@@ -3,7 +3,12 @@
 #include "H_Game_Object.hpp"
 #include "H_JCVB_window.hpp"
 
+//#include <string>
+
 namespace Digestion {
+
+    class SceneSerializer;
+
 	class KeyboardMovementController{
 
 	public:
@@ -18,12 +23,15 @@ namespace Digestion {
             int lookRight = GLFW_KEY_RIGHT;
             int lookUp = GLFW_KEY_UP;
             int lookDown = GLFW_KEY_DOWN;
+            int leftControl = GLFW_KEY_LEFT_CONTROL;
         };
 
         void moveInPlaneXZ(GLFWwindow* window, float dt, Entity& gameObject);
+        void handleCommands(GLFWwindow* window, SceneSerializer* scene);
 
         KeyMappings keys{};
         float moveSpeed{ 3.f };
         float lookSpeed{ 1.5f };
+        bool isHandling = false;
 	};
 }

@@ -11,6 +11,7 @@
 
 namespace Digestion {
 
+	//Update to be more serialized friendly, Fix after getting Serialization working
 	struct Camera {
 		glm::mat4 projectionMatrix{ 1.f };
 		glm::mat4 viewMatrix{ 1.f };
@@ -51,6 +52,7 @@ namespace Digestion {
 			projectionMatrix[2][2] = far / (far - near);
 			projectionMatrix[2][3] = 1.f;
 			projectionMatrix[3][2] = -(far * near) / (far - near);
+
 		}
 
 		void setViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up = glm::vec3{ 0.f, -1.f, 0.f }) {
@@ -139,6 +141,7 @@ namespace Digestion {
 		MeshFilter(MeshFilter&) = default;
 	};
 
+	//Not Component, needs to be moved
 	struct Shader {
 		std::string vertShaderPath;
 		std::string fragShaderPath;
@@ -147,10 +150,7 @@ namespace Digestion {
 		Shader(Shader&) = default;
 	};
 
-	//As Asset
 	struct Material {
-		//std::string vertexShader;
-		//std::string materialShader;
 		std::shared_ptr<Shader> shader = nullptr;
 
 		std::shared_ptr<Texture> diffuseMap = nullptr;
@@ -298,5 +298,5 @@ namespace Digestion {
 
 	using AllComponents =
 		ComponentGroup<Transform, MeshRenderer,
-		MeshFilter, Camera, PointLight>;
+		MeshFilter, Material, Camera, PointLight>;
 }

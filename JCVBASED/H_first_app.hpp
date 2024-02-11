@@ -6,6 +6,7 @@
 #include "H_Game_Object.hpp"
 #include "H_components.hpp"
 #include "H_Scene.hpp"
+#include "H_SceneSerializer.hpp"
 //#include "H_JCVB_game_object.hpp"
 #include "H_JCVB_renderer.hpp"
 #include "H_JCVB_window.hpp"
@@ -58,5 +59,7 @@ namespace Digestion {
 		std::vector<std::unique_ptr<JcvbDescriptorPool>> framePools;
 		
 		Scene* scene;
+		SceneSerializer* pSceneSerializer;
+		//SceneSerializer sceneSerializer;
 	};
 }

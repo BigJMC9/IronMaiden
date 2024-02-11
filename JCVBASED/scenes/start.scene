@@ -1,0 +1,80 @@
+Scene: Untitled
+Entities:
+  - Entity: ab1b77fb53f72dfa-711c4798e60a8258
+    Transform:
+      Translation: [-1.36602557, -1, 0.366024852]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [1, 1, 1]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: a1ab05b77686f5fd-f64cfef5b33a31f9
+    Transform:
+      Translation: [-0.366025537, -1, 1.36602533]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [0.100000001, 1, 1]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: 34894790b7fa22ca-5e79745a3a751e54
+    Transform:
+      Translation: [0.99999994, -1, 1.00000012]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [1, 1, 0.100000001]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: b26ac987cc8e44fb-c56458b07a0ab452
+    Transform:
+      Translation: [1.36602545, -0.99999994, -0.366025329]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [0.100000001, 1, 0.100000001]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: ec95a60f8c39d9b7-e7ffba2e8778cf86
+    Transform:
+      Translation: [0.366025478, -1, -1.36602545]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [0.100000001, 0.100000001, 1]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: 9fe34264c534555e-afa29ea6a2c0b8b4
+    Transform:
+      Translation: [-1, -1, -1]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [1, 0.100000001, 0.100000001]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: d0d5e4602874f1cc-c4811fbaec3da6a2
+    Transform:
+      Translation: [0, 0.5, 0]
+      Rotation: [0, 0, 0]
+      Scale: [3, 1, 3]
+    MeshFilter:
+      Model: models/quad.obj
+    MeshRenderer: True
+  - Entity: 6911b89a3989a12c-c79fc97085c96a0a
+    Transform:
+      Translation: [0.5, 0.5, 0]
+      Rotation: [0, 0, 0]
+      Scale: [3, 1.5, 3]
+    MeshFilter:
+      Model: models/smooth_vase.obj
+    MeshRenderer: True
+  - Entity: 507d3a1d88d8f7e6-d5e901747f8e7081
+    Transform:
+      Translation: [-0.5, 0.5, 0]
+      Rotation: [0, 0, 0]
+      Scale: [3, 1.5, 3]
+    MeshFilter:
+      Model: models/flat_vase.obj
+    MeshRenderer: True

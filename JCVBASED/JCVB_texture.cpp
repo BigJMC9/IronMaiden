@@ -9,7 +9,8 @@
 #include <stdexcept>
 
 namespace Digestion {
-    Texture::Texture(Device& device, const std::string& textureFilepath) : mDevice{ device } {
+    Texture::Texture(Device& device, const std::string& textureFilepath) : mDevice{ device }, file{ textureFilepath }
+    {
         createTextureImage(textureFilepath);
         createTextureImageView(VK_IMAGE_VIEW_TYPE_2D);
         createTextureSampler();
@@ -22,7 +23,7 @@ namespace Digestion {
         VkExtent3D extent,
         VkImageUsageFlags usage,
         VkSampleCountFlagBits sampleCount)
-        : mDevice{ device } {
+        : mDevice{ device }, file{ "NULL" } {
         VkImageAspectFlags aspectMask = 0;
         VkImageLayout imageLayout;
 

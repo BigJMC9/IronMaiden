@@ -22,7 +22,7 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{a24a697a-18eb-4c31-9916-4d6a5b229dab}</ProjectGuid>
-    <RootNamespace>JCVBASED</RootNamespace>
+    <RootNamespace>DigestionFiber</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>DigestionFiber</ProjectName>
   </PropertyGroup>
@@ -111,14 +111,18 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glm-0.9.9.8;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\tinyobjloader;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\stbImage;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glm-0.9.9.8;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\yaml-cpp-master\include;C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\third_party\tinyobjloader;C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\third_party\stbImage;C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\third_party\EnTT;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+      <PreprocessToFile>false</PreprocessToFile>
+      <ShowIncludes>true</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\lib-vc2022;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\yaml-cpp-master\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;yaml-cppd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>LinkVerbose</ShowProgress>
     </Link>
     <PreBuildEvent>
       <Command>call C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\compile.bat</Command>
@@ -132,16 +136,17 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glm-0.9.9.8;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\tinyobjloader;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\stbImage;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glm-0.9.9.8;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\tinyobjloader;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\stbImage;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\yaml-cpp-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\lib-vc2022;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\yaml-cpp-master\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;yaml-cpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\compile.bat</Command>
@@ -167,6 +172,7 @@
     <ClCompile Include="JCVB_device.cpp" />
     <ClCompile Include="Render_systems.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneSerializer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="entt.hpp" />
@@ -184,6 +190,7 @@
     <ClInclude Include="H_JCVB_device.hpp" />
     <ClInclude Include="H_keyboard_movement_controller.hpp" />
     <ClInclude Include="H_Scene.hpp" />
+    <ClInclude Include="H_SceneSerializer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="compile.bat" />

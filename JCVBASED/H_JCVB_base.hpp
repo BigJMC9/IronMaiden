@@ -39,6 +39,10 @@ namespace Digestion {
 
 			_UUID = ss.str();
 		}
+
+		UUID(std::string uuid) {
+			_UUID = uuid;
+		}
 		//UUID(const UUID&) = delete;
 
 		operator std::string() const { return _UUID; }
@@ -46,4 +50,12 @@ namespace Digestion {
 	private:
 		std::string _UUID;
 	};
+
+	template<typename T>
+	using Ref = std::shared_ptr<T>;
+	template<typename T, typename ... Args>
+	constexpr Ref<T> CreateRef(Args&& ... args)
+	{
+		return std::make_shared<T>(std::forward<Args>(args)...);
+	}
 }

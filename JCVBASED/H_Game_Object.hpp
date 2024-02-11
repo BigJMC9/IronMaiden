@@ -7,7 +7,7 @@
 #include "H_components.hpp"
 
 //lib
-#include "entt.hpp"
+//#include "entt.hpp"
 
 // std
 #include <cassert>
@@ -20,6 +20,7 @@ namespace Digestion {
 	public:
 		Entity() = default;
 		Entity(entt::entity _handle, Scene* _scene);
+		Entity(entt::entity _handle, Scene* _scene, UUID _id);
 		Entity(const Entity& other) = default;
 
 		template<typename T, typename... Args>
@@ -40,7 +41,7 @@ namespace Digestion {
 
 		template<typename T>
 		bool HasComponent() {
-			return scene->registry.orphan<T>(entityHandle);
+			return scene->registry.any_of<T>(entityHandle);
 		}
 
 		template<typename T>
@@ -49,8 +50,11 @@ namespace Digestion {
 			scene->registry.remove<T>(entityHandle);
 		}
 
+		operator bool() const { return entityHandle != entt::null; }
 		operator entt::entity() const { return entityHandle; }
-		//UUID GetUUID() { return id; }
+		operator uint32_t() const { return (uint32_t)entityHandle; }
+
+		UUID GetUUID() { return id; }
 
 		bool operator==(const Entity& other) const
 		{
@@ -66,6 +70,6 @@ namespace Digestion {
 	private:
 		entt::entity entityHandle{ entt::null };
 		Scene* scene = nullptr;
-		//UUID id;
+		UUID id;
 	};
 }

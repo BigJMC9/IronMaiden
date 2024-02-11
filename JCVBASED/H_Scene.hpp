@@ -7,9 +7,6 @@
 //#include "H_Game_Object.hpp"
 #include "H_JCVB_frame_info.hpp"
 
-//lib
-#include "entt.hpp"
-
 //std
 #include <memory>
 
@@ -32,6 +29,9 @@ namespace Digestion {
 		void Start();
 		void Update();
 		void Render();
+		void LoadScene();
+		//void SaveScene();
+		void LoadScene(std::string scenePath);
 
 		entt::registry& Reg() { return registry; }
 
@@ -46,6 +46,15 @@ namespace Digestion {
 
 		//GameObject editorCamera;
 	private:
+
+		//void LoadTransform(YAML::Node node, Entity gameObject);
+		//void LoadPointLight(YAML::Node node, Entity gameObject);
+		//void LoadMeshFilter(YAML::Node node, Entity gameObject);
+		//void LoadMeshRenderer(YAML::Node node, Entity gameObjectde);
+		//Shader LoadShader(YAML::Node node);
+		//void LoadMaterial(YAML::Node node, Entity gameObject);
+		//void LoadCamera(YAML::Node node, Entity gameObject);
+
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
 
@@ -56,5 +65,6 @@ namespace Digestion {
 		//KeyboardMovementController cameraController;
 
 		friend class Entity;
+		friend class SceneSerializer;
 	};
 }

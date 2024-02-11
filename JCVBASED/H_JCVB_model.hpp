@@ -34,6 +34,7 @@ namespace Digestion {
 		struct Builder {
 			std::vector<Vertex> vertices{};
 			std::vector<uint32_t> indices{};
+			std::string fileStr;
 
 			void loadModel(const std::string& filepath);
 		};
@@ -48,6 +49,10 @@ namespace Digestion {
 
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
+
+		std::string getFile() {
+			return file;
+		}
 	private:
 		void createVertexBuffers(const std::vector<Vertex>& vertices);
 		void createIndexBuffers(const std::vector<uint32_t>& indices);
@@ -60,5 +65,7 @@ namespace Digestion {
 		bool hasIndexBuffer = false;
 		std::unique_ptr<Buffer> indexBuffer;
 		uint32_t indexCount;
+
+		std::string file;
 	};
 }

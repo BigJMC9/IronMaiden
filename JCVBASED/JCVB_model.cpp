@@ -29,7 +29,7 @@ namespace std {
 
 namespace Digestion {
 
-	Model::Model(Device	&device, const Model::Builder &builder) : jcvbDevice{device} {
+	Model::Model(Device& device, const Model::Builder& builder) : jcvbDevice{ device }, file{builder.fileStr} {
 		createVertexBuffers(builder.vertices);
 		createIndexBuffers(builder.indices);
 	}
@@ -38,6 +38,7 @@ namespace Digestion {
 
 	std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::string& filepath) {
 		Builder builder{};
+		builder.fileStr = filepath;
 		builder.loadModel(filepath);
 		return std::make_unique<Model>(device, builder);
 	}
@@ -154,9 +155,6 @@ namespace Digestion {
 
 		std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 		for (const auto& shape : shapes) {
-			//std::vector<Vertex> face;
-			//int fIndex = 0;
-			//std::cout << shape.name << "\n";
 			for (const auto& index : shape.mesh.indices) {
 				Vertex vertex{};
 				if (index.vertex_index >= 0) {
@@ -190,41 +188,12 @@ namespace Digestion {
 					};
 				}
 
-				//vertex.tangent = { 0.5f,1,0.5f };
-				//Makes sure all vertex related var is added before this if statement
 				if (uniqueVertices.count(vertex) == 0) {
 					uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
 					vertices.push_back(vertex);
 				}
 				
 				indices.push_back(uniqueVertices[vertex]);
-				/*face.push_back(vertex);
-				fIndex += 1;
-				if (fIndex >= 3) {
-					glm::vec3 edge1 = face[1].position - face[0].position;
-					glm::vec3 edge2 = face[2].position - face[0].position;
-
-					glm::vec2 deltaUV1 = face[1].uv - face[0].uv;
-					glm::vec2 deltaUV2 = face[2].uv - face[0].uv;
-
-					float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-
-					glm::vec3 tangent;
-					tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-					tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-					tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-					tangent = glm::normalize(tangent);
-					face[0].tangent = tangent;
-					face[1].tangent = tangent;
-					face[2].tangent = tangent;
-
-					indices.push_back(uniqueVertices[face[0]]);
-					indices.push_back(uniqueVertices[face[1]]);
-					indices.push_back(uniqueVertices[face[2]]);
-					std::cout << "x: " << std::to_string(tangent.x) << " y: " << std::to_string(tangent.y) << " z: " << std::to_string(tangent.z) << "\n";
-					fIndex = 0;
-					face.clear();
-				}*/
 			}
 		}
 	}

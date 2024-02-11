@@ -32,6 +32,7 @@ namespace Digestion {
 		VkImageLayout getImageLayout() const { return mTextureLayout; }
 		VkExtent3D getExtent() const { return mExtent; }
 		VkFormat getFormat() const { return mFormat; }
+		std::string getFile() const { return file; }
 
 		void updateDescriptor();
 		void transitionLayout(
@@ -60,5 +61,7 @@ namespace Digestion {
 		uint32_t mMipLevels{ 1 };
 		uint32_t mLayerCount{ 1 };
 		VkExtent3D mExtent{};
+
+		std::string file{ "" };
 	};
 }
