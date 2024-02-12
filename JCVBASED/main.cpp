@@ -4,6 +4,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
+//#include <stdio.h> 
+//#include <tchar.h>
+//#include <strsafe.h>
 
 int main() {
 	Digestion::FirstApp app{};

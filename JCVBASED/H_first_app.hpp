@@ -7,11 +7,17 @@
 #include "H_components.hpp"
 #include "H_Scene.hpp"
 #include "H_SceneSerializer.hpp"
+#include "H_ProcessHandler.hpp"
+#include "H_CmdHandler.hpp"
 //#include "H_JCVB_game_object.hpp"
 #include "H_JCVB_renderer.hpp"
 #include "H_JCVB_window.hpp"
 #include "H_Render_systems.hpp"
 
+//Define fixes
+#ifdef min
+#undef min
+#endif
 
 
 // std
@@ -44,11 +50,12 @@ namespace Digestion {
 		//Map gameObjects;
 		void run();
 
+		Digestion::App::PipeHandler pipeHandler;
 	private:
 		//entt::registry registry;
 		std::vector<Model> models;
 		void loadGameObjects();
-
+		
 		Window jcvbWindow = Window{ WIDTH, HEIGHT, "JCVB - 0.01" };
 		Device jcvbDevice = Device{ jcvbWindow };
 		Rendering::Renderer jcvbRenderer = Rendering::Renderer{jcvbWindow, jcvbDevice};

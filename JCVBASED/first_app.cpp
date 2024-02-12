@@ -26,6 +26,7 @@
 namespace Digestion {
 
 	FirstApp::FirstApp() {
+
 		globalPool = 
 			JcvbDescriptorPool::Builder(jcvbDevice)
 				.setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
@@ -53,6 +54,27 @@ namespace Digestion {
 	}
 
 	void FirstApp::run() {
+
+		if (!pipeHandler.CreatePipe()) {
+			std::cerr << "Failed to create pipe" << std::endl;
+			pipeHandler.isCreated = false;
+		}
+		else {
+			pipeHandler.isCreated = true;
+			if (!pipeHandler.ConnectToChildProcess("Editor-NoGUI.exe")) {
+				std::cerr << "Failed to connect to child process" << std::endl;
+				pipeHandler.isConnected = false;
+			}
+			else {
+				pipeHandler.Write("Connection to Engine Established!");
+				pipeHandler.isConnected = true;
+			}
+		}
+
+		if (pipeHandler.isConnected) {
+			std::cout << "Is connected, starting read!" << std::endl;
+			pipeHandler.StartAsyncRead();
+		}
 
 		std::vector < std::unique_ptr<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (int i = 0; i < uboBuffers.size(); i++)
@@ -97,9 +119,15 @@ namespace Digestion {
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
-            frameTime = glm::min(frameTime, MAX_FRAME_TIME);
+            frameTime = glm::min(frameTime, MAX_FRAME_TIME);		
 
+			std::string command = pipeHandler.Read();
+			if (!command.empty()) {
+				std::cout << "command: " << command;
+				App::CommandHandler::HandleCommand(command, pipeHandler, pSceneSerializer);
+			}
 			cameraController.handleCommands(jcvbWindow.getGLFWwindow(), pSceneSerializer);
+			
             cameraController.moveInPlaneXZ(jcvbWindow.getGLFWwindow(), frameTime, viewerObject);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
@@ -188,6 +216,6 @@ namespace Digestion {
 			entity.GetComponent<Transform>().translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
 		}
 		pSceneSerializer->Serialize("scenes/start.scene");*/
-		pSceneSerializer->Deserialize("scenes/start.scene");
+		//pSceneSerializer->Deserialize("scenes/start.scene");
 	}
 }
