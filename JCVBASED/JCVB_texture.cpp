@@ -123,6 +123,9 @@ namespace Digestion {
     void Texture::createTextureImage(const std::string& filepath) {
         int texWidth, texHeight, texChannels;
         // stbi_set_flip_vertically_on_load(1);  // todo determine why texture coordinates are flipped
+        if (filepath.empty()) {
+            return;
+        }
         stbi_uc* pixels =
             stbi_load(filepath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;

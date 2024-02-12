@@ -1,80 +1,91 @@
 Scene: Untitled
 Entities:
-  - Entity: 8d52084fd2bcac3a-adb14b49d48e1eb6
+  - Entity: 3027f9c4276bee23-36f370914f5f616f
     Transform:
-      Translation: [-1.36602557, -1, 0.366024852]
+      Translation: [0, 0, -2.5]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-    PointLight:
-      Color: [1, 1, 1]
-      Intensity: 0.200000003
-      Radius: 0.100000001
-  - Entity: 40f66d4167db21f7-fc24f779d1a6ed0d
-    Transform:
-      Translation: [-0.366025537, -1, 1.36602533]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    PointLight:
-      Color: [0.100000001, 1, 1]
-      Intensity: 0.200000003
-      Radius: 0.100000001
-  - Entity: d5c2cb68cfb84b7b-318871d081b7ebe8
-    Transform:
-      Translation: [0.99999994, -1, 1.00000012]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    PointLight:
-      Color: [1, 1, 0.100000001]
-      Intensity: 0.200000003
-      Radius: 0.100000001
-  - Entity: 4190316dcbe0c66b-c63645b676082b9b
-    Transform:
-      Translation: [1.36602545, -0.99999994, -0.366025329]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    PointLight:
-      Color: [0.100000001, 1, 0.100000001]
-      Intensity: 0.200000003
-      Radius: 0.100000001
-  - Entity: a2ce485ae3ee9dd8-f70281af97ad6a7f
-    Transform:
-      Translation: [0.366025478, -1, -1.36602545]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    PointLight:
-      Color: [0.100000001, 0.100000001, 1]
-      Intensity: 0.200000003
-      Radius: 0.100000001
-  - Entity: d7760b75bc003001-d79fb796fb93058d
-    Transform:
-      Translation: [-1, -1, -1]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    PointLight:
-      Color: [1, 0.100000001, 0.100000001]
-      Intensity: 0.200000003
-      Radius: 0.100000001
-  - Entity: 37859467ab8be815-ecf8d0b76cf89651
-    Transform:
-      Translation: [0, 0.5, 0]
-      Rotation: [0, 0, 0]
-      Scale: [3, 1, 3]
-    MeshFilter:
-      Model: models/quad.obj
-    MeshRenderer: True
-  - Entity: eb490f6735351b3c-5e99d2a3287f2bfb
-    Transform:
-      Translation: [0.5, 0.5, 0]
-      Rotation: [0, 0, 0]
-      Scale: [3, 1.5, 3]
-    MeshFilter:
-      Model: models/smooth_vase.obj
-    MeshRenderer: True
-  - Entity: a2c8bea057785719-d10be4e7a1cc0284
+  - Entity: a5f229c84adfcb69-6c364a53d51f57ca
     Transform:
       Translation: [-0.5, 0.5, 0]
       Rotation: [0, 0, 0]
       Scale: [3, 1.5, 3]
     MeshFilter:
       Model: models/flat_vase.obj
-    MeshRenderer: True
+    MeshRenderer: true
+  - Entity: f59cd8c67acf303d-75045964a3941de2
+    Transform:
+      Translation: [0.5, 0.5, 0]
+      Rotation: [0, 0, 0]
+      Scale: [3, 1.5, 3]
+    MeshFilter:
+      Model: models/smooth_vase.obj
+    MeshRenderer: true
+  - Entity: 9afe896d8aadd748-eef4201a074bf05d
+    Transform:
+      Translation: [0, 0.5, 0]
+      Rotation: [0, 0, 0]
+      Scale: [3, 1, 3]
+    MeshFilter:
+      Model: models/quad.obj
+    Material:
+      Shader: [shaders/texture_shader.vert.spv, shaders/texture_shader.frag.spv]
+      Diffuse: textures/GroundSand005_COL_2K.jpg
+      Normal: textures/GroundSand005_NRM_2K.jpg
+      AO: textures/GroundSand005_AO_2K.jpg
+      Gloss: textures/GroundSand005_GLOSS_2K.jpg
+    MeshRenderer: true
+  - Entity: 5af4f5782a45a861-0e6f6dfd13ba9f52
+    Transform:
+      Translation: [-1.36801887, -1, 0.358321995]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [1, 0.100000001, 0.100000001]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: 7f567af0c1439c36-98bdd227a3913ecb
+    Transform:
+      Translation: [-0.994343936, -1, -1.00555754]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [0.100000001, 0.100000001, 1]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: 26a6511b4ecd10e1-bb817bbbe7f21cf9
+    Transform:
+      Translation: [0.373676986, -0.99999994, -1.36390972]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [0.100000001, 1, 0.100000001]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: 5c28f01252074cae-c8dceaa4d2996081
+    Transform:
+      Translation: [1.36801827, -1, -0.358321935]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [1, 1, 0.100000001]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: 52d94aeeae320199-d705b3c367ad92aa
+    Transform:
+      Translation: [0.99434346, -1, 1.00555718]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [0.100000001, 1, 1]
+      Intensity: 0.200000003
+      Radius: 0.100000001
+  - Entity: 412c2b5b69c29a00-a5b43740074f8ec9
+    Transform:
+      Translation: [-0.373677284, -1, 1.36390924]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLight:
+      Color: [1, 1, 1]
+      Intensity: 0.200000003
+      Radius: 0.100000001

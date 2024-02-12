@@ -44,7 +44,7 @@ namespace Digestion {
 		}
 		
 		scene = new Scene(jcvbDevice);
-		pSceneSerializer = new SceneSerializer(scene);
+		pSceneSerializer = new SceneSerializer(scene, jcvbDevice);
 		loadGameObjects();
 	}
 
@@ -84,6 +84,7 @@ namespace Digestion {
         Camera camera{};
         camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.f, 0.f, 0.f));
 		Entity viewerObject = scene->CreateGameObject();
+		viewerObject.SetName("Editor Camera");
 		viewerObject.GetComponent<Transform>().translation.z = -2.5f;
         KeyboardMovementController cameraController{};
 
@@ -139,7 +140,7 @@ namespace Digestion {
 	void FirstApp::loadGameObjects() {
 		std::cout << "Loading GameObjects" << std::endl;
 
-        std::shared_ptr<Model> flatModel = Model::createModelFromFile(jcvbDevice, "models/flat_vase.obj");
+        /*std::shared_ptr<Model> flatModel = Model::createModelFromFile(jcvbDevice, "models/flat_vase.obj");
 		Entity flatVase = scene->LoadGameObject(flatModel);
 		flatVase.GetComponent<Transform>().translation = { -0.5f, .5f, 0.f };
 		flatVase.GetComponent<Transform>().scale = { 3.f, 1.5f, 3.f };
@@ -153,11 +154,13 @@ namespace Digestion {
 		std::shared_ptr<Shader> shader = std::make_shared<Shader>();
 		shader->vertShaderPath = "shaders/texture_shader.vert.spv";
 		shader->fragShaderPath = "shaders/texture_shader.frag.spv";
-		std::shared_ptr<Material> sandMaterial = std::make_shared<Material>();
-		sandMaterial->diffuseMap = Texture::createTextureFromFile(jcvbDevice, "textures/GroundSand005_COL_2K.jpg");
-		sandMaterial->normalMap = Texture::createTextureFromFile(jcvbDevice, "textures/GroundSand005_NRM_2K.jpg");
-		sandMaterial->ambientOcclusionMap = Texture::createTextureFromFile(jcvbDevice, "textures/GroundSand005_AO_2K.jpg");
-		sandMaterial->glossMap = Texture::createTextureFromFile(jcvbDevice, "textures/GroundSand005_GLOSS_2K.jpg");
+		Material sandMaterial;
+		//std::shared_ptr<Material> sandMaterial = std::make_shared<Material>(sandMat);
+		sandMaterial.shader = shader;
+		sandMaterial.diffuseMap = Texture::createTextureFromFile(jcvbDevice, "textures/GroundSand005_COL_2K.jpg");
+		sandMaterial.normalMap = Texture::createTextureFromFile(jcvbDevice, "textures/GroundSand005_NRM_2K.jpg");
+		sandMaterial.ambientOcclusionMap = Texture::createTextureFromFile(jcvbDevice, "textures/GroundSand005_AO_2K.jpg");
+		sandMaterial.glossMap = Texture::createTextureFromFile(jcvbDevice, "textures/GroundSand005_GLOSS_2K.jpg");
 		Entity floor = scene->LoadGameObject(quadModel, sandMaterial);
 		floor.GetComponent<Transform>().translation = { 0.f, .5f, 0.f };
 		floor.GetComponent<Transform>().scale = { 3.f, 1.f, 3.f };
@@ -184,6 +187,7 @@ namespace Digestion {
 				{ 0.f, -1.f, 0.f });
 			entity.GetComponent<Transform>().translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
 		}
-		pSceneSerializer->Serialize("scenes/start.scene");
+		pSceneSerializer->Serialize("scenes/start.scene");*/
+		pSceneSerializer->Deserialize("scenes/start.scene");
 	}
 }

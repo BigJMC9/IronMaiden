@@ -46,6 +46,10 @@ namespace Digestion {
 		//UUID(const UUID&) = delete;
 
 		operator std::string() const { return _UUID; }
+		friend std::ostream& operator<<(std::ostream& os, const UUID& uuid) {
+			os << "UUID: " << uuid._UUID;
+			return os;
+		}
 
 	private:
 		std::string _UUID;

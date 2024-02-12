@@ -1,5 +1,6 @@
 #include "H_SceneSerializer.hpp"
 #include "H_Game_Object.hpp"
+//#include "H_components.hpp"
 
 //std
 #include <fstream>
@@ -97,7 +98,45 @@ namespace YAML {
 
 		static bool decode(const Node& node, Digestion::UUID& uuid)
 		{
-			uuid = node.as<Digestion::UUID>();
+			uuid = Digestion::UUID(node.as<std::string>());
+			return true;
+		}
+	};
+
+	template<>
+	struct convert<std::shared_ptr<Digestion::Shader>>
+	{
+		static Node encode(const std::shared_ptr<Digestion::Shader>& shader)
+		{
+			Node node;
+			node.push_back(shader->vertShaderPath);
+			node.push_back(shader->fragShaderPath);
+			return node;
+		}
+
+		static bool decode(const Node& node, std::shared_ptr<Digestion::Shader>& shader)
+		{
+			shader->vertShaderPath = node[0].as<std::string>();
+			shader->fragShaderPath = node[1].as<std::string>();
+			return true;
+		}
+	};
+
+	template<>
+	struct convert<Digestion::Shader>
+	{
+		static Node encode(const Digestion::Shader& shader)
+		{
+			Node node;
+			node.push_back(shader.vertShaderPath);
+			node.push_back(shader.fragShaderPath);
+			return node;
+		}
+
+		static bool decode(const Node& node, Digestion::Shader& shader)
+		{
+			shader.vertShaderPath = node[0].as<std::string>();
+			shader.fragShaderPath = node[1].as<std::string>();
 			return true;
 		}
 	};
@@ -163,6 +202,7 @@ namespace Digestion {
 			out << YAML::BeginMap;
 
 			MeshFilter& meshFilter = entity.GetComponent<MeshFilter>();
+			std::cout << "Debug: " << entity.GetUUID() << ", Saving MeshFilter: " << std::endl;
 			out << YAML::Key << "Model" << YAML::Value << meshFilter.model->getFile();
 
 			out << YAML::EndMap;
@@ -182,7 +222,7 @@ namespace Digestion {
 		}
 
 		if (entity.HasComponent<MeshRenderer>()) {
-			out << YAML::Key << "MeshRenderer" << YAML::Value << "True";
+			out << YAML::Key << "MeshRenderer" << YAML::Value << "true";
 		}
 
 		if (entity.HasComponent<PointLight>()) {
@@ -204,11 +244,11 @@ namespace Digestion {
 		out << YAML::EndMap;
 	}
 
-	SceneSerializer::SceneSerializer(Scene* scene) : m_Scene(scene) {
+	SceneSerializer::SceneSerializer(Scene* scene, Device& _device) : m_Scene(scene), device(_device) {
 
 	}
 	
-	void SceneSerializer::Serialize(const std::string& filepath) {
+	void SceneSerializer::Serialize(const std::string& filePath) {
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -217,6 +257,7 @@ namespace Digestion {
 		entt::registry& reg = m_Scene->registry;
 		reg.view<entt::entity>().each([&](auto entityID) {
 
+			std::cout << "Entity: " << (uint32_t)entityID << std::endl;
 			Entity entity = { entityID, m_Scene };
 			if (!entity) return;
 
@@ -227,16 +268,106 @@ namespace Digestion {
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 
-		std::ofstream fout(filepath);
+		std::ofstream fout(filePath);
 		fout << out.c_str();
 	}
 
-	void SceneSerializer::SerializeRuntime(const std::string& filepath) {
+	void SceneSerializer::SerializeRuntime(const std::string& filePath) {
 		//Not Implemented
 	}
 
-	bool SceneSerializer::Deserialize(const std::string& filepath) {
-		return false;
+	bool SceneSerializer::Deserialize(const std::string& filePath) {
+		std::string defaultFileType = ".scene";
+		std::string fileType = filePath.substr(filePath.size() - defaultFileType.size());
+
+		if (fileType != defaultFileType) {
+			std::cout << "Error loading scene: Parsed scene is wrong file type" << std::endl;
+			return false;
+		}
+
+		std::ifstream file(filePath);
+
+		if (!file.good()) {
+			std::cout << "Error loading scene: Scene does not exist" << std::endl;
+			return false;
+		}
+
+		YAML::Node node;
+		try {
+			node = YAML::LoadFile(filePath);
+		}
+		catch (YAML::ParserException e) {
+			std::cout << "Failed to load .scene file" << std::endl;
+			return false;
+		}
+
+		if (!node["Scene"]) {
+			return false;
+		}
+
+		std::string sceneName = node["Scene"].as<std::string>();
+		auto entities = node["Entities"];
+		if (entities) {
+			for (auto entity : entities) {
+				
+				Entity deserializedEntity = m_Scene->CreateEntity(entity["Entity"].as<UUID>());
+
+				std::cout << deserializedEntity.GetUUID() << ", Handle: " << (uint32_t)deserializedEntity.GetHandle() << std::endl;
+
+				auto transformNode = entity["Transform"];
+				if (transformNode) 
+				{
+					Transform& transform = deserializedEntity.GetComponent<Transform>();
+					transform.translation = transformNode["Translation"].as<glm::vec3>();
+					transform.rotation = transformNode["Rotation"].as<glm::vec3>();
+					transform.scale = transformNode["Scale"].as<glm::vec3>();;
+				}
+				
+				auto meshFilterNode = entity["MeshFilter"];
+				if (meshFilterNode) {
+					MeshFilter& meshFilter = deserializedEntity.AddComponent<MeshFilter>();
+					std::string path = meshFilterNode["Model"].as<std::string>();
+					std::cout << "Loading Model: " << path << std::endl;
+					meshFilter.model = Model::createModelFromFile(device, path);
+				}
+
+				auto materialNode = entity["Material"];
+				if (materialNode) {
+					Material& material = deserializedEntity.AddComponent<Material>();
+					Shader shader = materialNode["Shader"].as<Shader>();
+					material.shader = std::make_shared<Shader>(shader);
+					std::string path = materialNode["Diffuse"].as<std::string>();
+					material.diffuseMap = Texture::createTextureFromFile(device, path);
+					path = materialNode["Normal"].as<std::string>();
+					material.normalMap = Texture::createTextureFromFile(device, path);
+					path = materialNode["AO"].as<std::string>();
+					material.ambientOcclusionMap = Texture::createTextureFromFile(device, path);
+					path = materialNode["Gloss"].as<std::string>();
+					material.glossMap = Texture::createTextureFromFile(device, path);
+				}
+
+				auto pointLightNode = entity["PointLight"];
+				if (pointLightNode) {
+					PointLight& pointLight = deserializedEntity.AddComponent<PointLight>();
+					pointLight.color = pointLightNode["Color"].as<glm::vec3>();
+					pointLight.intensity = pointLightNode["Intensity"].as<float>();
+					pointLight.radius = pointLightNode["Radius"].as<float>();
+				}
+
+				auto meshRendererNode = entity["MeshRenderer"];
+				if (meshRendererNode) {
+					std::string isTrue = meshRendererNode.as<std::string>();
+					if (isTrue == "true") {
+						MeshRenderer& meshRenderer = deserializedEntity.AddComponent<MeshRenderer>();
+						if (deserializedEntity.HasComponent<Material>()) {
+							deserializedEntity.GetComponent<MeshRenderer>().material = std::make_shared<Material>(deserializedEntity.GetComponent<Material>());
+						}
+						deserializedEntity.GetComponent<MeshRenderer>().mesh = deserializedEntity.GetComponent<MeshFilter>();
+					}
+				}
+			}
+		}
+		return true;
 	}
 
 	bool SceneSerializer::DeserializeRuntime(const std::string& filepath) {

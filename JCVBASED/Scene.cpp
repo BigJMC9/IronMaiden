@@ -1,4 +1,4 @@
-#include "H_scene.hpp"
+#include "H_Scene.hpp"
 #include "H_keyboard_movement_controller.hpp"
 #include "H_Game_Object.hpp"
 #include "H_components.hpp"
@@ -19,6 +19,30 @@ namespace Digestion {
 
 	}
 
+	Entity Scene::CreateEntity() {
+		Entity entity = { registry.create(), this };
+		entity.AddComponent<Transform>();
+		entity.transform = entity.GetComponent<Transform>();
+		//m_EntityMap.emplace(entity.GetUUID(), entity);
+		return entity;
+	}
+
+	Entity Scene::CreateEntity(entt::entity _entity) {
+		Entity entity = { registry.create(_entity), this };
+		entity.AddComponent<Transform>();
+		entity.transform = entity.GetComponent<Transform>();
+		//m_EntityMap.emplace(entity.GetUUID(), entity);
+		return entity;
+	}
+
+	Entity Scene::CreateEntity(UUID uuid) {
+		Entity entity = { registry.create(), this, uuid};
+		entity.AddComponent<Transform>();
+		entity.transform = entity.GetComponent<Transform>();
+		//m_EntityMap.emplace(entity.GetUUID(), entity);
+		return entity;
+	}
+
 	Entity Scene::CreateGameObject() {
 		Entity gameObject = { registry.create(), this};
 		gameObject.AddComponent<Transform>();
@@ -37,13 +61,19 @@ namespace Digestion {
 		return gameObject;
 	}
 
-	Entity Scene::LoadGameObject(std::shared_ptr<Model> model, std::shared_ptr<Material> mat) {
+	Entity Scene::LoadGameObject(std::shared_ptr<Model> model, Material mat) {
 		Entity gameObject = { registry.create(), this};
 		gameObject.AddComponent<MeshRenderer>();
 		gameObject.AddComponent<MeshFilter>();
 		gameObject.GetComponent<MeshFilter>().model = model;
 		gameObject.GetComponent<MeshRenderer>().mesh = gameObject.GetComponent<MeshFilter>();
-		gameObject.GetComponent<MeshRenderer>().material = mat;
+		gameObject.GetComponent<MeshRenderer>().material = std::make_shared<Material>(mat);
+		gameObject.AddComponent<Material>();
+		gameObject.GetComponent<Material>().shader = mat.shader;
+		gameObject.GetComponent<Material>().diffuseMap = mat.diffuseMap;
+		gameObject.GetComponent<Material>().normalMap = mat.normalMap;
+		gameObject.GetComponent<Material>().ambientOcclusionMap = mat.ambientOcclusionMap;
+		gameObject.GetComponent<Material>().glossMap = mat.glossMap;
 		gameObject.AddComponent<Transform>();
 		gameObject.transform = gameObject.GetComponent<Transform>();
 		return gameObject;

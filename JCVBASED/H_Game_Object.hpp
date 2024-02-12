@@ -14,7 +14,6 @@
 
 namespace Digestion {
 
-	//Wrapper class of entt::entity
 	class Entity
 	{
 	public:
@@ -56,6 +55,19 @@ namespace Digestion {
 
 		UUID GetUUID() { return id; }
 
+		std::string SetName(std::string _name) {
+			name = _name;
+			return name; 
+		}
+
+		std::string GetName() {
+			return name;
+		}
+
+		entt::entity GetHandle() {
+			return entityHandle;
+		}
+
 		bool operator==(const Entity& other) const
 		{
 			return entityHandle == other.entityHandle && scene == other.scene;
@@ -71,5 +83,6 @@ namespace Digestion {
 		entt::entity entityHandle{ entt::null };
 		Scene* scene = nullptr;
 		UUID id;
+		std::string name = "NULL";
 	};
 }

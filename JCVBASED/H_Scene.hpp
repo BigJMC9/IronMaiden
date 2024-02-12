@@ -10,21 +10,24 @@
 //std
 #include <memory>
 
-
+//Wrapper class of entt::entity
 namespace Digestion {
 	struct Material;
-	//class GameObject;
-	class Entity;
 
+	class Entity;
+	struct UUID;
 	class Scene
 	{
 	public:
 		Scene(Device& _device) : device{ _device } {}
 		~Scene();
 
+		Entity CreateEntity();
+		Entity CreateEntity(entt::entity _entity);
+		Entity CreateEntity(UUID uuid);
 		Entity CreateGameObject();
 		Entity LoadGameObject(std::shared_ptr<Model> model);
-		Entity LoadGameObject(std::shared_ptr<Model> model, std::shared_ptr<Material> mat);
+		Entity LoadGameObject(std::shared_ptr<Model> model, Material mat);
 
 		void Start();
 		void Update();
@@ -47,14 +50,6 @@ namespace Digestion {
 		//GameObject editorCamera;
 	private:
 
-		//void LoadTransform(YAML::Node node, Entity gameObject);
-		//void LoadPointLight(YAML::Node node, Entity gameObject);
-		//void LoadMeshFilter(YAML::Node node, Entity gameObject);
-		//void LoadMeshRenderer(YAML::Node node, Entity gameObjectde);
-		//Shader LoadShader(YAML::Node node);
-		//void LoadMaterial(YAML::Node node, Entity gameObject);
-		//void LoadCamera(YAML::Node node, Entity gameObject);
-
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
 
@@ -63,6 +58,7 @@ namespace Digestion {
 		entt::registry registry;
 
 		//KeyboardMovementController cameraController;
+		//std::unordered_map<UUID, Entity> m_EntityMap;
 
 		friend class Entity;
 		friend class SceneSerializer;

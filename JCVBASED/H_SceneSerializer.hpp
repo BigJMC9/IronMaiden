@@ -7,16 +7,17 @@ namespace Digestion {
 	
 	class SceneSerializer {
 	public:
-		SceneSerializer(Scene* scene);
+		SceneSerializer(Scene* scene, Device& _device);
 
-		void Serialize(const std::string& filepath);
-		void SerializeRuntime(const std::string& filepath);
+		void Serialize(const std::string& filePath);
+		void SerializeRuntime(const std::string& filePath);
 
 		//static void SerializeEntity(YAML::Emitter& out, Entity entity);
 
-		bool Deserialize(const std::string& filepath);
-		bool DeserializeRuntime(const std::string& filepath);
+		bool Deserialize(const std::string& filePath);
+		bool DeserializeRuntime(const std::string& filePath);
 	private:
 		Scene* m_Scene;
+		Device& device;
 	};
 }
