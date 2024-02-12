@@ -1,19 +1,15 @@
 #pragma once
 
-//#include "H_scene.hpp"
-
 #include "H_JCVB_base.hpp"
 #include "H_Scene.hpp"
 #include "H_components.hpp"
-
-//lib
-//#include "entt.hpp"
 
 // std
 #include <cassert>
 
 namespace Digestion {
 
+	//Wrapper class of entt::entity
 	class Entity
 	{
 	public:

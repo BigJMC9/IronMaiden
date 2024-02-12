@@ -10,7 +10,7 @@
 //std
 #include <memory>
 
-//Wrapper class of entt::entity
+
 namespace Digestion {
 	struct Material;
 
