@@ -6,10 +6,10 @@
 #include <stdexcept>
 
 int main() {
-	Digestion::FirstApp app{};
+	//Madam::Application app{};
 
 	try {
-		app.run();
+		Madam::Application::Get().run();
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what() << '\n';

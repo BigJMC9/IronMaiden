@@ -16,7 +16,7 @@
 #include <vector>
 #include <iostream>
 
-namespace Digestion {
+namespace Madam {
     namespace Rendering {
 
         struct DefaultPushConstantData {
@@ -34,6 +34,11 @@ namespace Digestion {
             glm::vec4 color{};
             float radius;
         };
+
+        /*struct GridPushConstants {
+            glm::vec3 near{};
+            glm::vec3 far{};
+        };*/
 
 		class RenderSystem {
 
@@ -61,6 +66,21 @@ namespace Digestion {
             std::unique_ptr<Pipeline> jcvbPipeline;
             VkPipelineLayout pipelineLayout;
 		};
+
+        class GridRenderSystem : public RenderSystem {
+
+        public:
+            GridRenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "Default");
+            ~GridRenderSystem();
+
+            void render(FrameInfo& frameInfo) override;
+
+        protected:
+            void createPipelineLayout(VkDescriptorSetLayout globalSetLayout) override;
+            void createPipeline(VkRenderPass renderPass) override;
+
+            std::unique_ptr<JcvbDescriptorSetLayout> renderSystemLayout;
+        };
 
         class TextureRenderSystem : public RenderSystem {
 
@@ -112,6 +132,10 @@ namespace Digestion {
             void initialize(std::unique_ptr<JcvbDescriptorSetLayout>& globalSetLayout);
             void preRender(FrameInfo& frameInfo);
             void render(FrameInfo& frameInfo);
+            bool switchRenderSystems(int first, int second);
+            const std::vector<std::shared_ptr<RenderSystem>>& getRenderSystems() const {
+                return renderSystems;
+            }
 
             /*void addSystem(const RenderSystem& renderSystem) {
                 renderSystems.push_back(std::make_unique<RenderSystem>(std::move(renderSystem)));
@@ -121,8 +145,7 @@ namespace Digestion {
 
         private:
             Device& jcvbDevice;
-            //Should be Shared
-            std::vector<std::unique_ptr<RenderSystem>> renderSystems;
+            std::vector<std::shared_ptr<RenderSystem>> renderSystems;
             //std::vector<std::function<void()>> orderOfExecution;
         };
     }

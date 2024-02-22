@@ -8,7 +8,8 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace Digestion {
+namespace Madam {
+	//In future seperate the Pipeline and config part
 	Pipeline::Pipeline(Device& device, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo) : jcvbDevice{ device } {
 		createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
 	}
@@ -44,6 +45,7 @@ namespace Digestion {
 		auto vertCode = readFile(vertFilepath);
 		auto fragCode = readFile(fragFilepath);
 
+		//Shader Modules should be moved to a shaderModule class, this way they can be swapped out when using them
 		createShaderModule(vertCode, &vertShaderModule);
 		createShaderModule(fragCode, &fragShaderModule);
 

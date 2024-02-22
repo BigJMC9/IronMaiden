@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace Digestion {
+namespace Madam {
 
 	class SwapChain {
 	public:

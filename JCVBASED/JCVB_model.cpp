@@ -17,17 +17,17 @@
 
 namespace std {
 	template<>
-	struct hash<Digestion::Model::Vertex> {
-		size_t operator()(Digestion::Model::Vertex const& vertex) const {
+	struct hash<Madam::Model::Vertex> {
+		size_t operator()(Madam::Model::Vertex const& vertex) const {
 			size_t seed = 0;
-			Digestion::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv/*, vertex.tangent*/);
+			Madam::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv/*, vertex.tangent*/);
 			return seed;
 		}
 	};
 
 }
 
-namespace Digestion {
+namespace Madam {
 
 	Model::Model(Device& device, const Model::Builder& builder) : jcvbDevice{ device }, file{builder.fileStr} {
 		createVertexBuffers(builder.vertices);
@@ -102,6 +102,7 @@ namespace Digestion {
 		jcvbDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
 	}
 
+	//Move to render system and change to get the IndexBuffer
 	void Model::draw(VkCommandBuffer commandBuffer) {
 		if (hasIndexBuffer) {
 			vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
@@ -111,6 +112,7 @@ namespace Digestion {
 		}
 	}
 
+	//Move to render system and change to get the VertexBuffer
 	void Model::bind(VkCommandBuffer commandBuffer) {
 		VkBuffer buffers[] = { vertexBuffer->getBuffer()};
 		VkDeviceSize offsets[] = { 0 };

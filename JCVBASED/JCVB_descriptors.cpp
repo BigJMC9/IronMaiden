@@ -4,7 +4,7 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace Digestion {
+namespace Madam {
 
     // *************** Descriptor Set Layout Builder *********************
 

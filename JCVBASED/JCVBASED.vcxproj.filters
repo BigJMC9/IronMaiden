@@ -78,6 +78,12 @@
     <ClCompile Include="SceneSerializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ProcessHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CmdHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="H_JCVB_window.hpp">
@@ -128,6 +134,12 @@
     <ClInclude Include="H_SceneSerializer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="H_ProcessHandler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H_CmdHandler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="compile.bat" />
@@ -147,6 +159,12 @@
       <Filter>Shader</Filter>
     </None>
     <None Include="shaders\texture_shader.frag">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shaders\grid_shader.frag">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shaders\grid_shader.vert">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>

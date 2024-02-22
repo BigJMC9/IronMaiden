@@ -5,7 +5,7 @@
 #include <array>
 #include <cassert>
 
-namespace Digestion {
+namespace Madam {
 	namespace Rendering {
 		Renderer::Renderer(Window& window, Device& device) : jcvbWindow{ window }, jcvbDevice{ device } {
 			recreateSwapChain();

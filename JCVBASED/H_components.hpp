@@ -7,9 +7,17 @@
 //libs
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
+
+#ifdef far
+#undef far
+#endif
+#ifdef near
+#undef near
+#endif
 
 
-namespace Digestion {
+namespace Madam {
 
 	//Update to be more serialized friendly, Fix after getting Serialization working
 	struct Camera {

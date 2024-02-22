@@ -7,7 +7,7 @@
 #include <unordered_set>
 
 //Connection between the application and vulkan 
-namespace Digestion {
+namespace Madam {
 
 	// local callback functions
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(

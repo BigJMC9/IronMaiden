@@ -87,26 +87,26 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<Digestion::UUID>
+	struct convert<Madam::UUID>
 	{
-		static Node encode(const Digestion::UUID& uuid)
+		static Node encode(const Madam::UUID& uuid)
 		{
 			Node node;
 			node.push_back((std::string)uuid);
 			return node;
 		}
 
-		static bool decode(const Node& node, Digestion::UUID& uuid)
+		static bool decode(const Node& node, Madam::UUID& uuid)
 		{
-			uuid = Digestion::UUID(node.as<std::string>());
+			uuid = Madam::UUID(node.as<std::string>());
 			return true;
 		}
 	};
 
 	template<>
-	struct convert<std::shared_ptr<Digestion::Shader>>
+	struct convert<std::shared_ptr<Madam::Shader>>
 	{
-		static Node encode(const std::shared_ptr<Digestion::Shader>& shader)
+		static Node encode(const std::shared_ptr<Madam::Shader>& shader)
 		{
 			Node node;
 			node.push_back(shader->vertShaderPath);
@@ -114,7 +114,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, std::shared_ptr<Digestion::Shader>& shader)
+		static bool decode(const Node& node, std::shared_ptr<Madam::Shader>& shader)
 		{
 			shader->vertShaderPath = node[0].as<std::string>();
 			shader->fragShaderPath = node[1].as<std::string>();
@@ -123,9 +123,9 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<Digestion::Shader>
+	struct convert<Madam::Shader>
 	{
-		static Node encode(const Digestion::Shader& shader)
+		static Node encode(const Madam::Shader& shader)
 		{
 			Node node;
 			node.push_back(shader.vertShaderPath);
@@ -133,7 +133,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, Digestion::Shader& shader)
+		static bool decode(const Node& node, Madam::Shader& shader)
 		{
 			shader.vertShaderPath = node[0].as<std::string>();
 			shader.fragShaderPath = node[1].as<std::string>();
@@ -142,7 +142,7 @@ namespace YAML {
 	};
 }
 
-namespace Digestion {
+namespace Madam {
 
 	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec2& v)
 	{
@@ -244,7 +244,7 @@ namespace Digestion {
 		out << YAML::EndMap;
 	}
 
-	SceneSerializer::SceneSerializer(Scene* scene, Device& _device) : m_Scene(scene), device(_device) {
+	SceneSerializer::SceneSerializer(std::unique_ptr<Scene>& scene, Device& _device) : m_Scene(scene), device(_device) {
 
 	}
 	
@@ -254,11 +254,11 @@ namespace Digestion {
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
-		entt::registry& reg = m_Scene->registry;
+		entt::registry& reg = m_Scene->Reg();
 		reg.view<entt::entity>().each([&](auto entityID) {
 
 			std::cout << "Entity: " << (uint32_t)entityID << std::endl;
-			Entity entity = { entityID, m_Scene };
+			Entity entity = { entityID, m_Scene.get()};
 			if (!entity) return;
 
 			SerializeEntity(out, entity);
@@ -297,7 +297,9 @@ namespace Digestion {
 			node = YAML::LoadFile(filePath);
 		}
 		catch (YAML::ParserException e) {
-			std::cout << "Failed to load .scene file" << std::endl;
+			std::stringstream ss;
+			ss << e.what();
+			std::cout << "Failed to load .scene file: " << ss.str() << std::endl;
 			return false;
 		}
 
@@ -305,12 +307,13 @@ namespace Digestion {
 			return false;
 		}
 
+		Scene newScene{};
 		std::string sceneName = node["Scene"].as<std::string>();
 		auto entities = node["Entities"];
 		if (entities) {
 			for (auto entity : entities) {
 				
-				Entity deserializedEntity = m_Scene->CreateEntity(entity["Entity"].as<UUID>());
+				Entity deserializedEntity = newScene.CreateEntity(entity["Entity"].as<UUID>());
 
 				std::cout << deserializedEntity.GetUUID() << ", Handle: " << (uint32_t)deserializedEntity.GetHandle() << std::endl;
 
@@ -367,6 +370,7 @@ namespace Digestion {
 				}
 			}
 		}
+		m_Scene = std::make_unique<Scene>(std::move(newScene));
 		return true;
 	}
 

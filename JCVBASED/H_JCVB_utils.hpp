@@ -2,7 +2,7 @@
 
 #include <functional>
 
-namespace Digestion {
+namespace Madam {
 
 	// from: https://stackoverflow.com/a/57595105
 	template <typename T, typename... Rest>

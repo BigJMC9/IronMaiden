@@ -3,7 +3,12 @@
 //std
 #include <map>
 
-namespace Digestion {
+//May need overhaul since a pipeline may need to be created for each shader
+//Each shader needs a pipeline. Shader variants can use the same pipeline but ubershader has to be used which can cause a performance hit to the GPU.
+//More research required
+//Maybe have vkCmdSequences built onto class with builder and then have it execute in order for rendersystems?
+//Or could have CmdSequences handled in pipeline via a method by default but can override with custom sequence?
+namespace Madam {
 	namespace Rendering {
 		/*
 		------------------Render System------------------
@@ -69,7 +74,6 @@ namespace Digestion {
 			auto group = entities.view<Transform, MeshRenderer>();
 			for (auto entity : group)
 			{
-
 				auto [transform, meshRenderer] = group.get<Transform, MeshRenderer>(entity);
 
 				if (!entities.valid(entity)) {
@@ -103,12 +107,95 @@ namespace Digestion {
 		}
 
 		/*
+		------------------Grid Render System------------------
+		*/
+
+		GridRenderSystem::GridRenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
+			: RenderSystem(device, renderPass, globalSetLayout, _name) {
+			createPipelineLayout(globalSetLayout);
+			createPipeline(renderPass);
+		}
+
+		GridRenderSystem::~GridRenderSystem() {
+			vkDestroyPipelineLayout(jcvbDevice.device(), pipelineLayout, nullptr);
+		}
+
+		void GridRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+			/*VkPushConstantRange pushConstantRange{};
+			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+			pushConstantRange.offset = 0;
+			pushConstantRange.size = 0;*/
+
+			//Change for different layout
+			std::vector<VkDescriptorSetLayout> descriptorSetLayout{ globalSetLayout };
+
+			VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayout.size());
+			pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
+			pipelineLayoutInfo.pushConstantRangeCount = 0;
+			pipelineLayoutInfo.pPushConstantRanges = nullptr;
+			if (vkCreatePipelineLayout(jcvbDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+				throw std::runtime_error("Failed to create pipeline layout!");
+			}
+		}
+
+		void GridRenderSystem::createPipeline(VkRenderPass renderPass) {
+			assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+
+
+			PipelineConfigInfo pipelineConfig{};
+			Pipeline::defaultPipelineConfigInfo(pipelineConfig);
+			Pipeline::enableAlphaBlending(pipelineConfig);
+
+			//pipelineConfig.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+			pipelineConfig.attributeDescriptions.clear();
+			pipelineConfig.bindingDescriptions.clear();
+			pipelineConfig.renderPass = renderPass;
+			pipelineConfig.pipelineLayout = pipelineLayout;
+			pipelineConfig.depthStencilInfo.depthTestEnable = VK_TRUE;
+			pipelineConfig.depthStencilInfo.depthWriteEnable = VK_TRUE;
+			pipelineConfig.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+			pipelineConfig.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
+			pipelineConfig.depthStencilInfo.stencilTestEnable = VK_FALSE;
+			//pipelineConfig.rasterizationInfo.depthClampEnable = VK_TRUE;
+			jcvbPipeline = std::make_unique<Pipeline>(jcvbDevice, "shaders/grid_shader.vert.spv", "shaders/grid_shader.frag.spv", pipelineConfig);
+		}
+
+		void GridRenderSystem::render(FrameInfo& frameInfo) {
+			jcvbPipeline->bind(frameInfo.commandBuffer);
+
+			if (isFirstFrame) {
+				std::cout << "Rendering Grid" << std::endl;
+			}
+
+			vkCmdBindDescriptorSets(
+				frameInfo.commandBuffer,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				pipelineLayout,
+				0,
+				1,
+				&frameInfo.globalDescriptorSet,
+				0,
+				nullptr);
+
+			/*vkCmdPushConstants(
+				frameInfo.commandBuffer,
+				pipelineLayout,
+				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+				0,
+				0,
+				nullptr);*/
+			vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
+			isFirstFrame = false;
+		}
+
+		/*
 		------------------Texture Render System------------------
 		*/
 
 		TextureRenderSystem::TextureRenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
 			: RenderSystem(device, renderPass, globalSetLayout, _name) {
-			// Ensure to initialize jcvbDevice in the member initialization list
 			createPipelineLayout(globalSetLayout);
 			createPipeline(renderPass);
 		}
@@ -392,6 +479,14 @@ namespace Digestion {
 					"Render System"
 				));
 
+			renderSystems.push_back(std::make_unique<GridRenderSystem>
+				(
+					jcvbDevice,
+					jcvbRenderer.getSwapChainRenderPass(),
+					globalSetLayout->getDescriptorSetLayout(),
+					"Grid Render System"
+				));
+
 			renderSystems.push_back(std::make_unique<PointLightRenderSystem>
 				(
 					jcvbDevice,
@@ -399,6 +494,7 @@ namespace Digestion {
 					globalSetLayout->getDescriptorSetLayout(),
 					"Point Light Render System"
 				));
+			
 		}
 
 		void MasterRenderSystem::preRender(FrameInfo& frameInfo) {
@@ -413,5 +509,9 @@ namespace Digestion {
 			}
 		}
 
+		bool MasterRenderSystem::switchRenderSystems(int first, int second) {
+			std::swap(renderSystems[first], renderSystems[second]);
+			return true;
+		}
 	}
 }

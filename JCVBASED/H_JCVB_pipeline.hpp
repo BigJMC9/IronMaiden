@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace Digestion {
+namespace Madam {
 
 	struct PipelineConfigInfo {
 		PipelineConfigInfo() = default;

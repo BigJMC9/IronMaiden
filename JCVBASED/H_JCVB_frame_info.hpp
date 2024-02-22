@@ -11,7 +11,7 @@
 #include "entt.hpp"
 
 
-namespace Digestion {
+namespace Madam {
 
 	class Scene;
 
@@ -38,8 +38,8 @@ namespace Digestion {
 		glm::mat4 projection{ 1.f }; // mat4 is a 4x4 matrix, it will hold 64bytes of data.
 		glm::mat4 view{ 1.f }; // mat4 is a 4x4 matrix, it will hold 64bytes of data.
 		glm::mat4 inverseView{ 1.f };
-		glm::vec4 ambientLightColor{ 1.f, 1.f, 1.f, .02f }; // w is intensity. Holds 16bytes of data.
-		PointLightData pointLights[MAX_LIGHTS];
+		glm::vec4 ambientLightColor{ 1.f, 1.f, 1.f, .02f }; // w is intensity. Holds 16bytes of data. (NOT ESSENTIAL, SHOULD BE MOVED).
+		PointLightData pointLights[MAX_LIGHTS]; // NOT ESSENTIAL TO ALL OBJ, SHOULD BE MOVED
 		int numLights;
 	};
 
@@ -51,7 +51,7 @@ namespace Digestion {
 		VkDescriptorSet globalDescriptorSet;
 		JcvbDescriptorPool& frameDescriptorPool;
 		//Map& gameObjects;
-		Scene* scene;
+		std::unique_ptr<Scene>& scene;
 		GlobalUbo ubo;
 	};
 

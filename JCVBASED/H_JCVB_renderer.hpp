@@ -10,7 +10,7 @@
 #include <memory>
 #include <vector>
 
-namespace Digestion {
+namespace Madam {
 	namespace Rendering {
 		class Renderer {
 

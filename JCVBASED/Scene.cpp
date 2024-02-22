@@ -1,8 +1,10 @@
+#include "H_first_app.hpp"
 #include "H_Scene.hpp"
 #include "H_keyboard_movement_controller.hpp"
 #include "H_Game_Object.hpp"
 #include "H_components.hpp"
 #include "H_JCVB_renderer.hpp"
+
 
 //std
 #include <iostream>
@@ -12,11 +14,14 @@
 
 //namespace fs = std::filesystem;
 
-namespace Digestion {
+namespace Madam {
+
+	Scene::Scene() {
+	}
 
 	Scene::~Scene()
 	{
-
+		registry.clear();
 	}
 
 	Entity Scene::CreateEntity() {

@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include <string>
-namespace Digestion {
+namespace Madam {
 	class Window {
 
 	public:
