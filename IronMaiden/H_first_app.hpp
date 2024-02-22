@@ -26,7 +26,7 @@ namespace Madam {
 	/*namespace App {
 		class PipeHandler;
 	}*/
-	class Application {
+	class __declspec(dllexport) Application {
 
 	public:
 		//Put in app config header
@@ -53,16 +53,16 @@ namespace Madam {
 
 		bool debug = false;
 
-	private:
-		//static Application* instance;
-
 		Application();
-		~Application();
+		virtual ~Application();
 
 		Application(const Application&) = delete;
 		Application& operator=(const Application&) = delete;
 
 		void run();
+
+	private:
+		//static Application* instance;
 		
 		Window window = Window{ WIDTH, HEIGHT, "Iron Maiden Engine - 0.04" };
 		Device device = Device{ window };
@@ -74,7 +74,6 @@ namespace Madam {
 		std::vector<std::unique_ptr<JcvbDescriptorPool>> framePools;
 
 		bool firstFrame = true;
-		
 		
 		std::unique_ptr<Scene> scene;
 		SceneSerializer* pSceneSerializer;

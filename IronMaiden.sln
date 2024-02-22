@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IronMaiden", "JCVBASED\JCVBASED.vcxproj", "{A24A697A-18EB-4C31-9916-4D6A5B229DAB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IronMaiden", "IronMaiden\IronMaiden.vcxproj", "{A24A697A-18EB-4C31-9916-4D6A5B229DAB}"
 	ProjectSection(ProjectDependencies) = postProject
 		{9E5A742A-B536-4271-90A5-8CE551627EF4} = {9E5A742A-B536-4271-90A5-8CE551627EF4}
 	EndProjectSection
