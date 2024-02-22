@@ -14,8 +14,9 @@ namespace Digestion {
 		public:
 			static void HandleCommand(std::string command, PipeHandler& handler, SceneSerializer* scene);
 		private:
-			static void HandleObject(std::string command);
-			static void HandleScene(std::string command);
+			static void HandleObject(std::vector<std::string> commandWords);
+			static void HandleScene(std::vector<std::string> commandWords, PipeHandler& handler, SceneSerializer* scene);
+			static void HandleRendering(std::vector<std::string> commandWords, PipeHandler& handler, SceneSerializer* scene);
 		};
 	}
 }

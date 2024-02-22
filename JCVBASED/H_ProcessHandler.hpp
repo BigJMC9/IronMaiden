@@ -13,7 +13,7 @@ namespace Digestion {
 			~PipeHandler();
 
 			bool CreatePipe();
-			bool ConnectToChildProcess(const std::string& childProcessName);
+			//bool ConnectToChildProcess(const std::string& childProcessName);
 			void ReadAsync();
 			void StartAsyncRead();
 			bool Write(const std::string& message);
@@ -22,7 +22,10 @@ namespace Digestion {
 			bool isCreated = false;
 			bool isConnected = false;
 		private:
-			HANDLE hPipe;
+			bool CreateWrite();
+			bool CreateRead();
+			HANDLE p1; // Engine => Editor
+			HANDLE p2; // Editor => Engine
 			std::string message;
 			std::mutex mtx;
 		};

@@ -8,6 +8,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#ifdef far
+#undef far
+#endif
+#ifdef near
+#undef near
+#endif
+
 
 namespace Digestion {
 

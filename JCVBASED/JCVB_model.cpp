@@ -102,6 +102,7 @@ namespace Digestion {
 		jcvbDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
 	}
 
+	//Move to render system and change to get the IndexBuffer
 	void Model::draw(VkCommandBuffer commandBuffer) {
 		if (hasIndexBuffer) {
 			vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
@@ -111,6 +112,7 @@ namespace Digestion {
 		}
 	}
 
+	//Move to render system and change to get the VertexBuffer
 	void Model::bind(VkCommandBuffer commandBuffer) {
 		VkBuffer buffers[] = { vertexBuffer->getBuffer()};
 		VkDeviceSize offsets[] = { 0 };

@@ -6,6 +6,7 @@
 //#include "H_components.hpp"
 //#include "H_Game_Object.hpp"
 #include "H_JCVB_frame_info.hpp"
+//#include "H_first_app.hpp"
 
 //std
 #include <memory>
@@ -19,7 +20,7 @@ namespace Digestion {
 	class Scene
 	{
 	public:
-		Scene(Device& _device) : device{ _device } {}
+		Scene();
 		~Scene();
 
 		Entity CreateEntity();
@@ -32,13 +33,22 @@ namespace Digestion {
 		void Start();
 		void Update();
 		void Render();
-		void LoadScene();
-		//void SaveScene();
-		void LoadScene(std::string scenePath);
 
 		entt::registry& Reg() { return registry; }
 
 		Scene& scene() { return *this; }
+
+		Scene(Scene&& other) noexcept : registry(std::move(other.registry)) {
+			// Optionally, perform any additional move-related operations
+		}
+
+		Scene& operator=(Scene&& other) noexcept {
+			if (this != &other) {
+				registry = std::move(other.registry);
+				// Optionally, perform any additional move-related operations
+			}
+			return *this;
+		}
 
 		//std::shared_ptr<entt::registry> Reg() { return std::make_shared<entt::registry>(registry); }
 
@@ -53,7 +63,7 @@ namespace Digestion {
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
 
-		Device& device;
+		//Device device;
 
 		entt::registry registry;
 

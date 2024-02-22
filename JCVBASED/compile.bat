@@ -5,4 +5,6 @@ glslc.exe C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\point_
 glslc.exe C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\point_light.frag -o C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\point_light.frag.spv
 glslc.exe C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\texture_shader.vert -o C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\texture_shader.vert.spv
 glslc.exe C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\texture_shader.frag -o C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\texture_shader.frag.spv
+glslc.exe C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\grid_shader.vert -o C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\grid_shader.vert.spv
+glslc.exe C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\grid_shader.frag -o C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\shaders\grid_shader.frag.spv
 pause

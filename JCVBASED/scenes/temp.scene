@@ -7,19 +7,19 @@ Entities:
       Scale: [1, 1, 1]
   - Entity: f88b2f08c6a4db39-62992e88003a939a
     Transform:
-      Translation: [-0.5, 0.5, 0]
-      Rotation: [0, 0, 0]
-      Scale: [3, 1.5, 3]
+      Translation: [-1, -1, 0]
+      Rotation: [3.14159, 0, 0]
+      Scale: [0.5, 0.5, 0.5]
     MeshFilter:
-      Model: models/flat_vase.obj
+      Model: models/Monkey_Smooth.obj
     MeshRenderer: true
   - Entity: af3ce479e5c0dfec-3704eb85014fe213
     Transform:
-      Translation: [0.5, 0.5, 0]
-      Rotation: [0, 0, 0]
-      Scale: [3, 1.5, 3]
+      Translation: [1, -1, 0]
+      Rotation: [3.14159, 0, 0]
+      Scale: [0.5, 0.5, 0.5]
     MeshFilter:
-      Model: models/smooth_vase.obj
+      Model: models/Monkey.obj
     MeshRenderer: true
   - Entity: fb8a9db6ec3566b1-ba4a7a62cae0764c
     Transform:

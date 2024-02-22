@@ -6,20 +6,32 @@
 
 namespace Digestion {
 	namespace App {
-        PipeHandler::PipeHandler() : hPipe(NULL) {}
+        PipeHandler::PipeHandler() : p1(NULL), p2(NULL) {}
 
         PipeHandler::~PipeHandler() {
-            if (hPipe != NULL)
-                CloseHandle(hPipe);
+            if (p1 != NULL)
+                CloseHandle(p1);
+            if (p2 != NULL)
+                CloseHandle(p2);
         }
 
         bool PipeHandler::CreatePipe() {
+            if (!CreateWrite()) {
+                return false;
+            }
+            if (!CreateRead()) {
+                return false;
+            }
+            return true;
+        }
+
+        bool PipeHandler::CreateWrite() {
             SECURITY_ATTRIBUTES saAttr;
             saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
             saAttr.bInheritHandle = TRUE;
             saAttr.lpSecurityDescriptor = NULL;
 
-            hPipe = CreateNamedPipe(L"\\\\.\\pipe\\MyPipe",
+            p1 = CreateNamedPipe(L"\\\\.\\pipe\\ToEditorPipe",
                 PIPE_ACCESS_DUPLEX,
                 PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
                 1,
@@ -28,20 +40,42 @@ namespace Digestion {
                 NMPWAIT_USE_DEFAULT_WAIT,
                 NULL);
 
-            if (hPipe == INVALID_HANDLE_VALUE) {
+            if (p1 == INVALID_HANDLE_VALUE) {
                 return false;
             }
             else {
+                while (!ConnectNamedPipe(p1, NULL)) {
+                    std::cerr << "Failed to wait for client connection. Error code: " << GetLastError() << std::endl;
+                }
+                std::cout << "Client connected to the pipe." << std::endl;
+                Write("Connection Successful! \n");
+                Write("[!n!]");
                 return true;
             }
         }
 
-        bool PipeHandler::ConnectToChildProcess(const std::string& childProcessName) {
-            while (!ConnectNamedPipe(hPipe, NULL)) {
-                std::cerr << "Failed to wait for client connection. Error code: " << GetLastError() << std::endl;
+        //Update to make sure if connection fails it doesn't hang in infinite loop
+        bool PipeHandler::CreateRead() {
+            do {
+                p2 = CreateFile(L"\\\\.\\pipe\\ToEnginePipe",
+                    GENERIC_READ | GENERIC_WRITE,
+                    0,
+                    NULL,
+                    OPEN_EXISTING,
+                    0,
+                    NULL);
+                if (p2 == INVALID_HANDLE_VALUE) {
+                    std::cerr << "Failed to open pipe. Error code: " << GetLastError() << std::endl;
+                }
+            } while (p2 == INVALID_HANDLE_VALUE);
+
+            CHAR chBuf[1024];
+            DWORD dwRead;
+            while (!ReadFile(p2, chBuf, sizeof(chBuf), &dwRead, NULL)) {
+                std::cerr << "Failed to read from pipe. Error code: " << GetLastError() << std::endl;
             }
-            std::cout << "Client connected to the pipe." << std::endl;
-            Write("Connection Successful!");
+            chBuf[dwRead] = '\0';
+            std::cout << chBuf << std::endl;
             return true;
         }
 
@@ -52,7 +86,22 @@ namespace Digestion {
 
         bool PipeHandler::Write(const std::string& message) {
             DWORD dwWritten;
-            BOOL bSuccess = WriteFile(hPipe, message.c_str(), strlen(message.c_str()), &dwWritten, NULL);
+            std::cout << "Message: " << message << std::endl;
+            BOOL bSuccess = WriteFile(p1, message.c_str(), strlen(message.c_str()), &dwWritten, NULL);
+            if (!bSuccess) {
+                DWORD dwError = GetLastError();
+                if (dwError == ERROR_PIPE_BUSY) {
+                    // Pipe is full, handle accordingly or retry after waiting
+                    std::cerr << "Pipe is full. Unable to write." << std::endl;
+                }
+                else {
+                    std::cerr << "Failed to write to pipe. Error code: " << dwError << std::endl;
+                }
+            }
+            if (dwWritten != message.length()) {
+                std::cerr << "Incomplete write to pipe. Expected " << message.length() << " bytes, wrote " << dwWritten << " bytes." << std::endl;
+                return false;
+            }
             return bSuccess && (dwWritten == message.length());
         }
 
@@ -61,7 +110,7 @@ namespace Digestion {
             CHAR chBuf[1024];
             DWORD dwRead;
             while (true) {
-                if (ReadFile(hPipe, chBuf, sizeof(chBuf), &dwRead, NULL)) {
+                if (ReadFile(p2, chBuf, sizeof(chBuf), &dwRead, NULL)) {
                     chBuf[dwRead] = '\0';
                     std::string str(chBuf);
                     message = str;

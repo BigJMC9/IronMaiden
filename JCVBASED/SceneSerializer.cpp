@@ -244,7 +244,7 @@ namespace Digestion {
 		out << YAML::EndMap;
 	}
 
-	SceneSerializer::SceneSerializer(Scene* scene, Device& _device) : m_Scene(scene), device(_device) {
+	SceneSerializer::SceneSerializer(std::unique_ptr<Scene>& scene, Device& _device) : m_Scene(scene), device(_device) {
 
 	}
 	
@@ -254,11 +254,11 @@ namespace Digestion {
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
-		entt::registry& reg = m_Scene->registry;
+		entt::registry& reg = m_Scene->Reg();
 		reg.view<entt::entity>().each([&](auto entityID) {
 
 			std::cout << "Entity: " << (uint32_t)entityID << std::endl;
-			Entity entity = { entityID, m_Scene };
+			Entity entity = { entityID, m_Scene.get()};
 			if (!entity) return;
 
 			SerializeEntity(out, entity);
@@ -297,7 +297,9 @@ namespace Digestion {
 			node = YAML::LoadFile(filePath);
 		}
 		catch (YAML::ParserException e) {
-			std::cout << "Failed to load .scene file" << std::endl;
+			std::stringstream ss;
+			ss << e.what();
+			std::cout << "Failed to load .scene file: " << ss.str() << std::endl;
 			return false;
 		}
 
@@ -305,12 +307,13 @@ namespace Digestion {
 			return false;
 		}
 
+		Scene newScene{};
 		std::string sceneName = node["Scene"].as<std::string>();
 		auto entities = node["Entities"];
 		if (entities) {
 			for (auto entity : entities) {
 				
-				Entity deserializedEntity = m_Scene->CreateEntity(entity["Entity"].as<UUID>());
+				Entity deserializedEntity = newScene.CreateEntity(entity["Entity"].as<UUID>());
 
 				std::cout << deserializedEntity.GetUUID() << ", Handle: " << (uint32_t)deserializedEntity.GetHandle() << std::endl;
 
@@ -367,6 +370,7 @@ namespace Digestion {
 				}
 			}
 		}
+		m_Scene = std::make_unique<Scene>(std::move(newScene));
 		return true;
 	}
 

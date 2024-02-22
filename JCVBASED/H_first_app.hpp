@@ -1,72 +1,79 @@
 #pragma once
 
+//Fix these headers, only essential headers are needed, the rest can reside in the implementation
 #include "H_JCVB_base.hpp"
 #include "H_JCVB_descriptors.hpp"
 #include "H_JCVB_device.hpp"
 #include "H_Game_Object.hpp"
 #include "H_components.hpp"
+#include "H_JCVB_renderer.hpp"
+#include "H_JCVB_window.hpp"
+#include "H_Render_systems.hpp"
 #include "H_Scene.hpp"
 #include "H_SceneSerializer.hpp"
 #include "H_ProcessHandler.hpp"
 #include "H_CmdHandler.hpp"
-//#include "H_JCVB_game_object.hpp"
-#include "H_JCVB_renderer.hpp"
-#include "H_JCVB_window.hpp"
-#include "H_Render_systems.hpp"
 
-//Define fixes
-#ifdef min
-#undef min
-#endif
 
 
 // std
 #include <memory>
 #include <vector>
 
+int main();
+
 namespace Digestion {
-	class FirstApp {
+	/*namespace App {
+		class PipeHandler;
+	}*/
+	class Application {
 
 	public:
+		//Put in app config header
 		static constexpr int WIDTH = 800;
 		static constexpr int HEIGHT = 600;
 		
-		FirstApp();
-		~FirstApp();
 
-		FirstApp(const FirstApp &) = delete;
-		FirstApp &operator=(const FirstApp &) = delete;
+		static Application& Get() { 
+			static Application instance;
+			return instance; 
+		}
+		Window& getWindow() { return window;  }
+		Device& getDevice() { return device; }
+		Rendering::MasterRenderSystem& getMasterRenderSystem() { return masterRenderSystem; }
+		const std::vector<std::shared_ptr<Rendering::RenderSystem>>& getRenderSystems() const { 
+			return masterRenderSystem.getRenderSystems();
+		}
+		Rendering::Renderer& getRenderer() { return renderer; }
 
-		//GameObject CreateGameObject();
-		//GameObject LoadGameObject(std::shared_ptr<Model> model);
-		//GameObject LoadGameObject(std::shared_ptr<Model> model, std::shared_ptr<Material> mat);
-
-		//entt::registry& Reg() { return registry; }
-
-
-
+		//Put in app config header
 		const float MAX_FRAME_TIME = 0.1f;
 
-		//Map gameObjects;
-		void run();
-
 		Digestion::App::PipeHandler pipeHandler;
-	private:
-		//entt::registry registry;
-		std::vector<Model> models;
-		void loadGameObjects();
-		
-		Window jcvbWindow = Window{ WIDTH, HEIGHT, "JCVB - 0.01" };
-		Device jcvbDevice = Device{ jcvbWindow };
-		Rendering::Renderer jcvbRenderer = Rendering::Renderer{jcvbWindow, jcvbDevice};
-		Rendering::MasterRenderSystem masterRenderSystem = Rendering::MasterRenderSystem{ jcvbDevice, jcvbRenderer };
 
-		//note: order of declaration matters
+	private:
+		//static Application* instance;
+
+		Application();
+		~Application();
+
+		Application(const Application&) = delete;
+		Application& operator=(const Application&) = delete;
+
+		void run();
+		
+		Window window = Window{ WIDTH, HEIGHT, "JCVB - 0.01" };
+		Device device = Device{ window };
+		Rendering::Renderer renderer = Rendering::Renderer{window, device};
+		Rendering::MasterRenderSystem masterRenderSystem = Rendering::MasterRenderSystem{ device, renderer };
+
+		//Move this somewhere
 		std::unique_ptr<JcvbDescriptorPool> globalPool{};
 		std::vector<std::unique_ptr<JcvbDescriptorPool>> framePools;
 		
-		Scene* scene;
+		std::unique_ptr<Scene> scene;
 		SceneSerializer* pSceneSerializer;
-		//SceneSerializer sceneSerializer;
+		
+		friend int ::main();
 	};
 }

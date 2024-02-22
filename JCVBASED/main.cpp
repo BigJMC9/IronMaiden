@@ -4,15 +4,12 @@
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
-//#include <stdio.h> 
-//#include <tchar.h>
-//#include <strsafe.h>
 
 int main() {
-	Digestion::FirstApp app{};
+	//Digestion::Application app{};
 
 	try {
-		app.run();
+		Digestion::Application::Get().run();
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what() << '\n';
