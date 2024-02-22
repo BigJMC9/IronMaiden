@@ -87,26 +87,26 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<Digestion::UUID>
+	struct convert<Madam::UUID>
 	{
-		static Node encode(const Digestion::UUID& uuid)
+		static Node encode(const Madam::UUID& uuid)
 		{
 			Node node;
 			node.push_back((std::string)uuid);
 			return node;
 		}
 
-		static bool decode(const Node& node, Digestion::UUID& uuid)
+		static bool decode(const Node& node, Madam::UUID& uuid)
 		{
-			uuid = Digestion::UUID(node.as<std::string>());
+			uuid = Madam::UUID(node.as<std::string>());
 			return true;
 		}
 	};
 
 	template<>
-	struct convert<std::shared_ptr<Digestion::Shader>>
+	struct convert<std::shared_ptr<Madam::Shader>>
 	{
-		static Node encode(const std::shared_ptr<Digestion::Shader>& shader)
+		static Node encode(const std::shared_ptr<Madam::Shader>& shader)
 		{
 			Node node;
 			node.push_back(shader->vertShaderPath);
@@ -114,7 +114,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, std::shared_ptr<Digestion::Shader>& shader)
+		static bool decode(const Node& node, std::shared_ptr<Madam::Shader>& shader)
 		{
 			shader->vertShaderPath = node[0].as<std::string>();
 			shader->fragShaderPath = node[1].as<std::string>();
@@ -123,9 +123,9 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<Digestion::Shader>
+	struct convert<Madam::Shader>
 	{
-		static Node encode(const Digestion::Shader& shader)
+		static Node encode(const Madam::Shader& shader)
 		{
 			Node node;
 			node.push_back(shader.vertShaderPath);
@@ -133,7 +133,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, Digestion::Shader& shader)
+		static bool decode(const Node& node, Madam::Shader& shader)
 		{
 			shader.vertShaderPath = node[0].as<std::string>();
 			shader.fragShaderPath = node[1].as<std::string>();
@@ -142,7 +142,7 @@ namespace YAML {
 	};
 }
 
-namespace Digestion {
+namespace Madam {
 
 	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec2& v)
 	{

@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Digestion {
+namespace Madam {
 
     class JcvbDescriptorSetLayout {
     public:

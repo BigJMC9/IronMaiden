@@ -14,7 +14,7 @@
 
 //namespace fs = std::filesystem;
 
-namespace Digestion {
+namespace Madam {
 
 	Scene::Scene() {
 	}

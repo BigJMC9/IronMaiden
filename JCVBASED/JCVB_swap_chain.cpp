@@ -9,7 +9,7 @@
 #include <set>
 #include <stdexcept>
 
-namespace Digestion {
+namespace Madam {
 
 	SwapChain::SwapChain(Device& deviceRef, VkExtent2D extent)
 		: device{ deviceRef }, windowExtent{ extent } {

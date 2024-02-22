@@ -4,7 +4,7 @@
 #include <thread>
 #include <iostream>
 
-namespace Digestion {
+namespace Madam {
 	namespace App {
         PipeHandler::PipeHandler() : p1(NULL), p2(NULL) {}
 

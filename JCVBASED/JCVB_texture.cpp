@@ -8,7 +8,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace Digestion {
+namespace Madam {
     Texture::Texture(Device& device, const std::string& textureFilepath) : mDevice{ device }, file{ textureFilepath }
     {
         createTextureImage(textureFilepath);

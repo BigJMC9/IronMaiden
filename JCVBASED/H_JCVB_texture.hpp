@@ -9,7 +9,7 @@
 #include <memory>
 #include <string>
 
-namespace Digestion {
+namespace Madam {
 	class Texture {
 	public:
 		Texture(Device& device, const std::string& textureFilepath);

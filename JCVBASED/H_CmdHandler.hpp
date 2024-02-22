@@ -8,7 +8,7 @@
 #include <sstream>
 #include <vector>
 
-namespace Digestion {
+namespace Madam {
 	namespace App {
 		class CommandHandler {
 		public:

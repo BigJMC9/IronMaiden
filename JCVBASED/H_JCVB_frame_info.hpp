@@ -11,7 +11,7 @@
 #include "entt.hpp"
 
 
-namespace Digestion {
+namespace Madam {
 
 	class Scene;
 

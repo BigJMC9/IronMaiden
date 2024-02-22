@@ -5,7 +5,7 @@
 #include <string>
 #include <mutex>
 
-namespace Digestion {
+namespace Madam {
 	namespace App {
 		class PipeHandler {
 		public:

@@ -22,7 +22,7 @@
 
 int main();
 
-namespace Digestion {
+namespace Madam {
 	/*namespace App {
 		class PipeHandler;
 	}*/
@@ -49,7 +49,9 @@ namespace Digestion {
 		//Put in app config header
 		const float MAX_FRAME_TIME = 0.1f;
 
-		Digestion::App::PipeHandler pipeHandler;
+		Madam::App::PipeHandler pipeHandler;
+
+		bool debug = false;
 
 	private:
 		//static Application* instance;
@@ -62,7 +64,7 @@ namespace Digestion {
 
 		void run();
 		
-		Window window = Window{ WIDTH, HEIGHT, "JCVB - 0.01" };
+		Window window = Window{ WIDTH, HEIGHT, "Iron Maiden Engine - 0.04" };
 		Device device = Device{ window };
 		Rendering::Renderer renderer = Rendering::Renderer{window, device};
 		Rendering::MasterRenderSystem masterRenderSystem = Rendering::MasterRenderSystem{ device, renderer };
@@ -70,6 +72,9 @@ namespace Digestion {
 		//Move this somewhere
 		std::unique_ptr<JcvbDescriptorPool> globalPool{};
 		std::vector<std::unique_ptr<JcvbDescriptorPool>> framePools;
+
+		bool firstFrame = true;
+		
 		
 		std::unique_ptr<Scene> scene;
 		SceneSerializer* pSceneSerializer;

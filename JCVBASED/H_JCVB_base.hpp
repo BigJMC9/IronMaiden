@@ -7,7 +7,7 @@
 #include <sstream>
 #include <iomanip>
 
-namespace Digestion {
+namespace Madam {
 
 	class Entity;
 

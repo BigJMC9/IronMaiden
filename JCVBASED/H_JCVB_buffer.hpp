@@ -2,7 +2,7 @@
 
 #include "H_JCVB_device.hpp"
 
-namespace Digestion {
+namespace Madam {
 
     class Buffer {
     public:

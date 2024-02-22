@@ -4,7 +4,7 @@
 // std
 #include <cctype> 
 
-namespace Digestion {
+namespace Madam {
 	namespace App {
 
 		static std::string toLowerCase(const std::string& str) {
@@ -45,6 +45,9 @@ namespace Digestion {
 			}
 			else if (commandWords[0] == "render") {
 				HandleRendering(commandWords, handler, scene);
+			}
+			else if (commandWords[0] == "snap") {
+				Application::Get().debug = true;
 			}
 
 			if (!handler.Write("[!n!]")) {

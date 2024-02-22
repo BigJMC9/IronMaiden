@@ -17,17 +17,17 @@
 
 namespace std {
 	template<>
-	struct hash<Digestion::Model::Vertex> {
-		size_t operator()(Digestion::Model::Vertex const& vertex) const {
+	struct hash<Madam::Model::Vertex> {
+		size_t operator()(Madam::Model::Vertex const& vertex) const {
 			size_t seed = 0;
-			Digestion::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv/*, vertex.tangent*/);
+			Madam::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv/*, vertex.tangent*/);
 			return seed;
 		}
 	};
 
 }
 
-namespace Digestion {
+namespace Madam {
 
 	Model::Model(Device& device, const Model::Builder& builder) : jcvbDevice{ device }, file{builder.fileStr} {
 		createVertexBuffers(builder.vertices);

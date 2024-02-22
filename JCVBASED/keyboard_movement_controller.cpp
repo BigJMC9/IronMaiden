@@ -4,7 +4,7 @@
 //std
 #include <limits>
 
-namespace Digestion {
+namespace Madam {
 
 	void KeyboardMovementController::moveInPlaneXZ(GLFWwindow* window, float dt, Entity& gameObject) {
 		if (!isHandling) {

@@ -31,7 +31,7 @@
 #include <thread>
 #include <iostream>
 
-namespace Digestion {
+namespace Madam {
 
 	Application::Application() {
 		globalPool = 
@@ -104,6 +104,8 @@ namespace Digestion {
 
 		masterRenderSystem.initialize(globalSetLayout);
 
+		firstFrame = true;
+
 		//Done by Scene
         Camera camera{};
         camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.f, 0.f, 0.f));
@@ -134,7 +136,7 @@ namespace Digestion {
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
             float aspect = renderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 500.f);
+            camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 500.0f);
 
 			if (auto commandBuffer = renderer.beginFrame()) {
 				int frameIndex = renderer.getFrameIndex();
@@ -149,6 +151,12 @@ namespace Digestion {
 					* framePools[frameIndex],
 					scene,
 					ubo};
+				if (debug) {
+					std::cout << "View: " << glm::to_string(ubo.view) << std::endl;
+					std::cout << "Inverse View: " << glm::to_string(ubo.inverseView) << std::endl;
+					std::cout << "Projection: " << glm::to_string(ubo.projection) << std::endl;
+					debug = false;
+				}
 				frameInfo.ubo.projection = camera.getProjection();
 				frameInfo.ubo.view = camera.getView();
 				frameInfo.ubo.inverseView = camera.getInverseView();
@@ -161,6 +169,9 @@ namespace Digestion {
 				masterRenderSystem.render(frameInfo);
 				renderer.endSwapChainRenderPass(commandBuffer);
 				renderer.endFrame();
+				if (firstFrame) {
+					firstFrame = false;
+				}
 			}
 		}
 

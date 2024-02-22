@@ -5,7 +5,7 @@
 
 //#include <string>
 
-namespace Digestion {
+namespace Madam {
 
     class SceneSerializer;
 

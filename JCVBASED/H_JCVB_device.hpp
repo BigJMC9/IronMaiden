@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace Digestion {
+namespace Madam {
 
 	struct SwapChainSupportDetails {
 		VkSurfaceCapabilitiesKHR capabilities;

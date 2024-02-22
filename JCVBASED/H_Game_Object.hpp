@@ -7,7 +7,7 @@
 // std
 #include <cassert>
 
-namespace Digestion {
+namespace Madam {
 
 	//Wrapper class of entt::entity
 	class Entity

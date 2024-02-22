@@ -3,7 +3,7 @@
 #include "H_Scene.hpp"
 #include "H_JCVB_base.hpp"
 
-namespace Digestion {
+namespace Madam {
 	
 	class SceneSerializer {
 	public:

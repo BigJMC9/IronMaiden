@@ -8,7 +8,7 @@
 //More research required
 //Maybe have vkCmdSequences built onto class with builder and then have it execute in order for rendersystems?
 //Or could have CmdSequences handled in pipeline via a method by default but can override with custom sequence?
-namespace Digestion {
+namespace Madam {
 	namespace Rendering {
 		/*
 		------------------Render System------------------
@@ -158,6 +158,7 @@ namespace Digestion {
 			pipelineConfig.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
 			pipelineConfig.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
 			pipelineConfig.depthStencilInfo.stencilTestEnable = VK_FALSE;
+			//pipelineConfig.rasterizationInfo.depthClampEnable = VK_TRUE;
 			jcvbPipeline = std::make_unique<Pipeline>(jcvbDevice, "shaders/grid_shader.vert.spv", "shaders/grid_shader.frag.spv", pipelineConfig);
 		}
 

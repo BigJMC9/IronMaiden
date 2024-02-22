@@ -12,7 +12,7 @@
 #include <memory>
 #include <vector>
 
-namespace Digestion {
+namespace Madam {
 	class Model {
 	public:
 

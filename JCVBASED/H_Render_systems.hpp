@@ -16,7 +16,7 @@
 #include <vector>
 #include <iostream>
 
-namespace Digestion {
+namespace Madam {
     namespace Rendering {
 
         struct DefaultPushConstantData {
@@ -71,13 +71,8 @@ namespace Digestion {
 
         public:
             GridRenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "Default");
-            //TextureRenderSystem(JcvbDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name);
             ~GridRenderSystem();
 
-            //TextureRenderSystem(const TextureRenderSystem&) = delete;
-            //TextureRenderSystem& operator=(const TextureRenderSystem&) = delete;
-            
-            //void preRender(FrameInfo& frameInfo) override;
             void render(FrameInfo& frameInfo) override;
 
         protected:

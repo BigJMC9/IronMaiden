@@ -12,7 +12,7 @@
 #include <memory>
 
 
-namespace Digestion {
+namespace Madam {
 	struct Material;
 
 	class Entity;
