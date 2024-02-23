@@ -5,11 +5,8 @@
  * https://github.com/SaschaWillems/Vulkan/blob/master/base/VulkanBuffer.h
  */
 
+#include "maidenpch.hpp"
 #include "H_JCVB_buffer.hpp"
-
- // std
-#include <cassert>
-#include <cstring>
 
 namespace Madam {
 

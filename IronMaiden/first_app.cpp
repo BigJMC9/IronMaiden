@@ -1,3 +1,4 @@
+#include "maidenpch.hpp"
 #include "H_first_app.hpp"
 
 #include "H_keyboard_movement_controller.hpp"
@@ -53,6 +54,10 @@ namespace Madam {
 		
 		scene = std::make_unique<Scene>();
 		pSceneSerializer = new SceneSerializer(scene, device);
+
+		char buff[FILENAME_MAX];
+		GetCurrentDir(buff, FILENAME_MAX);
+		config.workingDirectory = buff;
 	}
 
 	Application::~Application() {
@@ -60,7 +65,6 @@ namespace Madam {
 	}
 
 	void Application::run() {
-
 		//PipeLogic
 		if (!pipeHandler.CreatePipe()) {
 			std::cerr << "Failed to create pipe" << std::endl;
@@ -174,7 +178,7 @@ namespace Madam {
 				}
 			}
 		}
-
+		std::cout << "Closing Program" << std::endl;
 		vkDeviceWaitIdle(device.device());
 	}
 }

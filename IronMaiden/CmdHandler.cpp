@@ -1,3 +1,4 @@
+#include "maidenpch.hpp"
 #include "H_CmdHandler.hpp"
 #include "H_first_app.hpp"
 

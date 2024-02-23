@@ -1,10 +1,5 @@
+#include "maidenpch.hpp"
 #include "H_JCVB_device.hpp"
-
-// std headers
-#include <cstring>
-#include <iostream>
-#include <set>
-#include <unordered_set>
 
 //Connection between the application and vulkan 
 namespace Madam {

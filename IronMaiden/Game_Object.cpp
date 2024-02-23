@@ -1,3 +1,4 @@
+#include "maidenpch.hpp"
 #include "H_Game_Object.hpp"
 
 namespace Madam {

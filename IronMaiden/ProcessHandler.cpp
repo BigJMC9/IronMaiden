@@ -1,8 +1,5 @@
+#include "maidenpch.hpp"
 #include "H_ProcessHandler.hpp"
-
-// std
-#include <thread>
-#include <iostream>
 
 namespace Madam {
 	namespace App {

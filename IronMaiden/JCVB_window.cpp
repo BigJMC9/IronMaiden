@@ -1,7 +1,5 @@
+#include "maidenpch.hpp"
 #include "H_JCVB_window.hpp"
-
-//std
-#include <stdexcept>
 
 namespace Madam {
 

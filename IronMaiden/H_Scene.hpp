@@ -1,15 +1,12 @@
 #pragma once
 
-
+#include "maidenpch.hpp"
 #include "H_JCVB_device.hpp"
 #include "H_JCVB_model.hpp"
 //#include "H_components.hpp"
 //#include "H_Game_Object.hpp"
 #include "H_JCVB_frame_info.hpp"
 //#include "H_first_app.hpp"
-
-//std
-#include <memory>
 
 
 namespace Madam {

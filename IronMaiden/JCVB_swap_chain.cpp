@@ -1,14 +1,12 @@
+#include "maidenpch.hpp"
 #include "H_JCVB_swap_chain.hpp"
 
-// std
-#include <array>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <limits>
-#include <set>
-#include <stdexcept>
-
+#ifdef max
+	#undef max
+#endif
+#ifdef min
+	#undef min
+#endif
 namespace Madam {
 
 	SwapChain::SwapChain(Device& deviceRef, VkExtent2D extent)

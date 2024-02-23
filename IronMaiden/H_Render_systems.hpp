@@ -1,5 +1,6 @@
 #pragma once
 
+#include "maidenpch.hpp"
 //#include "H_JCVB_camera.hpp"
 #include "H_JCVB_descriptors.hpp"
 #include "H_JCVB_device.hpp"
@@ -9,12 +10,6 @@
 #include "H_JCVB_pipeline.hpp"
 #include "H_JCVB_renderer.hpp"
 #include "H_JCVB_base.hpp"
-
-// std
-#include <memory>
-#include <functional>
-#include <vector>
-#include <iostream>
 
 namespace Madam {
     namespace Rendering {

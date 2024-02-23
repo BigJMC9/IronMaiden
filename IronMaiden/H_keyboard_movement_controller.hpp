@@ -1,9 +1,8 @@
 #pragma once
 
+#include "maidenpch.hpp"
 #include "H_Game_Object.hpp"
 #include "H_JCVB_window.hpp"
-
-//#include <string>
 
 namespace Madam {
 

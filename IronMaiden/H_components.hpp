@@ -1,5 +1,6 @@
 #pragma once
 
+#include "maidenpch.hpp"
 #include "H_JCVB_model.hpp"
 //#include "H_JCVB_material.hpp"
 #include "H_JCVB_texture.hpp"

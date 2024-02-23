@@ -1,13 +1,10 @@
 #pragma once
 
+#include "maidenpch.hpp"
 #include "H_JCVB_device.hpp"
 
 //libs
 #include <vulkan/vulkan.h>
-
-//std
-#include <memory>
-#include <string>
 
 namespace Madam {
 	class Texture {
@@ -41,11 +38,11 @@ namespace Madam {
 
 		static std::unique_ptr<Texture> createTextureFromFile(
 			Device& device,
-			const std::string& filepath
+			const std::string& rawFilePath
 		);
 
 	private:
-		void createTextureImage(const std::string& filepath);
+		void createTextureImage(const std::string& filePath);
 		void createTextureImageView(VkImageViewType viewType);
 		void createTextureSampler();
 

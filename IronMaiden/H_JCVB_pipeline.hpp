@@ -1,11 +1,8 @@
 #pragma once
 
+#include "maidenpch.hpp"
 #include "H_JCVB_device.hpp"
 #include "H_JCVB_frame_info.hpp"
-
-// std
-#include <string>
-#include <vector>
 
 namespace Madam {
 
@@ -32,7 +29,7 @@ namespace Madam {
 
 	class Pipeline {
 	public:
-		Pipeline(Device& device, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo);
+		Pipeline(Device& device, const std::string& rawVertFilepath, const std::string& rawFragFilepath, const PipelineConfigInfo& configInfo);
 		~Pipeline();
 
 		Pipeline(const Pipeline&) = delete;

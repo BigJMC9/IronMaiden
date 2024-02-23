@@ -1,5 +1,6 @@
 #pragma once
 
+#include "maidenpch.hpp"
 #include "H_JCVB_device.hpp"
 
 namespace Madam {

@@ -1,8 +1,6 @@
+#include "maidenpch.hpp"
 #include "H_JCVB_descriptors.hpp"
 
-// std
-#include <cassert>
-#include <stdexcept>
 
 namespace Madam {
 

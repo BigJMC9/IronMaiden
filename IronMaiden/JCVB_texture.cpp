@@ -1,12 +1,10 @@
+#include "maidenpch.hpp"
 #include "H_JCVB_texture.hpp"
+#include "H_first_app.hpp"
 
 // libs
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
-// std
-#include <cmath>
-#include <stdexcept>
+#include <stbImage/stb_image.h>
 
 namespace Madam {
     Texture::Texture(Device& device, const std::string& textureFilepath) : mDevice{ device }, file{ textureFilepath }
@@ -110,8 +108,9 @@ namespace Madam {
     }
 
     std::unique_ptr<Texture> Texture::createTextureFromFile(
-        Device& device, const std::string& filepath) {
-        return std::make_unique<Texture>(device, filepath);
+        Device& device, const std::string& rawFilePath) {
+        std::string filePath = Application::Get().getConfig().internals + rawFilePath;
+        return std::make_unique<Texture>(device, filePath);
     }
 
     void Texture::updateDescriptor() {
@@ -120,14 +119,13 @@ namespace Madam {
         mDescriptor.imageLayout = mTextureLayout;
     }
 
-    void Texture::createTextureImage(const std::string& filepath) {
+    void Texture::createTextureImage(const std::string& filePath) {
         int texWidth, texHeight, texChannels;
-        // stbi_set_flip_vertically_on_load(1);  // todo determine why texture coordinates are flipped
-        if (filepath.empty()) {
+        if (filePath.empty()) {
             return;
         }
         stbi_uc* pixels =
-            stbi_load(filepath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+            stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
         if (!pixels) {

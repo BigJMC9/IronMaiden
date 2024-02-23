@@ -1,6 +1,7 @@
 #pragma once
 
 //#include "H_JCVB_camera.hpp"
+#include "maidenpch.hpp"
 #include "H_JCVB_descriptors.hpp"
 //#include "H_Scene.hpp"
 //#include "H_Game_Object.hpp"
@@ -8,7 +9,7 @@
 //lib
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.h>
-#include "entt.hpp"
+#include <EnTT/entt.hpp>
 
 
 namespace Madam {

@@ -1,14 +1,10 @@
 #pragma once
 
+#include "maidenpch.hpp"
 #include "H_JCVB_device.hpp"
 
 // vulkan headers
 #include <vulkan/vulkan.h>
-
-// std lib headers
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace Madam {
 

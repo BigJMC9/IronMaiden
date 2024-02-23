@@ -1,14 +1,9 @@
 #pragma once
 
+#include "maidenpch.hpp"
 #include "H_JCVB_device.hpp"
 #include "H_JCVB_swap_chain.hpp"
 #include "H_JCVB_window.hpp"
-
-
-// std
-#include <cassert>
-#include <memory>
-#include <vector>
 
 namespace Madam {
 	namespace Rendering {

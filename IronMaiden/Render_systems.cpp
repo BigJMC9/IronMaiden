@@ -1,7 +1,5 @@
+#include "maidenpch.hpp"
 #include "H_Render_systems.hpp"
-
-//std
-#include <map>
 
 //May need overhaul since a pipeline may need to be created for each shader
 //Each shader needs a pipeline. Shader variants can use the same pipeline but ubershader has to be used which can cause a performance hit to the GPU.

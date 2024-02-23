@@ -1,16 +1,14 @@
+#include "maidenpch.hpp"
 #include "H_JCVB_pipeline.hpp"
+#include "H_first_app.hpp"
 
 #include "H_JCVB_model.hpp"
 
-//std
-#include <cassert>
-#include <fstream>
-#include <iostream>
-#include <stdexcept>
-
 namespace Madam {
 	//In future seperate the Pipeline and config part
-	Pipeline::Pipeline(Device& device, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo) : jcvbDevice{ device } {
+	Pipeline::Pipeline(Device& device, const std::string& rawVertFilepath, const std::string& rawFragFilepath, const PipelineConfigInfo& configInfo) : jcvbDevice{ device } {
+		std::string vertFilepath = Application::Get().getConfig().internals + rawVertFilepath;
+		std::string fragFilepath = Application::Get().getConfig().internals + rawFragFilepath;
 		createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
 	}
 

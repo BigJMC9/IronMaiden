@@ -1,5 +1,6 @@
 #pragma once
 
+#include "maidenpch.hpp"
 #include "H_JCVB_buffer.hpp"
 #include "H_JCVB_device.hpp"
 
@@ -7,10 +8,6 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
-
-//std
-#include <memory>
-#include <vector>
 
 namespace Madam {
 	class Model {
@@ -36,7 +33,7 @@ namespace Madam {
 			std::vector<uint32_t> indices{};
 			std::string fileStr;
 
-			void loadModel(const std::string& filepath);
+			void loadModel(const std::string& rawFilePath);
 		};
 
 		Model(Device &device, const Model::Builder &builder);
@@ -45,7 +42,7 @@ namespace Madam {
 		Model(const Model&) = delete;
 		Model &operator=(const Model&) = delete;
 
-		static std::unique_ptr<Model> createModelFromFile(Device& device, const std::string& filepath);
+		static std::unique_ptr<Model> createModelFromFile(Device& device, const std::string& rawFilePath);
 
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);

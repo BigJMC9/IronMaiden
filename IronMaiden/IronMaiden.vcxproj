@@ -55,19 +55,19 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Editor-NG-Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -158,11 +158,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glm-0.9.9.8;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\yaml-cpp-master\include;C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\third_party\tinyobjloader;C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\third_party\stbImage;C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\third_party\EnTT;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/IronMaiden/vendors;$(SolutionDir)/IronMaiden/vendors/vulkan;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>maidenpch.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -170,9 +172,11 @@
       <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\lib-vc2022;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\yaml-cpp-master\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;yaml-cppd.lib;kernel32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>LinkVerbose</ShowProgress>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
     </Link>
     <PreBuildEvent>
-      <Command>call C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\compile.bat</Command>
+      <Command>call C:\Users\xbox\source\repos\IronMaiden\IronMaiden\compile.bat</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Editor-NG-Debug|x64'">
@@ -181,7 +185,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glm-0.9.9.8;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\yaml-cpp-master\include;C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\third_party\tinyobjloader;C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\third_party\stbImage;C:\Users\xbox\source\repos\DigestionSwiftFiber\JCVBASED\third_party\EnTT;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/IronMaiden/vendors;$(SolutionDir)/IronMaiden/vendors/vulkan;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <PreprocessToFile>false</PreprocessToFile>
@@ -206,7 +210,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glm-0.9.9.8;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\include;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\tinyobjloader;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\stbImage;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\yaml-cpp-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/IronMaiden/vendors;$(SolutionDir)/IronMaiden/vendors/vulkan;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
     </ClCompile>
@@ -238,16 +242,18 @@
     <ClCompile Include="JCVB_texture.cpp" />
     <ClCompile Include="JCVB_window.cpp" />
     <ClCompile Include="keyboard_movement_controller.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="H_JCVB_pipeline.hpp" />
     <ClCompile Include="JCVB_device.cpp" />
+    <ClCompile Include="maidenpch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">maidenpch.hpp</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="ProcessHandler.cpp" />
     <ClCompile Include="Render_systems.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneSerializer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="entt.hpp" />
     <ClInclude Include="H_CmdHandler.hpp" />
     <ClInclude Include="H_components.hpp" />
     <ClInclude Include="H_Game_Object.hpp" />
@@ -267,6 +273,45 @@
     <ClInclude Include="H_SceneSerializer.hpp" />
     <ClInclude Include="Maiden.hpp" />
     <ClInclude Include="Maiden\Core.hpp" />
+    <ClInclude Include="Maiden\EntryPoint.hpp" />
+    <ClInclude Include="maidenpch.hpp" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\anchor.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\binary.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\contrib\anchordict.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\contrib\graphbuilder.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\depthguard.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\dll.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\emitfromevents.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\emitter.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\emitterdef.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\emittermanip.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\emitterstyle.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\eventhandler.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\exceptions.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\mark.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\convert.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\impl.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\iterator.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\iterator_fwd.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\memory.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\node.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\node_data.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\node_iterator.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\node_ref.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\emit.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\impl.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\iterator.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\node.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\parse.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\ptr.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\type.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\noexcept.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\null.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\ostream_wrapper.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\parser.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\stlemitter.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\traits.h" />
+    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\yaml.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="compile.bat" />

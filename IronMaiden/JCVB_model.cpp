@@ -1,19 +1,14 @@
+#include "maidenpch.hpp"
+#include "H_first_app.hpp"
 #include "H_JCVB_model.hpp"
 
 #include "H_JCVB_utils.hpp"
 
 //libs
 #define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
+#include <tinyobjloader/tiny_obj_loader.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
-
-//std
-#include <cassert>
-#include <cstring>
-#include <string>
-#include <iostream>
-#include <unordered_map>
 
 namespace std {
 	template<>
@@ -36,10 +31,10 @@ namespace Madam {
 
 	Model::~Model() {}
 
-	std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::string& filepath) {
+	std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::string& rawFilePath) {
 		Builder builder{};
-		builder.fileStr = filepath;
-		builder.loadModel(filepath);
+		builder.fileStr = Application::Get().getConfig().internals + rawFilePath;
+		builder.loadModel(rawFilePath);
 		return std::make_unique<Model>(device, builder);
 	}
 
@@ -142,13 +137,14 @@ namespace Madam {
 		return attributeDescriptions;
 	}
 
-	void Model::Builder::loadModel(const std::string& filepath) {
+	void Model::Builder::loadModel(const std::string& rawFilePath) {
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
 		std::string warn, err;
+		std::string filePath = Application::Get().getConfig().internals + rawFilePath;
 
-		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filepath.c_str())) {
+		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filePath.c_str())) {
 			throw std::runtime_error(warn + err);
 		}
 

@@ -1,9 +1,8 @@
+#include "maidenpch.hpp"
 #include "H_SceneSerializer.hpp"
 #include "H_Game_Object.hpp"
+#include "H_first_app.hpp"
 //#include "H_components.hpp"
-
-//std
-#include <fstream>
 
 //libs
 #define YAML_CPP_STATIC_DEFINE
@@ -248,7 +247,7 @@ namespace Madam {
 
 	}
 	
-	void SceneSerializer::Serialize(const std::string& filePath) {
+	void SceneSerializer::Serialize(const std::string& rawfilePath) {
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -268,6 +267,8 @@ namespace Madam {
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 
+		std::string filePath = Application::Get().getConfig().internals + rawfilePath;
+
 		std::ofstream fout(filePath);
 		fout << out.c_str();
 	}
@@ -276,14 +277,16 @@ namespace Madam {
 		//Not Implemented
 	}
 
-	bool SceneSerializer::Deserialize(const std::string& filePath) {
+	bool SceneSerializer::Deserialize(const std::string& rawFilePath) {
 		std::string defaultFileType = ".scene";
-		std::string fileType = filePath.substr(filePath.size() - defaultFileType.size());
+		std::string fileType = rawFilePath.substr(rawFilePath.size() - defaultFileType.size());
 
 		if (fileType != defaultFileType) {
 			std::cout << "Error loading scene: Parsed scene is wrong file type" << std::endl;
 			return false;
 		}
+
+		std::string filePath = Application::Get().getConfig().internals + rawFilePath;
 
 		std::ifstream file(filePath);
 

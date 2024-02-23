@@ -1,9 +1,5 @@
+#include "maidenpch.hpp"
 #include "H_JCVB_renderer.hpp"
-
-// std
-#include <stdexcept>
-#include <array>
-#include <cassert>
 
 namespace Madam {
 	namespace Rendering {

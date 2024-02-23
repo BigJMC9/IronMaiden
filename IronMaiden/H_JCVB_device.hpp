@@ -1,10 +1,7 @@
 #pragma once
 
+#include "maidenpch.hpp"
 #include "H_JCVB_window.hpp"
-
-// std lib headers
-#include <string>
-#include <vector>
 
 namespace Madam {
 

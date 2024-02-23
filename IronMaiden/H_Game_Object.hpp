@@ -1,5 +1,6 @@
 #pragma once
 
+#include "maidenpch.hpp"
 #include "H_JCVB_base.hpp"
 #include "H_Scene.hpp"
 #include "H_components.hpp"

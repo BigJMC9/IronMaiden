@@ -1,12 +1,7 @@
 #pragma once
+#include "maidenpch.hpp"
 #include "H_ProcessHandler.hpp"
 #include "H_SceneSerializer.hpp"
-
-//std
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <vector>
 
 namespace Madam {
 	namespace App {

@@ -4,15 +4,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IronMaiden", "IronMaiden\IronMaiden.vcxproj", "{A24A697A-18EB-4C31-9916-4D6A5B229DAB}"
-	ProjectSection(ProjectDependencies) = postProject
-		{9E5A742A-B536-4271-90A5-8CE551627EF4} = {9E5A742A-B536-4271-90A5-8CE551627EF4}
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B2D8823C-F3FC-4DB0-82E3-E52427D43C07}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Editor-NoGUI", "Editor-NoGUI\Editor-NoGUI.vcxproj", "{9E5A742A-B536-4271-90A5-8CE551627EF4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sandbox", "Sandbox\Sandbox.vcxproj", "{D72C3666-0360-4026-8087-713FBE1A4CD7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Editor", "Sandbox\Sandbox.vcxproj", "{D72C3666-0360-4026-8087-713FBE1A4CD7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9E5A742A-B536-4271-90A5-8CE551627EF4} = {9E5A742A-B536-4271-90A5-8CE551627EF4}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

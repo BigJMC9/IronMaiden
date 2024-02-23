@@ -1,9 +1,6 @@
 #pragma once
 
-// std
-#include <windows.h>
-#include <string>
-#include <mutex>
+#include "maidenpch.hpp"
 
 namespace Madam {
 	namespace App {
