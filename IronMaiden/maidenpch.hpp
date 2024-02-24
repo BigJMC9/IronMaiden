@@ -22,6 +22,7 @@
 #include <limits>
 #include <cmath>
 #include <thread>
+#include <chrono>
 
 #ifdef MADAM_PLATFORM_WINDOWS
 	#include <windows.h>

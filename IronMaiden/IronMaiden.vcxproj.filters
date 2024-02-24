@@ -18,246 +18,141 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="JCVB_window.cpp">
+    <ClCompile Include="src\Maiden\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="first_app.cpp">
+    <ClCompile Include="src\Application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="JCVB_pipeline.cpp">
+    <ClCompile Include="src\Buffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="JCVB_device.cpp">
+    <ClCompile Include="src\CmdHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="JCVB_swap_chain.cpp">
+    <ClCompile Include="src\Descriptors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H_JCVB_pipeline.hpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="JCVB_model.cpp">
+    <ClCompile Include="src\Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="JCVB_renderer.cpp">
+    <ClCompile Include="src\Entity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="keyboard_movement_controller.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="JCVB_buffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="H_JCVB_frame_info.hpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="JCVB_descriptors.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="H_JCVB_texture.hpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="JCVB_texture.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="H_Render_systems.hpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Render_systems.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Game_Object.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneSerializer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ProcessHandler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CmdHandler.cpp">
+    <ClCompile Include="src\Input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="maidenpch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Pipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ProcessHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RenderSystems.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneSerializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SwapChain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="H_JCVB_window.hpp">
+    <ClInclude Include="src\Maiden\Core.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_first_app.hpp">
+    <ClInclude Include="src\Maiden\EntryPoint.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_JCVB_device.hpp">
+    <ClInclude Include="src\Maiden\H_Logger.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_JCVB_swap_chain.hpp">
+    <ClInclude Include="src\Base.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_JCVB_model.hpp">
+    <ClInclude Include="src\Components.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_JCVB_renderer.hpp">
+    <ClInclude Include="src\FrameInfo.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_keyboard_movement_controller.hpp">
+    <ClInclude Include="src\H_Application.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_JCVB_utils.hpp">
+    <ClInclude Include="src\H_Buffer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_JCVB_buffer.hpp">
+    <ClInclude Include="src\H_CmdHandler.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_JCVB_descriptors.hpp">
+    <ClInclude Include="src\H_Descriptors.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_JCVB_base.hpp">
+    <ClInclude Include="src\H_Device.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_components.hpp">
+    <ClInclude Include="src\H_Entity.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_Game_Object.hpp">
+    <ClInclude Include="src\H_Input.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_Scene.hpp">
+    <ClInclude Include="src\H_Model.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_SceneSerializer.hpp">
+    <ClInclude Include="src\H_Pipeline.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_ProcessHandler.hpp">
+    <ClInclude Include="src\H_ProcessHandler.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H_CmdHandler.hpp">
+    <ClInclude Include="src\H_Renderer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Maiden\Core.hpp">
+    <ClInclude Include="src\H_RenderSystems.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Maiden.hpp">
+    <ClInclude Include="src\H_Scene.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Maiden\EntryPoint.hpp">
+    <ClInclude Include="src\H_SceneSerializer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\H_SwapChain.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\H_Texture.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\H_Window.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="maidenpch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\contrib\anchordict.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\contrib\graphbuilder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\impl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\iterator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\iterator_fwd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\memory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\node.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\node_data.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\node_iterator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\detail\node_ref.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\convert.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\emit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\impl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\iterator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\node.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\parse.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\ptr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\node\type.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\anchor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\binary.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\depthguard.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\dll.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\emitfromevents.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\emitter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\emitterdef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\emittermanip.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\emitterstyle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\eventhandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\exceptions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\mark.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\noexcept.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\null.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\ostream_wrapper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\parser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\stlemitter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\traits.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vendors\yaml-cpp\include\yaml-cpp\yaml.h">
+    <ClInclude Include="src\utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

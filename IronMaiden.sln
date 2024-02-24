@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Editor-NoGUI", "Editor-NoGUI\Editor-NoGUI.vcxproj", "{9E5A742A-B536-4271-90A5-8CE551627EF4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Editor", "Sandbox\Sandbox.vcxproj", "{D72C3666-0360-4026-8087-713FBE1A4CD7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Editor", "Editor\Editor.vcxproj", "{D72C3666-0360-4026-8087-713FBE1A4CD7}"
 	ProjectSection(ProjectDependencies) = postProject
 		{9E5A742A-B536-4271-90A5-8CE551627EF4} = {9E5A742A-B536-4271-90A5-8CE551627EF4}
 	EndProjectSection

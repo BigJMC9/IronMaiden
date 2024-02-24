@@ -1,0 +1,21 @@
+[submodule "IronMaiden/vendors/spdlog"]
+	path = IronMaiden/vendors/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "IronMaiden/vendors/glm"]
+	path = IronMaiden/vendors/glm
+	url = https://github.com/g-truc/glm
+[submodule "IronMaiden/vendors/glfw"]
+	path = IronMaiden/vendors/glfw
+	url = https://github.com/glfw/glfw
+[submodule "IronMaiden/vendors/stb"]
+	path = IronMaiden/vendors/stb
+	url = https://github.com/nothings/stb
+[submodule "IronMaiden/vendors/tinyobjloader"]
+	path = IronMaiden/vendors/tinyobjloader
+	url = https://github.com/tinyobjloader/tinyobjloader
+[submodule "IronMaiden/vendors/entt"]
+	path = IronMaiden/vendors/entt
+	url = https://github.com/skypjack/entt
+[submodule "IronMaiden/vendors/yaml-cpp"]
+	path = IronMaiden/vendors/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp

@@ -154,12 +154,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>kernel32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\glfw-3.3.8.bin.WIN64\lib-vc2022;C:\Users\xbox\Desktop\Development\Visual Studio Libraries\yaml-cpp-master\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Editor-NG-Debug|x64'">
