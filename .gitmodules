@@ -19,3 +19,6 @@
 [submodule "IronMaiden/vendors/yaml-cpp"]
 	path = IronMaiden/vendors/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp
+[submodule "OpenFBX"]
+	path = OpenFBX
+	url = https://github.com/nem0/OpenFBX

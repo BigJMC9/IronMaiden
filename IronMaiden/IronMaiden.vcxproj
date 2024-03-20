@@ -80,12 +80,13 @@
       <PrecompiledHeaderFile>maidenpch.hpp</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;MADAM_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;vendors\vulkan\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\yaml-cpp\include;vendors\stb;vendors\entt\single_include;vendors\tinyobjloader;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;vendors\vulkan\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\yaml-cpp\include;vendors\stb;vendors\entt\single_include;vendors\tinyobjloader;vendors\OpenFBX\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
+      <DisableSpecificWarnings>4996;4251</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -156,54 +157,63 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="maidenpch.hpp" />
-    <ClInclude Include="src\Base.hpp" />
-    <ClInclude Include="src\Components.hpp" />
-    <ClInclude Include="src\FrameInfo.hpp" />
-    <ClInclude Include="src\H_Application.hpp" />
-    <ClInclude Include="src\H_Buffer.hpp" />
-    <ClInclude Include="src\H_CmdHandler.hpp" />
-    <ClInclude Include="src\H_Descriptors.hpp" />
-    <ClInclude Include="src\H_Device.hpp" />
-    <ClInclude Include="src\H_Entity.hpp" />
-    <ClInclude Include="src\H_Input.hpp" />
-    <ClInclude Include="src\H_Model.hpp" />
-    <ClInclude Include="src\H_Pipeline.hpp" />
-    <ClInclude Include="src\H_ProcessHandler.hpp" />
-    <ClInclude Include="src\H_RenderSystems.hpp" />
-    <ClInclude Include="src\H_Renderer.hpp" />
-    <ClInclude Include="src\H_Scene.hpp" />
-    <ClInclude Include="src\H_SceneSerializer.hpp" />
-    <ClInclude Include="src\H_SwapChain.hpp" />
-    <ClInclude Include="src\H_Texture.hpp" />
-    <ClInclude Include="src\H_Window.hpp" />
+    <ClInclude Include="src\Maiden\Core\Object.h" />
+    <ClInclude Include="src\Maiden\Core\Base.hpp" />
+    <ClInclude Include="src\Maiden\Scene\Components.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\FrameInfo.hpp" />
+    <ClInclude Include="src\Maiden\Core\H_Application.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_Buffer.hpp" />
+    <ClInclude Include="src\Maiden\Core\H_CmdHandler.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_Descriptors.hpp" />
+    <ClInclude Include="src\Maiden\Core\H_Device.hpp" />
+    <ClInclude Include="src\Maiden\Scene\H_Entity.hpp" />
+    <ClInclude Include="src\Maiden\Events\H_Input.hpp" />
+    <ClInclude Include="src\Maiden\Scene\H_Model.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_Pipeline.hpp" />
+    <ClInclude Include="src\Maiden\Core\H_ProcessHandler.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_RenderSystems.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_Renderer.hpp" />
+    <ClInclude Include="src\Maiden\Scene\H_Scene.hpp" />
+    <ClInclude Include="src\Maiden\Scene\H_SceneSerializer.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_SwapChain.hpp" />
+    <ClInclude Include="src\Maiden\Scene\H_Texture.hpp" />
+    <ClInclude Include="src\Maiden\Core\H_Window.hpp" />
     <ClInclude Include="src\Maiden.hpp" />
-    <ClInclude Include="src\Maiden\Core.hpp" />
-    <ClInclude Include="src\Maiden\EntryPoint.hpp" />
-    <ClInclude Include="src\Maiden\H_Logger.hpp" />
-    <ClInclude Include="src\utils.hpp" />
+    <ClInclude Include="src\Maiden\Core\Main\Core.hpp" />
+    <ClInclude Include="src\Maiden\Core\Main\EntryPoint.hpp" />
+    <ClInclude Include="src\Maiden\Events\Event.hpp" />
+    <ClInclude Include="src\Maiden\Events\InputEvent.hpp" />
+    <ClInclude Include="src\Maiden\Events\WindowEvent.hpp" />
+    <ClInclude Include="src\Maiden\Core\H_Logger.hpp" />
+    <ClInclude Include="src\Maiden\Core\utils.hpp" />
+    <ClInclude Include="src\Maiden\Core\Surface.h" />
+    <ClInclude Include="src\Maiden\Core\SurfaceStack.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\Application.cpp" />
-    <ClCompile Include="src\Buffer.cpp" />
-    <ClCompile Include="src\CmdHandler.cpp" />
-    <ClCompile Include="src\Descriptors.cpp" />
-    <ClCompile Include="src\Device.cpp" />
-    <ClCompile Include="src\Entity.cpp" />
-    <ClCompile Include="src\Input.cpp" />
-    <ClCompile Include="src\Maiden\Logger.cpp" />
-    <ClCompile Include="src\Model.cpp" />
-    <ClCompile Include="src\Pipeline.cpp" />
-    <ClCompile Include="src\ProcessHandler.cpp" />
-    <ClCompile Include="src\RenderSystems.cpp" />
-    <ClCompile Include="src\Renderer.cpp" />
-    <ClCompile Include="src\Scene.cpp" />
-    <ClCompile Include="src\SceneSerializer.cpp" />
-    <ClCompile Include="src\SwapChain.cpp" />
-    <ClCompile Include="src\Texture.cpp" />
-    <ClCompile Include="src\Window.cpp" />
+    <ClCompile Include="src\Maiden\Core\Object.cpp" />
+    <ClCompile Include="src\Maiden\Core\Application.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Buffer.cpp" />
+    <ClCompile Include="src\Maiden\Core\CmdHandler.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Descriptors.cpp" />
+    <ClCompile Include="src\Maiden\Core\Device.cpp" />
+    <ClCompile Include="src\Maiden\Scene\Entity.cpp" />
+    <ClCompile Include="src\Maiden\Events\Input.cpp" />
+    <ClCompile Include="src\Maiden\Core\Logger.cpp" />
+    <ClCompile Include="src\Maiden\Scene\Model.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Pipeline.cpp" />
+    <ClCompile Include="src\Maiden\Core\ProcessHandler.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\RenderSystems.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Renderer.cpp" />
+    <ClCompile Include="src\Maiden\Scene\Scene.cpp" />
+    <ClCompile Include="src\Maiden\Scene\SceneSerializer.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\SwapChain.cpp" />
+    <ClCompile Include="src\Maiden\Scene\Texture.cpp" />
+    <ClCompile Include="src\Maiden\Core\Window.cpp" />
+    <ClCompile Include="src\Maiden\Core\Surface.cpp" />
+    <ClCompile Include="src\Maiden\Core\SurfaceStack.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
