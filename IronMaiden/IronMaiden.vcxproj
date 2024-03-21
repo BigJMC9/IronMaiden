@@ -157,6 +157,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="maidenpch.hpp" />
+    <ClInclude Include="src\Maiden\Core\H_Time.hpp" />
     <ClInclude Include="src\Maiden\Core\Object.h" />
     <ClInclude Include="src\Maiden\Core\Base.hpp" />
     <ClInclude Include="src\Maiden\Scene\Components.hpp" />
@@ -186,8 +187,9 @@
     <ClInclude Include="src\Maiden\Events\WindowEvent.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp" />
     <ClInclude Include="src\Maiden\Core\utils.hpp" />
-    <ClInclude Include="src\Maiden\Core\Surface.h" />
+    <ClInclude Include="src\Maiden\Core\H_Surface.h" />
     <ClInclude Include="src\Maiden\Core\SurfaceStack.h" />
+    <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp">
@@ -195,6 +197,7 @@
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Object.cpp" />
     <ClCompile Include="src\Maiden\Core\Application.cpp" />
+    <ClCompile Include="src\Maiden\Core\Time.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Buffer.cpp" />
     <ClCompile Include="src\Maiden\Core\CmdHandler.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Descriptors.cpp" />

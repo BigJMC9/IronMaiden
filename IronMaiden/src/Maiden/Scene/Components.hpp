@@ -3,6 +3,7 @@
 #include "maidenpch.hpp"
 #include "H_Model.hpp"
 #include "H_Texture.hpp"
+#include "ScriptableEntity.hpp"
 
 //libs
 #include <glm/glm.hpp>
@@ -297,6 +298,40 @@ namespace Madam {
 			};
 		}
 		//operator const glm::mat4& () const { return m_transform; }
+	};
+
+	struct NativeScriptComponent {
+
+		ScriptableEntity* instance = nullptr;
+
+		std::function<void()> instantiate;
+		std::function<void()> destroyInstance;
+
+		std::function<void(ScriptableEntity*)> onCreate;
+		std::function<void(ScriptableEntity*)> onStart;
+		std::function<void(ScriptableEntity*)> onUpdate;
+		std::function<void(ScriptableEntity*)> onLateUpdate;
+		std::function<void(ScriptableEntity*)> onRender;
+		std::function<void(ScriptableEntity*)> onDestroy;
+		
+
+		NativeScriptComponent() = default;
+		NativeScriptComponent(NativeScriptComponent&) = default;
+
+		template<typename T>
+		void Bind() {
+
+			instantiate = [&]() { instance = new T(); };
+			destroyInstance = [&]() { delete (T*)instance; instance = nullptr; };
+
+			onCreate = [](ScriptableEntity* instance) { ((T*)instance)->Create(); };
+			onDestroy = [](ScriptableEntity* instance) { ((T*)instance)->Destroy(); };
+			onStart = [](ScriptableEntity* instance) { ((T*)instance)->Start(); };
+			onUpdate = [](ScriptableEntity* instance) { ((T*)instance)->Update(); };
+			onLateUpdate = [](ScriptableEntity* instance) { ((T*)instance)->LateUpdate(); };
+			onRender = [](ScriptableEntity* instance) { ((T*)instance)->Render(); };
+			
+		}
 	};
 
 	template<typename... Component>

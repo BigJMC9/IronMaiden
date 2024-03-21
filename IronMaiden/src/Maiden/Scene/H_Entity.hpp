@@ -3,7 +3,7 @@
 #include "maidenpch.hpp"
 #include "../Core/Base.hpp"
 #include "H_Scene.hpp"
-#include "Components.hpp"
+//#include "Components.hpp"
 
 // std
 #include <cassert>
@@ -31,6 +31,7 @@ namespace Madam {
 
 		template<typename T>
 		T& GetComponent() {
+			MADAM_CORE_ASSERT(HasComponent<T>(), "GameObject does not have that component!");
 			//assert(HasComponent<T>(), "GameObject does not have that component!");
 			return scene->registry.get<T>(entityHandle);
 		}
@@ -75,7 +76,7 @@ namespace Madam {
 			return !(*this == other);
 		}
 
-		Transform transform;
+		//Transform transform;
 	private:
 		entt::entity entityHandle{ entt::null };
 		Scene* scene = nullptr;

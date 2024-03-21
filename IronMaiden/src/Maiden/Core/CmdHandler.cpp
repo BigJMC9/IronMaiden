@@ -113,5 +113,14 @@ namespace Madam {
 			}
 		}
 
+
+		void CommandHandler::HandleRuntime(std::vector<std::string> commandWords, PipeHandler& handler) {
+			if (commandWords.size() < 2) {
+				handler.Write("Commands for Runtime: \nRuntime start");
+			}
+			else if (commandWords[1] == "start") {
+				Application::Get().isRuntime = true;
+			}
+		}
 	}
 }

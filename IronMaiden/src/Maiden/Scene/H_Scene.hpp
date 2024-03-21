@@ -15,7 +15,7 @@ namespace Madam {
 
 	class Entity;
 	struct UUID;
-	class Scene
+	class MADAM_API Scene
 	{
 	public:
 		Scene();

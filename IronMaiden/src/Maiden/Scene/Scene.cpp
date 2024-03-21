@@ -21,7 +21,7 @@ namespace Madam {
 	Entity Scene::CreateEntity() {
 		Entity entity = { registry.create(), this };
 		entity.AddComponent<Transform>();
-		entity.transform = entity.GetComponent<Transform>();
+		//entity.transform = entity.GetComponent<Transform>();
 		//m_EntityMap.emplace(entity.GetUUID(), entity);
 		return entity;
 	}
@@ -29,7 +29,7 @@ namespace Madam {
 	Entity Scene::CreateEntity(entt::entity _entity) {
 		Entity entity = { registry.create(_entity), this };
 		entity.AddComponent<Transform>();
-		entity.transform = entity.GetComponent<Transform>();
+		//entity.transform = entity.GetComponent<Transform>();
 		//m_EntityMap.emplace(entity.GetUUID(), entity);
 		return entity;
 	}
@@ -37,7 +37,7 @@ namespace Madam {
 	Entity Scene::CreateEntity(UUID uuid) {
 		Entity entity = { registry.create(), this, uuid};
 		entity.AddComponent<Transform>();
-		entity.transform = entity.GetComponent<Transform>();
+		//entity.transform = entity.GetComponent<Transform>();
 		//m_EntityMap.emplace(entity.GetUUID(), entity);
 		return entity;
 	}
@@ -45,7 +45,7 @@ namespace Madam {
 	Entity Scene::CreateGameObject() {
 		Entity gameObject = { registry.create(), this};
 		gameObject.AddComponent<Transform>();
-		gameObject.transform = gameObject.GetComponent<Transform>();
+		//gameObject.transform = gameObject.GetComponent<Transform>();
 		return gameObject;
 	}
 
@@ -56,7 +56,7 @@ namespace Madam {
 		gameObject.GetComponent<MeshFilter>().model = model;
 		gameObject.GetComponent<MeshRenderer>().mesh = gameObject.GetComponent<MeshFilter>();
 		gameObject.AddComponent<Transform>();
-		gameObject.transform = gameObject.GetComponent<Transform>();
+		//gameObject.transform = gameObject.GetComponent<Transform>();
 		return gameObject;
 	}
 
@@ -74,7 +74,7 @@ namespace Madam {
 		gameObject.GetComponent<Material>().ambientOcclusionMap = mat.ambientOcclusionMap;
 		gameObject.GetComponent<Material>().glossMap = mat.glossMap;
 		gameObject.AddComponent<Transform>();
-		gameObject.transform = gameObject.GetComponent<Transform>();
+		//gameObject.transform = gameObject.GetComponent<Transform>();
 		return gameObject;
 	}
 
@@ -83,11 +83,26 @@ namespace Madam {
 	}
 
 	void Scene::Update() {
+		{
+			registry.view <NativeScriptComponent>().each([=](auto entity, auto& nsc) {
+				if (!nsc.instance) {
+					nsc.instantiate();
+					nsc.onCreate(nsc.instance);
+					nsc.onStart(nsc.instance);
+					//nsc.instance->entity = Entity{ entity, this };
+					//nsc.instance->onCreate(nsc.instance);
+					//nsc.instance->onStart(nsc.instance);
+				}
+				nsc.onUpdate(nsc.instance);
 
+			});
+		}
 	}
 
 	void Scene::Render() {
-
+		registry.view <NativeScriptComponent>().each([=](auto entity, auto& nsc) {
+			nsc.onRender(nsc.instance);
+		});
 	}
 
 	/*

@@ -132,24 +132,27 @@ namespace Madam {
 
 		firstFrame = true;
 
+		pSurface->OnAttach();
 		//Will be done by Scene
-        Camera camera{};
+        /*Camera camera{};
         camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.f, 0.f, 0.f));
 		Entity viewerObject = scene->CreateGameObject();
 		viewerObject.SetName("Editor Camera");
 		viewerObject.GetComponent<Transform>().translation.z = -2.5f;
-        KeyboardMovementController cameraController{};
+        KeyboardMovementController cameraController{};*/
 
-        auto currentTime = std::chrono::high_resolution_clock::now();
+		time.StartTime();
+        //auto currentTime = std::chrono::high_resolution_clock::now();
 
 		while (!window.shouldClose()) {
 			glfwPollEvents();
 
-            auto newTime = std::chrono::high_resolution_clock::now();
-            float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
-            currentTime = newTime;
+			time.UpdateTime();
+            //auto newTime = std::chrono::high_resolution_clock::now();
+            //float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+            //currentTime = newTime;
 
-            frameTime = glm::min(frameTime, MAX_FRAME_TIME);		
+            //frameTime = glm::min(frameTime, MAX_FRAME_TIME);
 
 			std::string command = pipeHandler.Read();
 			if (!command.empty()) {
@@ -158,11 +161,12 @@ namespace Madam {
 			}
 			//cameraController.handleCommands(window.getGLFWwindow(), pSceneSerializer);
 			
-            cameraController.moveInPlaneXZ(window.getGLFWwindow(), frameTime, viewerObject);
-            camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+			pSurface->OnUpdate();
+            /*cameraController.moveInPlaneXZ(window.getGLFWwindow(), time.GetFrameTime(), viewerObject);
+            camera.setViewYXZ(viewerObject.GetComponent<Transform>().translation, viewerObject.GetComponent<Transform>().rotation);*/
 
-            float aspect = renderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 500.0f);
+            /*float aspect = renderer.getAspectRatio();
+            camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 500.0f);*/
 
 			if (auto commandBuffer = renderer.beginFrame()) {
 				int frameIndex = renderer.getFrameIndex();
@@ -170,9 +174,9 @@ namespace Madam {
 				GlobalUbo ubo{};
 				FrameInfo frameInfo {
 					frameIndex,
-					frameTime,
+					time.GetFrameTime(),
 					commandBuffer,
-					camera,
+					*pCamera,
 					globalDescriptorSets[frameIndex],
 					* framePools[frameIndex],
 					scene,
@@ -183,9 +187,9 @@ namespace Madam {
 					std::cout << "Projection: " << glm::to_string(ubo.projection) << std::endl;
 					debug = false;
 				}
-				frameInfo.ubo.projection = camera.getProjection();
-				frameInfo.ubo.view = camera.getView();
-				frameInfo.ubo.inverseView = camera.getInverseView();
+				frameInfo.ubo.projection = pCamera->getProjection();
+				frameInfo.ubo.view = pCamera->getView();
+				frameInfo.ubo.inverseView = pCamera->getInverseView();
 				renderStack.preRender(frameInfo);
 				uboBuffers[frameIndex]->writeToBuffer(&frameInfo.ubo);
 				uboBuffers[frameIndex]->flush();

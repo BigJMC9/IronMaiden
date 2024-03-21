@@ -1,5 +1,6 @@
 #include "maidenpch.hpp"
 #include "H_Input.hpp"
+#include "../Scene/Components.hpp"
 
 namespace Madam {
 
@@ -12,13 +13,13 @@ namespace Madam {
 			if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS) rotate.x -= 1.f;
 
 			if (glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()) {
-				gameObject.transform.rotation += lookSpeed * dt * glm::normalize(rotate);
+				gameObject.GetComponent<Transform>().rotation += lookSpeed * dt * glm::normalize(rotate);
 			}
 
-			gameObject.transform.rotation.x = glm::clamp(gameObject.transform.rotation.x, -1.5f, 1.5f);
-			gameObject.transform.rotation.y = glm::mod(gameObject.transform.rotation.y, glm::two_pi<float>());
+			gameObject.GetComponent<Transform>().rotation.x = glm::clamp(gameObject.GetComponent<Transform>().rotation.x, -1.5f, 1.5f);
+			gameObject.GetComponent<Transform>().rotation.y = glm::mod(gameObject.GetComponent<Transform>().rotation.y, glm::two_pi<float>());
 
-			float yaw = gameObject.transform.rotation.y;
+			float yaw = gameObject.GetComponent<Transform>().rotation.y;
 			const glm::vec3 forwardDir{ sin(yaw), 0.f, cos(yaw) };
 			const glm::vec3 rightDir{ forwardDir.z, 0.f, -forwardDir.x };
 			const glm::vec3 upDir{ 0.f, -1.f, 0.f };
@@ -32,7 +33,7 @@ namespace Madam {
 			if (glfwGetKey(window, keys.moveDown) == GLFW_PRESS) moveDir -= upDir;
 
 			if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
-				gameObject.transform.translation += moveSpeed * dt * glm::normalize(moveDir);
+				gameObject.GetComponent<Transform>().translation += moveSpeed * dt * glm::normalize(moveDir);
 			}
 		}
 		isHandling = false;

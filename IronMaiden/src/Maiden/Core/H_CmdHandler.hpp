@@ -13,6 +13,7 @@ namespace Madam {
 			static void HandleObject(std::vector<std::string> commandWords, PipeHandler& handler);
 			static void HandleScene(std::vector<std::string> commandWords, PipeHandler& handler, SceneSerializer* scene);
 			static void HandleRendering(std::vector<std::string> commandWords, PipeHandler& handler, SceneSerializer* scene);
+			static void HandleRuntime(std::vector<std::string> commandWords, PipeHandler& handler);
 		};
 	}
 }

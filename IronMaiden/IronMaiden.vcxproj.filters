@@ -89,8 +89,10 @@
     <ClInclude Include="src\Maiden\Events\InputEvent.hpp" />
     <ClInclude Include="src\Maiden\Core\Object.h" />
     <ClInclude Include="src\Maiden\Events\WindowEvent.hpp" />
-    <ClInclude Include="src\Maiden\Core\Surface.h" />
+    <ClInclude Include="src\Maiden\Core\H_Surface.h" />
     <ClInclude Include="src\Maiden\Core\SurfaceStack.h" />
+    <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp" />
+    <ClInclude Include="src\Maiden\Core\H_Time.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
@@ -151,5 +153,6 @@
     <ClCompile Include="src\Maiden\Core\Object.cpp" />
     <ClCompile Include="src\Maiden\Core\Surface.cpp" />
     <ClCompile Include="src\Maiden\Core\SurfaceStack.cpp" />
+    <ClCompile Include="src\Maiden\Core\Time.cpp" />
   </ItemGroup>
 </Project>

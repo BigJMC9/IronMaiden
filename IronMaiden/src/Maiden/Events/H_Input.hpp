@@ -9,7 +9,7 @@ namespace Madam {
 
     //Human interface device (see pg 53)
 
-	class KeyboardMovementController{
+	class MADAM_API KeyboardMovementController{
 
 	public:
         struct KeyMappings {

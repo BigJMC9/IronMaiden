@@ -10,6 +10,8 @@
 #include "../Scene/H_Scene.hpp"
 #include "H_ProcessHandler.hpp"
 #include "../Events/Event.hpp"
+#include "H_Time.hpp"
+#include "H_Surface.h"
 
 //int main();
 
@@ -42,6 +44,14 @@ namespace Madam {
 
 		void onEvent(Event& e);
 
+		float getAspectRatio() {
+			return renderer.getAspectRatio();
+		}
+
+		void addSurface(Surface& surface) {
+			pSurface = std::make_unique<Surface>(surface);
+		}
+
 		static Application& Get() {
 			//static Application instance;
 			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
@@ -52,10 +62,12 @@ namespace Madam {
 		Rendering::RenderStack& getMasterRenderSystem() { return renderStack; }
 		const std::vector<std::shared_ptr<Rendering::RenderLayer>>& getRenderLayers() const;
 		Rendering::Renderer& getRenderer() { return renderer; }
+		Scene& getScene() { return *scene; }
+		Time& getTime() { return time; }
 		ApplicationConfig getConfig() {
 			return config;
 		}
-
+		
 		//Put in engine config header
 		const float MAX_FRAME_TIME = 0.1f;
 
@@ -68,6 +80,9 @@ namespace Madam {
 
 		void run();
 
+		bool isRuntime = false;
+		std::unique_ptr<Camera> pCamera;
+
 	private:
 
 		static Application* instance;
@@ -78,6 +93,7 @@ namespace Madam {
 		Device device = Device{ window };
 		Rendering::Renderer renderer = Rendering::Renderer{window, device};
 		Rendering::RenderStack renderStack = Rendering::RenderStack{ device, renderer };
+		Time time = Time{};
 
 		//Move this somewhere
 		std::unique_ptr<DescriptorPool> globalPool{};
@@ -86,10 +102,10 @@ namespace Madam {
 		bool firstFrame = true;
 		bool isRunning = false;
 
-		bool isRuntime = false;
-
 		std::unique_ptr<Scene> scene;
 		SceneSerializer* pSceneSerializer;
+	protected:
+		std::unique_ptr<Surface> pSurface;
 	};
 
 	//Defined by client
