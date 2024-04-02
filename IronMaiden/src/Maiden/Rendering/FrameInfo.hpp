@@ -11,7 +11,7 @@
 #include <vulkan/vulkan.h>
 #include <entt/entt.hpp>
 
-
+//Will remove in future
 namespace Madam {
 
 	class Scene;
@@ -35,6 +35,8 @@ namespace Madam {
 		It may be worth to change all vec3 to vec4 in the future as some older shader language versions
 		and gpus may not handle this well. (alignment issue)
 	*/
+
+	//Uniform buffer object
 	struct GlobalUbo {
 		glm::mat4 projection{ 1.f }; // mat4 is a 4x4 matrix, it will hold 64bytes of data.
 		glm::mat4 view{ 1.f }; // mat4 is a 4x4 matrix, it will hold 64bytes of data.
@@ -48,7 +50,6 @@ namespace Madam {
 		int frameIndex;
 		float frameTime;
 		VkCommandBuffer commandBuffer;
-		Camera& camera;
 		VkDescriptorSet globalDescriptorSet;
 		DescriptorPool& frameDescriptorPool;
 		//Map& gameObjects;

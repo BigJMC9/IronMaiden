@@ -7,152 +7,191 @@
     <Filter Include="src\Maiden">
       <UniqueIdentifier>{EAA9F11F-D661-336D-3F69-0CC92B40CE5D}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Maiden\Core">
+      <UniqueIdentifier>{8290B31B-EE1B-21E0-F72C-A4D463377DE0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Maiden\Core\Main">
+      <UniqueIdentifier>{36952A7D-2224-B446-CB42-C841B7B0C4EC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Maiden\Events">
+      <UniqueIdentifier>{8ECAFBDB-FAE0-F971-4358-8593AFADCAF9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Maiden\Rendering">
+      <UniqueIdentifier>{B75F8AE3-A3EE-13AD-4C0D-28A8387B2453}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Maiden\Scene">
+      <UniqueIdentifier>{875E4093-7357-5FE5-9C89-446A88E13EF1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="maidenpch.hpp" />
-    <ClInclude Include="src\Maiden\Core\Base.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Scene\Components.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\FrameInfo.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_Application.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\H_Buffer.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_CmdHandler.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\H_Descriptors.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_Device.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Scene\H_Entity.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Events\H_Input.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Scene\H_Model.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\H_Pipeline.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_ProcessHandler.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\H_RenderSystems.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\H_Renderer.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Scene\H_Scene.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Scene\H_SceneSerializer.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\H_SwapChain.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Scene\H_Texture.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_Window.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Maiden.hpp">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Core\Main\Core.hpp">
-      <Filter>src\Maiden</Filter>
+    <ClInclude Include="src\Maiden\Core\Base.hpp">
+      <Filter>src\Maiden\Core</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Core\Main\EntryPoint.hpp">
-      <Filter>src\Maiden</Filter>
+    <ClInclude Include="src\Maiden\Core\H_Application.hpp">
+      <Filter>src\Maiden\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Core\H_CmdHandler.hpp">
+      <Filter>src\Maiden\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Core\H_Device.hpp">
+      <Filter>src\Maiden\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp">
-      <Filter>src\Maiden</Filter>
+      <Filter>src\Maiden\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Core\H_ProcessHandler.hpp">
+      <Filter>src\Maiden\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Core\H_Surface.h">
+      <Filter>src\Maiden\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Core\H_Time.hpp">
+      <Filter>src\Maiden\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Core\H_Window.hpp">
+      <Filter>src\Maiden\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Core\Main\Core.hpp">
+      <Filter>src\Maiden\Core\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Core\Main\EntryPoint.hpp">
+      <Filter>src\Maiden\Core\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Core\SurfaceStack.h">
+      <Filter>src\Maiden\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Core\utils.hpp">
-      <Filter>src</Filter>
+      <Filter>src\Maiden\Core</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Events\Event.hpp" />
-    <ClInclude Include="src\Maiden\Events\InputEvent.hpp" />
-    <ClInclude Include="src\Maiden\Core\Object.h" />
-    <ClInclude Include="src\Maiden\Events\WindowEvent.hpp" />
-    <ClInclude Include="src\Maiden\Core\H_Surface.h" />
-    <ClInclude Include="src\Maiden\Core\SurfaceStack.h" />
-    <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp" />
-    <ClInclude Include="src\Maiden\Core\H_Time.hpp" />
+    <ClInclude Include="src\Maiden\Events\Event.hpp">
+      <Filter>src\Maiden\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Events\H_Input.hpp">
+      <Filter>src\Maiden\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Events\InputEvent.hpp">
+      <Filter>src\Maiden\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Events\WindowEvent.hpp">
+      <Filter>src\Maiden\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\FrameInfo.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Buffer.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Camera.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Descriptors.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Pipeline.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_RenderSystems.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Renderer.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_SwapChain.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Scene\Components.hpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Scene\H_Entity.hpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Scene\H_Model.hpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Scene\H_Scene.hpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Scene\H_SceneSerializer.hpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Scene\H_Texture.hpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
     <ClCompile Include="src\Maiden\Core\Application.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\Buffer.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\CmdHandler.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\Descriptors.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Device.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Scene\Entity.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Events\Input.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Logger.cpp">
-      <Filter>src\Maiden</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Scene\Model.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\Pipeline.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\ProcessHandler.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Maiden\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\RenderSystems.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Maiden\Core\Surface.cpp">
+      <Filter>src\Maiden\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\Renderer.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Maiden\Core\SurfaceStack.cpp">
+      <Filter>src\Maiden\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Scene\Scene.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Scene\SceneSerializer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\SwapChain.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Scene\Texture.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Maiden\Core\Time.cpp">
+      <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Window.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Maiden\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Core\Object.cpp" />
-    <ClCompile Include="src\Maiden\Core\Surface.cpp" />
-    <ClCompile Include="src\Maiden\Core\SurfaceStack.cpp" />
-    <ClCompile Include="src\Maiden\Core\Time.cpp" />
+    <ClCompile Include="src\Maiden\Events\Input.cpp">
+      <Filter>src\Maiden\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Buffer.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Camera.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Descriptors.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Pipeline.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\RenderSystems.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Renderer.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\SwapChain.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Scene\Entity.cpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Scene\Model.cpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Scene\Scene.cpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Scene\SceneSerializer.cpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Scene\Texture.cpp">
+      <Filter>src\Maiden\Scene</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

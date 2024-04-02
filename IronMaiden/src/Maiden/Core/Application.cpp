@@ -166,7 +166,7 @@ namespace Madam {
             camera.setViewYXZ(viewerObject.GetComponent<Transform>().translation, viewerObject.GetComponent<Transform>().rotation);*/
 
             /*float aspect = renderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 500.0f);*/
+            camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 500.0f);*/ //Should only update when window is resized
 
 			if (auto commandBuffer = renderer.beginFrame()) {
 				int frameIndex = renderer.getFrameIndex();
@@ -176,20 +176,22 @@ namespace Madam {
 					frameIndex,
 					time.GetFrameTime(),
 					commandBuffer,
-					*pCamera,
 					globalDescriptorSets[frameIndex],
 					* framePools[frameIndex],
 					scene,
 					ubo};
-				if (debug) {
+				/*if (debug) {
 					std::cout << "View: " << glm::to_string(ubo.view) << std::endl;
 					std::cout << "Inverse View: " << glm::to_string(ubo.inverseView) << std::endl;
 					std::cout << "Projection: " << glm::to_string(ubo.projection) << std::endl;
 					debug = false;
-				}
-				frameInfo.ubo.projection = pCamera->getProjection();
-				frameInfo.ubo.view = pCamera->getView();
-				frameInfo.ubo.inverseView = pCamera->getInverseView();
+				}*/
+
+				//Should be done in render stack
+				Rendering::CameraHandle& camera = Rendering::CameraHandle::getMain();
+				frameInfo.ubo.projection = camera.getProjection();
+				frameInfo.ubo.view = camera.getView();
+				frameInfo.ubo.inverseView = camera.getInverseView();
 				renderStack.preRender(frameInfo);
 				uboBuffers[frameIndex]->writeToBuffer(&frameInfo.ubo);
 				uboBuffers[frameIndex]->flush();

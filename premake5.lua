@@ -1,3 +1,5 @@
+--Config
+
 workspace "IronMaiden"
     architecture "x64"
 
@@ -12,14 +14,23 @@ workspace "IronMaiden"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+include("dpc.lua")
+
+group("Dependencies")
+    include("IronMaiden/vendors/yaml-cpp")
+
+group("")
+
 project "IronMaiden"
     location "IronMaiden"
-    kind "SharedLib"
+    kind "StaticLib"
     language "C++"
+    cppdialect "C++17"
+    staticruntime "on"
 
     targetdir ("bin/" .. outputdir .. "/%{prj.name}")
     objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-    
+
     pchheader "maidenpch.hpp"
     pchsource "%{prj.name}/maidenpch.cpp"
     
@@ -41,61 +52,56 @@ project "IronMaiden"
     includedirs
     {
         "%{prj.name}",
-        "%{prj.name}/vendors/vulkan/include",
-        "%{prj.name}/vendors/glfw-3.3.8.bin.WIN64/include",
-        "%{prj.name}/vendors/glm",
-        "%{prj.name}/vendors/spdlog/include",
-        "%{prj.name}/vendors/yaml-cpp/include",
-        "%{prj.name}/vendors/stb",
-        "%{prj.name}/vendors/entt/single_include",
-        "%{prj.name}/vendors/tinyobjloader"
+        "%{IncludeDir.VulkanSDK}",
+        "%{IncludeDir.glfw}",
+        "%{IncludeDir.glm}",
+        "%{IncludeDir.spdlog}",
+        "%{IncludeDir.yaml_cpp}",
+        "%{IncludeDir.stb}",
+        "%{IncludeDir.entt}",
+        "%{IncludeDir.tinyobj}",
+        "%{IncludeDir.openfbx}",
     }
 
     libdirs 
     { 
-        "C:/Program Files/VulkanSDK/1.3.268.0/Lib",
-        "%{prj.name}/vendors/glfw-3.3.8.bin.WIN64/lib-vc2022",
-        "%{prj.name}/vendors/yaml-cpp/Debug"
+        "%{LibDir.VulkanSDK}",
+        "%{LibDir.glfw}",
+        "%{LibDir.yaml_cpp}"
     }
 
     links
     {
-        "vulkan-1",
-        "glfw3",
-        "yaml-cppd",
-        "kernel32"
+        "%{Lib.Vulkan}",
+        "%{Lib.glfw}",
+        "%{Lib.yaml_cpp}"
     }
 
     filter "system:windows"
-        cppdialect "C++17"
-        staticruntime "Off"
         systemversion "latest"
 
         defines
         {
+            "_CRT_SECURE_NO_WARNINGS";
+            "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
             "MADAM_PLATFORM_WINDOWS";
             "MADAM_BUILD_DLL";
         }
 
-        postbuildcommands
-        {
-            "copy /B /Y ..\\bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll ..\\bin\\" .. outputdir .. "\\Editor\\ > nul"
-        }
-
     filter "configurations:Debug"
         defines "MADAM_DEBUG"
-        symbols "On"
-        runtime "Debug"
+        symbols "on"
+        runtime "debug"
 
     filter "configurations:Release"
         defines "MADAM_RELEASE"
-        optimize "On"
-        runtime "Release"
+        optimize "on"
+        runtime "release"
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
-        optimize "On"
-        runtime "Release"
+        optimize "on"
+        runtime "release"
 
 project "Editor-NoGUI"
     location "Editor-NoGUI"
@@ -120,30 +126,33 @@ project "Editor-NoGUI"
     
     filter "system:windows"
         cppdialect "C++17"
-        staticruntime "On"
+        staticruntime "on"
         systemversion "latest"
 
         defines
         {
+            "_CRT_SECURE_NO_WARNINGS";
             "MADAM_PLATFORM_WINDOWS";
         }
 
     filter "configurations:Debug"
         defines "MADAM_DEBUG"
-        symbols "On"
+        symbols "on"
 
     filter "configurations:Release"
         defines "MADAM_RELEASE"
-        optimize "On"
+        optimize "on"
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
-        optimize "On"    
+        optimize "on"    
 
 project "Editor"
     location "Editor"
     kind "ConsoleApp"
     language "C++"
+    cppdialect "C++17"
+    staticruntime "on"
 
     targetdir ("bin/" .. outputdir .. "/%{prj.name}")
     objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -160,41 +169,31 @@ project "Editor"
 
     includedirs
     {
-        "IronMaiden/vendors/vulkan/include",
-        "IronMaiden/vendors/glfw-3.3.8.bin.WIN64/include",
-        "IronMaiden/vendors/glm",
-        "IronMaiden/vendors/spdlog/include",
-        "IronMaiden/vendors/yaml-cpp/include",
-        "IronMaiden/vendors/stb",
-        "IronMaiden/vendors/entt/single_include",
-        "IronMaiden/vendors/tinyobjloader",
+        "%{IncludeDir.VulkanSDK}",
+        "%{IncludeDir.glfw}",
+        "%{IncludeDir.glm}",
+        "%{IncludeDir.spdlog}",
+        --"IronMaiden/vendors/yaml-cpp/include",
+        --"IronMaiden/vendors/stb",
+        "%{IncludeDir.entt}",
+        --"IronMaiden/vendors/tinyobjloader",
+        --"IronMaiden/vendors/OpenFBX/src",
         "IronMaiden/src",
         "IronMaiden"
     }
 
-    libdirs 
-    { 
-        "C:/Program Files/VulkanSDK/1.3.268.0/Lib",
-        "IronMaiden/vendors/glfw-3.3.8.bin.WIN64/lib-vc2022",
-        "IronMaiden/vendors/yaml-cpp/Debug"
-    }
-
     links
     {
-        "vulkan-1",
-        "glfw3",
-        "yaml-cppd",
-        "kernel32",
         "IronMaiden"
     }
 
     filter "system:windows"
-        cppdialect "C++17"
-        staticruntime "On"
         systemversion "latest"
 
         defines
         {
+            "_CRT_SECURE_NO_WARNINGS";
+            "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
             "MADAM_PLATFORM_WINDOWS";
         }
 
@@ -205,12 +204,12 @@ project "Editor"
 
     filter "configurations:Debug"
         defines "MADAM_DEBUG"
-        symbols "On"
+        symbols "on"
 
     filter "configurations:Release"
         defines "MADAM_RELEASE"
-        optimize "On"
+        optimize "on"
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
-        optimize "On"
+        optimize "on"

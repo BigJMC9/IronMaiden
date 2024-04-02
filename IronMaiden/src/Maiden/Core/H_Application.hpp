@@ -48,8 +48,9 @@ namespace Madam {
 			return renderer.getAspectRatio();
 		}
 
-		void addSurface(Surface& surface) {
-			pSurface = std::make_unique<Surface>(surface);
+		void addSurface(std::unique_ptr<Surface> _surface) {
+			pSurface = std::move(_surface);
+			MADAM_CORE_INFO("Surface added");
 		}
 
 		static Application& Get() {
@@ -81,7 +82,8 @@ namespace Madam {
 		void run();
 
 		bool isRuntime = false;
-		std::unique_ptr<Camera> pCamera;
+
+		std::unique_ptr<Surface> pSurface = nullptr;
 
 	private:
 
@@ -105,7 +107,7 @@ namespace Madam {
 		std::unique_ptr<Scene> scene;
 		SceneSerializer* pSceneSerializer;
 	protected:
-		std::unique_ptr<Surface> pSurface;
+		
 	};
 
 	//Defined by client

@@ -1,10 +1,6 @@
 #pragma once
 
 #include <Maiden.hpp>
-#include "Maiden/Scene/H_Scene.hpp"
-#include "Maiden/Scene/H_Entity.hpp"
-#include "Maiden/Scene/ScriptableEntity.hpp"
-#include "Maiden/Events/H_Input.hpp"
 
 namespace Madam {
 	class EditorSurface : public Surface {
@@ -15,11 +11,13 @@ namespace Madam {
 		virtual void OnAttach() override;
 		//virtual void OnDetach() override;
 
-		virtual void OnUpdate() override;
+		void OnUpdate() override;
+
+		void OnSceneLoad() override;
 
 	private:
 		KeyboardMovementController cameraController{};
-		Entity viewerObject;
-		Camera camera{};
+		std::shared_ptr<Entity> viewerObject = nullptr;
+		bool isFirst = true;
 	};
 }

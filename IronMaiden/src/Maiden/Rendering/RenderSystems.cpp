@@ -266,10 +266,9 @@ namespace Madam {
 
 			entt::registry& entities = frameInfo.scene->Reg();
 			auto group = entities.view<Transform, MeshRenderer>();
-			//std::cout << "---Texture---" << std::endl;
-			//auto group = entities.group<Transform>(entt::get<MeshRenderer>);
+
 			for (auto entity : group) {
-				//auto& obj = kv.second;
+
 				auto [transform, meshRenderer] = group.get<Transform, MeshRenderer>(entity);
 
 				if (!entities.valid(entity)) {
@@ -418,7 +417,7 @@ namespace Madam {
 			auto group = entities.view<Transform, PointLight>();
 			for (auto entity : group) {
 				auto [transform, pointLight] = group.get<Transform, PointLight>(entity);
-				auto offset = frameInfo.camera.getPosition() - transform.translation;
+				auto offset = Rendering::CameraHandle::getMain().getPosition() - transform.translation;
 				float disSquared = glm::dot(offset, offset);
 				sorted[disSquared] = entity;
 			}

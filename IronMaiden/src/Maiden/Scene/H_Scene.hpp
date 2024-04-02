@@ -3,9 +3,8 @@
 #include "maidenpch.hpp"
 #include "../Core/H_Device.hpp"
 #include "H_Model.hpp"
-//#include "H_components.hpp"
-//#include "H_Game_Object.hpp"
 #include "../Rendering/FrameInfo.hpp"
+#include "../Rendering/H_Camera.hpp"
 
 //When we add animation, we will have to compress the data when loaded into the GPU or it will be very memory intensive. see (pg 63)
 
@@ -47,26 +46,13 @@ namespace Madam {
 			}
 			return *this;
 		}
-
-		//std::shared_ptr<entt::registry> Reg() { return std::make_shared<entt::registry>(registry); }
-
-		//void Initialize();
-		//void Start();
-		//void Update();
-		//void Render();
-
-		//GameObject editorCamera;
 	private:
+		std::vector<std::shared_ptr<Rendering::CameraHandle>> cameras;
 
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
 
-		//Device device;
-
 		entt::registry registry;
-
-		//KeyboardMovementController cameraController;
-		//std::unordered_map<UUID, Entity> m_EntityMap;
 
 		friend class Entity;
 		friend class SceneSerializer;

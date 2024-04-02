@@ -98,9 +98,11 @@ namespace Madam {
 			else if (commandWords[1] == "load") {
 				if (commandWords.size() > 2) {
 					scene->Deserialize(commandWords[2]);
+					Application::Get().pSurface->OnSceneLoad();
 				}
 				else {
 					scene->Deserialize("scenes/temp.scene");
+					Application::Get().pSurface->OnSceneLoad();
 				}
 			}
 			else if (commandWords[1] == "save") {

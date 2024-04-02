@@ -16,17 +16,19 @@ namespace Madam {
 	public:
 		Entity() = default;
 		Entity(entt::entity _handle, Scene* _scene);
-		Entity(entt::entity _handle, Scene* _scene, UUID _id);
+		//Entity(entt::entity _handle, Scene* _scene, UUID _id);
 		Entity(const Entity& other) = default;
+
+		~Entity() = default;
 
 		template<typename T, typename... Args>
 		T& AddComponent(Args&&... args)
 		{
+			MADAM_CORE_ASSERT(!HasComponent<T>(), "GameObject already has component!");
 			//assert(!HasComponent<T>(), "GameObject already has component!");
 			T& component = scene->registry.emplace<T>(entityHandle, std::forward<Args>(args)...);
 			scene->OnComponentAdded<T>(*this, component);
 			return component; //forwards args
-
 		}
 
 		template<typename T>
@@ -43,6 +45,7 @@ namespace Madam {
 
 		template<typename T>
 		void RemoveComponent() {
+			MADAM_CORE_ASSERT(HasComponent<T>(), "GameObject does not have that component!");
 			//assert(HasComponent<T>(), "GameObject does not have that component!");
 			scene->registry.remove<T>(entityHandle);
 		}
@@ -51,19 +54,18 @@ namespace Madam {
 		operator entt::entity() const { return entityHandle; }
 		operator uint32_t() const { return (uint32_t)entityHandle; }
 
-		UUID GetUUID() { return id; }
-
-		std::string SetName(std::string _name) {
-			name = _name;
-			return name; 
-		}
-
-		std::string GetName() {
-			return name;
-		}
-
 		entt::entity GetHandle() {
 			return entityHandle;
+		}
+
+		entt::entity& GetHandleAsRef() {
+			return entityHandle;
+		}
+
+		std::string GetHandleMemoryLocation() {
+			std::stringstream ss;
+			ss << static_cast<void*>(&entityHandle);
+			return ss.str();
 		}
 
 		bool operator==(const Entity& other) const
@@ -80,7 +82,7 @@ namespace Madam {
 	private:
 		entt::entity entityHandle{ entt::null };
 		Scene* scene = nullptr;
-		UUID id;
-		std::string name = "NULL";
+		//UUID id;
+		//std::string name = "NULL";
 	};
 }
