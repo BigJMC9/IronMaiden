@@ -90,6 +90,7 @@ namespace Madam {
 			registry.view <NativeScriptComponent>().each([=](auto entity, auto& nsc) {
 				if (!nsc.instance) {
 					nsc.instantiate();
+					nsc.instance->entity = Entity{ entity, this };
 					nsc.onCreate(nsc.instance);
 					nsc.onStart(nsc.instance);
 					//nsc.instance->entity = Entity{ entity, this };
@@ -97,7 +98,7 @@ namespace Madam {
 					//nsc.instance->onStart(nsc.instance);
 				}
 				nsc.onUpdate(nsc.instance);
-
+				nsc.onLateUpdate(nsc.instance);
 			});
 		}
 	}
@@ -152,6 +153,12 @@ namespace Madam {
 
 	template<>
 	void Scene::OnComponentAdded<Material>(Entity entity, Material& component)
+	{
+
+	}
+
+	template<>
+	void Scene::OnComponentAdded<NativeScriptComponent>(Entity entity, NativeScriptComponent& component)
 	{
 
 	}

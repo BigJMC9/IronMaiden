@@ -162,6 +162,7 @@ namespace Madam {
 			//cameraController.handleCommands(window.getGLFWwindow(), pSceneSerializer);
 			
 			pSurface->OnUpdate();
+			scene->Update();
             /*cameraController.moveInPlaneXZ(window.getGLFWwindow(), time.GetFrameTime(), viewerObject);
             camera.setViewYXZ(viewerObject.GetComponent<Transform>().translation, viewerObject.GetComponent<Transform>().rotation);*/
 
@@ -197,6 +198,7 @@ namespace Madam {
 				uboBuffers[frameIndex]->flush();
 
 				// render
+				scene->Render();
 				renderer.beginSwapChainRenderPass(commandBuffer);
 				renderStack.render(frameInfo);
 				renderer.endSwapChainRenderPass(commandBuffer);

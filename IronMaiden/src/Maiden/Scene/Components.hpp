@@ -245,6 +245,7 @@ namespace Madam {
 		//operator const glm::mat4& () const { return m_transform; }
 	};
 
+	//Maybe set default functions? virtual functions may need to be avoided
 	struct NativeScriptComponent {
 
 		ScriptableEntity* instance = nullptr;

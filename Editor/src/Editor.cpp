@@ -1,6 +1,61 @@
 #include "H_Editor.hpp"
 
 namespace Madam {
+
+	class CameraController : public ScriptableEntity {
+	public:
+		float moveSpeed{ 3.f };
+		float lookSpeed{ 1.5f };
+		void Create() {
+
+		}
+		void Destroy() {
+
+		}
+		void Start() {
+
+		}
+		void Update() {
+			GLFWwindow* window = Application::Get().getWindow().getGLFWwindow();
+
+			glm::vec3 rotate{ 0 };
+			if (Input::Get().IsKeyDown(KeyCode::UP)) rotate.x += 1.f;
+			if (Input::Get().IsKeyDown(KeyCode::DOWN)) rotate.x -= 1.f;
+			if (Input::Get().IsKeyDown(KeyCode::RIGHT)) rotate.y += 1.f;
+			if (Input::Get().IsKeyDown(KeyCode::LEFT)) rotate.y -= 1.f;
+
+			if (glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()) {
+				GetComponent<Transform>().rotation += lookSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(rotate);
+			}
+
+			GetComponent<Transform>().rotation.x = glm::clamp(GetComponent<Transform>().rotation.x, -1.5f, 1.5f);
+			GetComponent<Transform>().rotation.y = glm::mod(GetComponent<Transform>().rotation.y, glm::two_pi<float>());
+
+			float yaw = GetComponent<Transform>().rotation.y;
+			const glm::vec3 forwardDir{ sin(yaw), 0.f, cos(yaw) };
+			const glm::vec3 rightDir{ forwardDir.z, 0.f, -forwardDir.x };
+			const glm::vec3 upDir{ 0.f, -1.f, 0.f };
+
+			glm::vec3 moveDir{ 0.f };
+			if (Input::Get().IsKeyDown(KeyCode::W)) moveDir += forwardDir;
+			if (Input::Get().IsKeyDown(KeyCode::S)) moveDir -= forwardDir;
+			if (Input::Get().IsKeyDown(KeyCode::A)) moveDir -= rightDir;
+			if (Input::Get().IsKeyDown(KeyCode::D)) moveDir += rightDir;
+			if (Input::Get().IsKeyDown(KeyCode::E)) moveDir += upDir;
+			if (Input::Get().IsKeyDown(KeyCode::Q)) moveDir -= upDir;
+
+			if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
+				GetComponent<Transform>().translation += moveSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(moveDir);
+			}
+		}
+		void LateUpdate() {
+
+		}
+		void Render() {
+
+		}
+	};
+
 	EditorSurface::EditorSurface() : Surface("Editor") 
 	{
 
@@ -28,6 +83,10 @@ namespace Madam {
 		}
 		entt::entity& entityID = obj.GetHandleAsRef();
 		MADAM_CORE_INFO("Entity ID: {0} at: {1}", (uint32_t)entityID, obj.GetHandleMemoryLocation());
+
+		
+
+		viewerObject->AddComponent<NativeScriptComponent>().Bind<CameraController>();
 	}
 
 	void EditorSurface::OnUpdate()
@@ -62,7 +121,6 @@ namespace Madam {
 		}
 		
 		Entity& obj = *viewerObject.get();
-		cameraController.moveInPlaneXZ(Application::Get().getWindow().getGLFWwindow(), Application::Get().getTime().GetDeltaTime(), obj);
 		Camera& camera = viewerObject->GetComponent<Camera>();
 		camera.cameraHandle->setViewYXZ(viewerObject->GetComponent<Transform>().translation, viewerObject->GetComponent<Transform>().rotation);
 		float aspect = Application::Get().getAspectRatio();
@@ -82,6 +140,7 @@ namespace Madam {
 				{
 					MADAM_INFO("Camera is main camera");
 					viewerObject = std::make_shared<Entity>(entity);
+					viewerObject->AddComponent<NativeScriptComponent>().Bind<CameraController>();
 				}
 				else {
 					MADAM_INFO("Camera is not main camera");

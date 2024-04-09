@@ -16,7 +16,6 @@ namespace Madam {
 		void OnSceneLoad() override;
 
 	private:
-		KeyboardMovementController cameraController{};
 		std::shared_ptr<Entity> viewerObject = nullptr;
 		bool isFirst = true;
 	};
