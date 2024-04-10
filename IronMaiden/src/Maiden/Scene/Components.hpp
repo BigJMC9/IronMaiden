@@ -248,10 +248,12 @@ namespace Madam {
 	//Maybe set default functions? virtual functions may need to be avoided
 	struct NativeScriptComponent {
 
-		ScriptableEntity* instance = nullptr;
+		ScriptableEntity* Instance = nullptr;
 
-		std::function<void()> instantiate;
-		std::function<void()> destroyInstance;
+		//std::function<void()> InstantiateScript;
+		ScriptableEntity* (*InstantiateScript)();
+		void (*DestroyScript)(NativeScriptComponent*);
+		//std::function<void()> DestroyScript;
 
 		std::function<void(ScriptableEntity*)> onCreate;
 		std::function<void(ScriptableEntity*)> onStart;
@@ -264,19 +266,18 @@ namespace Madam {
 		NativeScriptComponent() = default;
 		NativeScriptComponent(NativeScriptComponent&) = default;
 
+		//Bind ?!?!??
 		template<typename T>
 		void Bind() {
+			InstantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
+			DestroyScript = [](NativeScriptComponent* nsc) { delete (T*)nsc->Instance; nsc->Instance = nullptr; };
 
-			instantiate = [&]() { instance = new T(); };
-			destroyInstance = [&]() { delete (T*)instance; instance = nullptr; };
-
-			onCreate = [](ScriptableEntity* instance) { ((T*)instance)->Create(); };
-			onDestroy = [](ScriptableEntity* instance) { ((T*)instance)->Destroy(); };
-			onStart = [](ScriptableEntity* instance) { ((T*)instance)->Start(); };
-			onUpdate = [](ScriptableEntity* instance) { ((T*)instance)->Update(); };
-			onLateUpdate = [](ScriptableEntity* instance) { ((T*)instance)->LateUpdate(); };
-			onRender = [](ScriptableEntity* instance) { ((T*)instance)->Render(); };
-			
+			onCreate = [](ScriptableEntity* Instance) { ((T*)Instance)->Create(); };
+			onDestroy = [](ScriptableEntity* Instance) { ((T*)Instance)->Destroy(); };
+			onStart = [](ScriptableEntity* Instance) { ((T*)Instance)->Start(); };
+			onUpdate = [](ScriptableEntity* Instance) { ((T*)Instance)->Update(); };
+			onLateUpdate = [](ScriptableEntity* Instance) { ((T*)Instance)->LateUpdate(); };
+			onRender = [](ScriptableEntity* Instance) { ((T*)Instance)->Render(); };
 		}
 	};
 

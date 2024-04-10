@@ -64,7 +64,7 @@ namespace Madam {
 	void EditorSurface::OnAttach()
 	{
 		MADAM_INFO("Editor Server Attached");
-
+		compiler = std::make_shared<Scripting::NativeCompiler>();
 		Rendering::CameraData cameraData;
 		cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
 		cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().getAspectRatio(), 0.1f, 1000.0f);
@@ -120,6 +120,20 @@ namespace Madam {
 			}
 		}
 		
+		std::string scriptPath = Application::Get().CreateScript();
+		if (scriptPath != "") {
+			MADAM_CORE_INFO("Script Creating");
+			compiler->OnCreateScript(scriptPath);
+		}
+		if (Application::Get().isScan()) {
+			MADAM_CORE_INFO("Scanning for scripts");
+			compiler->HardScanScripts();
+		}
+		if (Application::Get().isCompile()) {
+			MADAM_CORE_INFO("Compiling scripts");
+			compiler->Compile();
+		}
+
 		Entity& obj = *viewerObject.get();
 		Camera& camera = viewerObject->GetComponent<Camera>();
 		camera.cameraHandle->setViewYXZ(viewerObject->GetComponent<Transform>().translation, viewerObject->GetComponent<Transform>().rotation);

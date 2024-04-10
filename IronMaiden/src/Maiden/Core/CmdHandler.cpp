@@ -52,6 +52,42 @@ namespace Madam {
 			else if (commandWords[0] == "snap") {
 				Application::Get().debug = true;
 			}
+			else if (commandWords[0] == "scan") {
+				Application::Get().setScan();
+			}
+			else if (commandWords[0] == "compile") {
+				Application::Get().setCompile();
+			}
+			else if (commandWords[0] == "create") {
+				if (commandWords.size() < 2) {
+					handler.Write("Commands for create: \ncreate script [location]");
+				}
+				else if (commandWords[1] == "script") {
+					if (commandWords.size() < 3) {
+						Application::Get().setCreateNative("NewScript.cpp");
+					}
+					else {
+						std::string defaultFileType = ".cpp";
+						std::string fileType = commandWords[2].substr(commandWords[2].size() - defaultFileType.size());
+						if (fileType == defaultFileType) {
+							Application::Get().setCreateNative(commandWords[2]);
+						}
+						else {
+							Application::Get().setCreateNative(commandWords[2] + ".cpp");
+						}
+					}
+					/*else {
+						handler.Write("Commands for create script: \ncreate script [location]");
+					}*/
+				}
+			}
+			else if (commandWords[0] == "quit") {
+				Application::Get().quit();
+				if (!handler.Write("[!c!]")) {
+					std::cout << "Error: unable to send end of write to pipe!" << std::endl;
+				}
+				return;
+			}
 
 			if (!handler.Write("[!n!]")) {
 				std::cout << "Error: unable to send end of write to pipe!" << std::endl;

@@ -6,6 +6,7 @@ namespace Madam {
         PipeHandler::PipeHandler() : p1(NULL), p2(NULL) {}
 
         PipeHandler::~PipeHandler() {
+            isRunning = false;
             if (p1 != NULL)
                 CloseHandle(p1);
             if (p2 != NULL)
@@ -78,6 +79,7 @@ namespace Madam {
 
         void PipeHandler::StartAsyncRead() {
             // Start a new thread for asynchronous reading
+            isRunning = true;
             std::thread(&PipeHandler::ReadAsync, this).detach();
         }
 
@@ -106,7 +108,7 @@ namespace Madam {
             // Function to read asynchronously
             CHAR chBuf[1024];
             DWORD dwRead;
-            while (true) {
+            while (isRunning) {
                 if (ReadFile(p2, chBuf, sizeof(chBuf), &dwRead, NULL)) {
                     chBuf[dwRead] = '\0';
                     std::string str(chBuf);

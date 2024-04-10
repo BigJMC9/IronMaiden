@@ -1,0 +1,30 @@
+#include <windows.h>
+#include <iostream>
+
+int main() {
+    // Compile the script into a DLL
+    system("cl /LD script.cpp /Fe:script.dll");
+
+    // Load the DLL
+    HMODULE hMod = LoadLibrary(TEXT("script.dll"));
+    if (!hMod) {
+        std::cerr << "Failed to load script.dll\n";
+        return 1;
+    }
+
+    // Get a function from the DLL
+    typedef void (*ScriptFunction)();
+    ScriptFunction func = (ScriptFunction)GetProcAddress(hMod, "MyFunction");
+    if (!func) {
+        std::cerr << "Failed to find MyFunction\n";
+        return 1;
+    }
+
+    // Call the function
+    func();
+
+    // Unload the DLL
+    FreeLibrary(hMod);
+
+    return 0;
+}

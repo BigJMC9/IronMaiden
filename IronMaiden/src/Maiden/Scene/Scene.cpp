@@ -88,24 +88,25 @@ namespace Madam {
 	void Scene::Update() {
 		{
 			registry.view <NativeScriptComponent>().each([=](auto entity, auto& nsc) {
-				if (!nsc.instance) {
-					nsc.instantiate();
-					nsc.instance->entity = Entity{ entity, this };
-					nsc.onCreate(nsc.instance);
-					nsc.onStart(nsc.instance);
+				//Move to on scene play
+				if (!nsc.Instance) {
+					nsc.Instance = nsc.InstantiateScript();
+					nsc.Instance->entity = Entity{ entity, this };
+					nsc.onCreate(nsc.Instance);
+					nsc.onStart(nsc.Instance);
 					//nsc.instance->entity = Entity{ entity, this };
 					//nsc.instance->onCreate(nsc.instance);
 					//nsc.instance->onStart(nsc.instance);
 				}
-				nsc.onUpdate(nsc.instance);
-				nsc.onLateUpdate(nsc.instance);
+				nsc.onUpdate(nsc.Instance);
+				nsc.onLateUpdate(nsc.Instance);
 			});
 		}
 	}
 
 	void Scene::Render() {
 		registry.view <NativeScriptComponent>().each([=](auto entity, auto& nsc) {
-			nsc.onRender(nsc.instance);
+			nsc.onRender(nsc.Instance);
 		});
 	}
 

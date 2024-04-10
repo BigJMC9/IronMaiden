@@ -294,7 +294,7 @@ namespace Madam {
 				auto ambientOcclusionInfo = meshRenderer.getMaterial()->ambientOcclusionMap->getImageInfo();
 				auto glossInfo = meshRenderer.getMaterial()->glossMap->getImageInfo();
 				VkDescriptorSet descriptorSet1;
-				JcvbDescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
+				DescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
 					.writeImage(0, &imageInfo)
 					.writeImage(1, &normalInfo)
 					.writeImage(2, &ambientOcclusionInfo)

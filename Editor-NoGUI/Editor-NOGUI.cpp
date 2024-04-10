@@ -1,16 +1,48 @@
 // std
 #include <windows.h>
 #include <iostream>
-
-#include <windows.h>
-#include <iostream>
+#include <stdlib.h>
+#include <thread>
+#include <chrono>
 #include <string>
+
+static int connectErrorCount = 0;
+static int createPipeErrorCount = 0;
+static int readErrorCount = 0;
 
 void read(HANDLE p1, char buffer[1024], DWORD& bytesRead) {
     while (!ReadFile(p1, buffer, sizeof(buffer), &bytesRead, NULL)) {
-        std::cerr << "Failed to read from pipe. Error code: " << GetLastError() << std::endl;
+        switch (readErrorCount)
+        {
+        case 0:
+            std::cerr << "Failed to read from pipe, Retrying. Error code: " << GetLastError() << std::endl;
+            readErrorCount++;
+            break;
+        case 1:
+            std::cerr << "Failed to read from pipe, Retrying. Error code: " << GetLastError() << std::endl;
+            readErrorCount++;
+            break;
+        case 2:
+            std::cerr << "Failed to read from pipe, Retrying. Error code: " << GetLastError() << " ." << std::endl;
+            readErrorCount++;
+            break;
+        case 3:
+            std::cerr << "Failed to read from pipe, Retrying. Error code: " << GetLastError() << " .." << std::endl;
+            readErrorCount++;
+            break;
+        case 4:
+            std::cerr << "Failed to read from pipe, Retrying. Error code: " << GetLastError() << " ..." << std::endl;
+            readErrorCount = 1;
+            break;
+        default:
+            std::cerr << "Code Error??" << std::endl;
+            break;
+        }
+        //std::cerr << "Failed to open pipe. Error code: " << GetLastError() << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     buffer[bytesRead] = '\0';
+    readErrorCount = 0;
 }
 
 void write(HANDLE p2, char buffer[1024], DWORD& bytesWritten, std::string input) {
@@ -36,8 +68,40 @@ int main() {
             0,
             NULL);
         if (p1 == INVALID_HANDLE_VALUE) {
-            std::cerr << "Failed to open pipe. Error code: " << GetLastError() << std::endl;
+            switch (connectErrorCount)
+            {
+            case 0:
+                std::cerr << "Failed to connect to pipe, Retrying. Error code: " << GetLastError() << std::endl;
+				connectErrorCount++;
+				break;
+            case 1:
+                std::system("cls");
+                std::cerr << "Failed to connect to pipe, Retrying. Error code: " << GetLastError() << std::endl;
+                connectErrorCount++;
+                break;
+            case 2:
+                std::system("cls");
+				std::cerr << "Failed to connect to pipe, Retrying. Error code: " << GetLastError() << " ." << std::endl;
+				connectErrorCount++;
+                break;
+            case 3:
+                std::system("cls");
+                std::cerr << "Failed to connect to pipe, Retrying. Error code: " << GetLastError() << " .." << std::endl;
+                connectErrorCount++;
+                break;
+            case 4:
+                std::system("cls");
+                std::cerr << "Failed to connect to pipe, Retrying. Error code: " << GetLastError() << " ..." << std::endl;
+                connectErrorCount = 1;
+                break;
+            default:
+                std::cerr << "Code Error??" << std::endl;
+                break;
+            }
+            //std::cerr << "Failed to open pipe. Error code: " << GetLastError() << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
+        connectErrorCount = 0;
     } while (p1 == INVALID_HANDLE_VALUE);
 
     std::cout << "Read End Pipe Established!" << std::endl;
@@ -61,12 +125,19 @@ int main() {
     }
     std::cout << "Create Write End Pipe!" << std::endl;
     write(p2, buffer, bytesWritten, "Connected to Editor!");
-
-    while (true) {
+    bool isClose = false;
+    while (!isClose) {
         while(true) {
             read(p1, buffer, bytesRead);
             if (strstr(buffer, "[!n!]") == NULL) {
-                std::cout << buffer;
+                if (strstr(buffer, "[!c!]") != NULL) {
+                    std::cout << "quitting" << std::endl;
+                    isClose = true;
+                    break;
+                }
+                else {
+                    std::cout << buffer;
+                }
             }
             else {
                 std::cout << std::endl;
@@ -74,7 +145,9 @@ int main() {
             }
         } //while (strstr(buffer, "[!n!]") == NULL);
         
-
+        if (isClose) {
+            break;
+        }
         // Server finished writing, now handle user input
         std::cout << "> ";
         std::string input;

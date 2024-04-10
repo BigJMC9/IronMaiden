@@ -68,9 +68,10 @@ namespace Madam {
 	}
 
 	void Application::ShutDown() {
+		pipeHandler.Shutdown();
 		renderStack.ShutDown();
 		renderer.ShutDown();
-		device.ShutDown();
+		//device.ShutDown(); //For proper shutdown, make singleton
 		window.ShutDown();
 		isRunning = false;
 	}
@@ -116,14 +117,14 @@ namespace Madam {
 			uboBuffers[i]->map();
 		}
 
-		auto globalSetLayout = DescriptorSetLayout::Builder(device)
+		std::unique_ptr<DescriptorSetLayout> globalSetLayout = DescriptorSetLayout::Builder(device)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 			.build();
 
 		std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (int i = 0; i < globalDescriptorSets.size(); i++) {
 			auto bufferInfo = uboBuffers[i]->descriptorInfo();
-			JcvbDescriptorWriter(*globalSetLayout, *globalPool)
+			DescriptorWriter(*globalSetLayout, *globalPool)
 				.writeBuffer(0, &bufferInfo)
 				.build(globalDescriptorSets[i]);
 		}
@@ -133,41 +134,22 @@ namespace Madam {
 		firstFrame = true;
 
 		pSurface->OnAttach();
-		//Will be done by Scene
-        /*Camera camera{};
-        camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.f, 0.f, 0.f));
-		Entity viewerObject = scene->CreateGameObject();
-		viewerObject.SetName("Editor Camera");
-		viewerObject.GetComponent<Transform>().translation.z = -2.5f;
-        KeyboardMovementController cameraController{};*/
 
 		time.StartTime();
-        //auto currentTime = std::chrono::high_resolution_clock::now();
 
 		while (!window.shouldClose()) {
 			glfwPollEvents();
 
 			time.UpdateTime();
-            //auto newTime = std::chrono::high_resolution_clock::now();
-            //float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
-            //currentTime = newTime;
-
-            //frameTime = glm::min(frameTime, MAX_FRAME_TIME);
 
 			std::string command = pipeHandler.Read();
 			if (!command.empty()) {
 				std::cout << "command: " << command << std::endl;
 				App::CommandHandler::HandleCommand(command, pipeHandler, pSceneSerializer);
 			}
-			//cameraController.handleCommands(window.getGLFWwindow(), pSceneSerializer);
 			
 			pSurface->OnUpdate();
 			scene->Update();
-            /*cameraController.moveInPlaneXZ(window.getGLFWwindow(), time.GetFrameTime(), viewerObject);
-            camera.setViewYXZ(viewerObject.GetComponent<Transform>().translation, viewerObject.GetComponent<Transform>().rotation);*/
-
-            /*float aspect = renderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 500.0f);*/ //Should only update when window is resized
 
 			if (auto commandBuffer = renderer.beginFrame()) {
 				int frameIndex = renderer.getFrameIndex();
@@ -181,12 +163,6 @@ namespace Madam {
 					* framePools[frameIndex],
 					scene,
 					ubo};
-				/*if (debug) {
-					std::cout << "View: " << glm::to_string(ubo.view) << std::endl;
-					std::cout << "Inverse View: " << glm::to_string(ubo.inverseView) << std::endl;
-					std::cout << "Projection: " << glm::to_string(ubo.projection) << std::endl;
-					debug = false;
-				}*/
 
 				//Should be done in render stack
 				Rendering::CameraHandle& camera = Rendering::CameraHandle::getMain();
@@ -209,8 +185,14 @@ namespace Madam {
 			}
 		}
 		
-		std::cout << "Closing Program" << std::endl;
+		MADAM_CORE_INFO("Closing Program");
+		framePools.clear();
+		globalPool.reset();
 		vkDeviceWaitIdle(device.device());
 		ShutDown();
+	}
+
+	void Application::quit() {
+		window.quit();
 	}
 }

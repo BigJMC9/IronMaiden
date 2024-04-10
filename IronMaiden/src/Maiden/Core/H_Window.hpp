@@ -31,6 +31,7 @@ namespace Madam {
 		void ShutDown();
 
 		bool shouldClose() { return glfwWindowShouldClose(window); }
+		void quit() { glfwSetWindowShouldClose(window, GLFW_TRUE); }
 		VkExtent2D getExtent() { return { data.width, data.height }; }
 		bool wasWindowResized() { return framebufferResized; }
 		void resetWindowResizedFlag() { framebufferResized = false; }

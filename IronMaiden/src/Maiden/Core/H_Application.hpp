@@ -76,10 +76,45 @@ namespace Madam {
 
 		bool debug = false;
 
+		std::string CreateScript() {
+			std::string returnVal = createNative;
+			if (returnVal != "") {
+				MADAM_CORE_INFO("Creating Native Script: {0}", returnVal);
+			}
+			createNative = "";
+			return returnVal;
+		}
+
+		void setCreateNative(const std::string scriptName) {
+			createNative = scriptName;
+		}
+
+		bool isScan() {
+			bool temp = isScanning;
+			isScanning = false;
+			return temp;
+		}
+
+		void setScan() {
+			isScanning = true;
+		}
+
+		bool isCompile() {
+			bool temp = isCompiling;
+			isCompiling = false;
+			return temp;
+		}
+
+		void setCompile() {
+			isCompiling = true;
+		}
+
 		Application(const Application&) = delete;
 		Application& operator=(const Application&) = delete;
 
 		void run();
+
+		void quit();
 
 		bool isRuntime = false;
 
@@ -103,6 +138,10 @@ namespace Madam {
 
 		bool firstFrame = true;
 		bool isRunning = false;
+		//For Testing Remove when redundant
+		std::string createNative = "";
+		bool isScanning = true;
+		bool isCompiling = false;
 
 		std::unique_ptr<Scene> scene;
 		SceneSerializer* pSceneSerializer;

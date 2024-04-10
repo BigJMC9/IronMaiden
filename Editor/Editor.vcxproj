@@ -143,11 +143,16 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Internal\HeaderSample.hpp" />
     <ClInclude Include="src\H_Editor.hpp" />
+    <ClInclude Include="src\Scripting\H_Compiler.hpp" />
+    <ClInclude Include="src\Scripting\Core\NativeBehaviour.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Assets\Scripts\controller.cpp" />
     <ClCompile Include="EditorApp.cpp" />
     <ClCompile Include="src\Editor.cpp" />
+    <ClCompile Include="src\Scripting\Compiler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\IronMaiden\IronMaiden.vcxproj">

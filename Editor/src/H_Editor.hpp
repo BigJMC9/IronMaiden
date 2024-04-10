@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Maiden.hpp>
+#include "Scripting/H_Compiler.hpp"
 
 namespace Madam {
 	class EditorSurface : public Surface {
@@ -18,5 +19,6 @@ namespace Madam {
 	private:
 		std::shared_ptr<Entity> viewerObject = nullptr;
 		bool isFirst = true;
+		std::shared_ptr<Scripting::NativeCompiler> compiler = nullptr;
 	};
 }

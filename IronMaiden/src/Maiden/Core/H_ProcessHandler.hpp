@@ -10,6 +10,8 @@ namespace Madam {
 			PipeHandler();
 			~PipeHandler();
 
+			void Shutdown() { isRunning = false; }
+
 			bool CreatePipe();
 			//bool ConnectToChildProcess(const std::string& childProcessName);
 			void ReadAsync();
@@ -22,6 +24,8 @@ namespace Madam {
 		private:
 			bool CreateWrite();
 			bool CreateRead();
+			bool isRunning = false;
+
 			HANDLE p1; // Engine => Editor
 			HANDLE p2; // Editor => Engine
 			std::string message;

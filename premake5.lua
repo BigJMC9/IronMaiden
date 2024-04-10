@@ -57,6 +57,7 @@ project "IronMaiden"
         "%{IncludeDir.glm}",
         "%{IncludeDir.spdlog}",
         "%{IncludeDir.yaml_cpp}",
+        "%{IncludeDir.imgui}",
         "%{IncludeDir.stb}",
         "%{IncludeDir.entt}",
         "%{IncludeDir.tinyobj}",
@@ -200,6 +201,54 @@ project "Editor"
         postbuildcommands
         {
             "call \"compile.bat\""
+        }
+
+    filter "configurations:Debug"
+        defines "MADAM_DEBUG"
+        symbols "on"
+
+    filter "configurations:Release"
+        defines "MADAM_RELEASE"
+        optimize "on"
+
+    filter "configurations:Dist"
+        defines "MADAM_DIST"
+        optimize "on"
+project "Sandbox"
+    location "Sandbox"
+    kind "SharedLib"
+    language "C++"
+    cppdialect "C++17"
+
+    targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+    objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+    files
+    {
+        "%{prj.name}/**.h",
+        "%{prj.name}/**.hpp",
+        "%{prj.name}/**.c",
+        "%{prj.name}/**.cpp"
+    }
+
+    includedirs
+    {
+        
+    }
+
+    links
+    {
+
+    }
+
+    filter "system:windows"
+        systemversion "latest"
+
+        defines
+        {
+            "_CRT_SECURE_NO_WARNINGS";
+            "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
+            "MADAM_PLATFORM_WINDOWS";
         }
 
     filter "configurations:Debug"

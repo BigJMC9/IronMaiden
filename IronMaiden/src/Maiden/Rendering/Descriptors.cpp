@@ -130,10 +130,10 @@ namespace Madam {
 
     // *************** Descriptor Writer *********************
 
-    JcvbDescriptorWriter::JcvbDescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool)
+    DescriptorWriter::DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool)
         : setLayout{ setLayout }, pool{ pool } {}
 
-    JcvbDescriptorWriter& JcvbDescriptorWriter::writeBuffer(
+    DescriptorWriter& DescriptorWriter::writeBuffer(
         uint32_t binding, VkDescriptorBufferInfo* bufferInfo) {
         assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
 
@@ -154,7 +154,7 @@ namespace Madam {
         return *this;
     }
 
-    JcvbDescriptorWriter& JcvbDescriptorWriter::writeImage(
+    DescriptorWriter& DescriptorWriter::writeImage(
         uint32_t binding, VkDescriptorImageInfo* imageInfo) {
         assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
 
@@ -175,7 +175,7 @@ namespace Madam {
         return *this;
     }
 
-    bool JcvbDescriptorWriter::build(VkDescriptorSet& set) {
+    bool DescriptorWriter::build(VkDescriptorSet& set) {
         bool success = pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), set);
         if (!success) {
             return false;
@@ -184,7 +184,7 @@ namespace Madam {
         return true;
     }
 
-    void JcvbDescriptorWriter::overwrite(VkDescriptorSet& set) {
+    void DescriptorWriter::overwrite(VkDescriptorSet& set) {
         for (auto& write : writes) {
             write.dstSet = set;
         }
