@@ -1,8 +1,8 @@
-//Class: SampleClass
+//Class: test
 #include <Maiden.hpp>
 using namespace Madam;
 
-class SampleClass : public ScriptableEntity {
+class test : public ScriptableEntity {
 public:
 	
 	//Called when Entity is created
@@ -15,7 +15,7 @@ public:
 	}
 	//Called when Entity is enabled
 	void Start() {
-
+		std::cout << "Hello Test!" << std::endl;
 	}
 	//Called every frame
 	void Update() {

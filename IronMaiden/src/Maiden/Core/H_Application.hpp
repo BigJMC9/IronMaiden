@@ -19,6 +19,7 @@ namespace Madam {
 
 	class SceneSerializer;
 
+	//Should be passed in when App is created
 	struct ApplicationConfig
 	{
 		std::string name = "IronMaidenEngine";
@@ -26,6 +27,7 @@ namespace Madam {
 		std::string version = "0.05";
 		uint32_t windowWidth = 1600, windowHeight = 900;
 		std::string workingDirectory;
+		std::string projectFolder = "../Sandbox/"; //This should be the folder where the project is stored
 		std::string internals = "Internal/";
 		std::string assets = "Assets/";
 		bool is2D = false;
@@ -58,13 +60,16 @@ namespace Madam {
 			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
 			return *instance;
 		}
+
+		// Use const func() const {} for readonly vars
+
 		Window& getWindow() { return window;  }
 		Device& getDevice() { return device; }
 		Rendering::RenderStack& getMasterRenderSystem() { return renderStack; }
 		const std::vector<std::shared_ptr<Rendering::RenderLayer>>& getRenderLayers() const;
 		Rendering::Renderer& getRenderer() { return renderer; }
 		Scene& getScene() { return *scene; }
-		Time& getTime() { return time; }
+		const Time& getTime() const { return time; }
 		ApplicationConfig getConfig() {
 			return config;
 		}
@@ -99,7 +104,7 @@ namespace Madam {
 			isScanning = true;
 		}
 
-		bool isCompile() {
+		/*bool isCompile() {
 			bool temp = isCompiling;
 			isCompiling = false;
 			return temp;
@@ -107,6 +112,94 @@ namespace Madam {
 
 		void setCompile() {
 			isCompiling = true;
+		}*/
+
+		bool isPlay() const {
+			return runtime;
+		}
+
+		bool isRuntimeFlag() {
+			bool temp = runtimeFlag;
+			runtimeFlag = false;
+			return temp;
+		}
+
+		void setRuntimeFlag() {
+			runtimeFlag = true;
+		}
+
+		void RuntimeStart() {
+			runtime = true;
+		}
+
+		void RuntimeStop() {
+			if (runtime) {
+				runtime = false;
+				SwitchScenes(true);
+			}
+		}
+
+
+		//Temp solution. Need to move to Scene Management class and needs to be safer
+		void PrimeReserve(std::shared_ptr<Scene> _scene) {
+			reservedScene = _scene;
+		}
+
+		void SwitchScenes() {
+			if (reservedScene == nullptr) {
+				MADAM_CORE_ERROR("Scene has not been primed into reserve");
+			}
+			else {
+				std::shared_ptr<Scene> temp = scene;
+				scene = reservedScene;
+				reservedScene = temp;
+			}
+		}
+
+		void SwitchScenes(bool drop) {
+			if (reservedScene == nullptr) {
+				MADAM_CORE_ERROR("Scene has not been primed into reserve");
+			}
+			else {
+				std::shared_ptr<Scene> temp = scene;
+				scene = reservedScene;
+				if (drop) {
+					reservedScene = nullptr;
+				}
+				else {
+					reservedScene = temp;
+				}
+			}
+		}
+
+		/*bool isTest() {
+			bool temp = isTesting;
+			isTesting = false;
+			return temp;
+		}
+
+		void setTest() {
+			isTesting = true;
+		}*/
+
+		bool isUpdate() {
+			bool temp = isUpdating;
+			isUpdating = false;
+			return temp;
+		}
+
+		void setUpdate() {
+			isUpdating = true;
+		}
+
+		bool getScripts() {
+			bool temp = isGettingScripts;
+			isGettingScripts = false;
+			return temp;
+		}
+
+		void setScripts() {
+			isGettingScripts = true;
 		}
 
 		Application(const Application&) = delete;
@@ -115,8 +208,6 @@ namespace Madam {
 		void run();
 
 		void quit();
-
-		bool isRuntime = false;
 
 		std::unique_ptr<Surface> pSurface = nullptr;
 
@@ -136,14 +227,21 @@ namespace Madam {
 		std::unique_ptr<DescriptorPool> globalPool{};
 		std::vector<std::unique_ptr<DescriptorPool>> framePools;
 
-		bool firstFrame = true;
 		bool isRunning = false;
+		bool firstFrame = true;
 		//For Testing Remove when redundant
 		std::string createNative = "";
 		bool isScanning = true;
 		bool isCompiling = false;
+		bool runtime = false;
+		bool runtimeFlag = false;
+		bool isGettingScripts = false;
+		//bool isTesting = false;
+		bool isUpdating = false;
 
-		std::unique_ptr<Scene> scene;
+		//Need Scene Management class
+		std::shared_ptr<Scene> scene;
+		std::shared_ptr<Scene> reservedScene = nullptr;
 		SceneSerializer* pSceneSerializer;
 	protected:
 		

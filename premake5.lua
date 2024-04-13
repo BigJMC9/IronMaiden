@@ -6,6 +6,7 @@ workspace "IronMaiden"
     configurations
     {
         "Debug",
+        "DebugDLL",
         "Release",
         "Dist"
     }
@@ -71,13 +72,6 @@ project "IronMaiden"
         "%{LibDir.yaml_cpp}"
     }
 
-    links
-    {
-        "%{Lib.Vulkan}",
-        "%{Lib.glfw}",
-        "%{Lib.yaml_cpp}"
-    }
-
     filter "system:windows"
         systemversion "latest"
 
@@ -88,21 +82,53 @@ project "IronMaiden"
             "MADAM_PLATFORM_WINDOWS";
             "MADAM_BUILD_DLL";
         }
-
+        
     filter "configurations:Debug"
         defines "MADAM_DEBUG"
         symbols "on"
         runtime "debug"
+        links
+        {
+            "%{StaticLib.Vulkan}",
+            "%{StaticLib.glfw}",
+            "%{StaticLib.yaml_cpp}"
+        }
+    
+    filter "configurations:DebugDLL"
+        defines "MADAM_DEBUG"
+        symbols "on"
+        staticruntime "off"
+        runtime "debug"
+        kind "SharedLib"
+        links
+        {
+            "%{Lib.Vulkan}",
+            "%{Lib.glfw}",
+            "%{Lib.yaml_cpp}"
+        }
+        defines "MADAM_DYNAMIC_LINK"
 
     filter "configurations:Release"
         defines "MADAM_RELEASE"
         optimize "on"
         runtime "release"
+        links
+        {
+            "%{StaticLib.Vulkan}",
+            "%{StaticLib.glfw}",
+            "%{StaticLib.yaml_cpp}"
+        }
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
         optimize "on"
         runtime "release"
+        links
+        {
+            "%{StaticLib.Vulkan}",
+            "%{StaticLib.glfw}",
+            "%{StaticLib.yaml_cpp}"
+        }
 
 project "Editor-NoGUI"
     location "Editor-NoGUI"
@@ -183,9 +209,15 @@ project "Editor"
         "IronMaiden"
     }
 
+    libdirs 
+    { 
+        "bin/" .. outputdir .. "/IronMaiden",
+        "%{LibDir.yaml_cpp}",
+    }
+
     links
     {
-        "IronMaiden"
+        "IronMaiden.lib"
     }
 
     filter "system:windows"
@@ -198,6 +230,12 @@ project "Editor"
             "MADAM_PLATFORM_WINDOWS";
         }
 
+        prebuildcommands
+        {
+            "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
+            "copy %{wks.location}IronMaiden\\vendors\\yaml-cpp\\bin\\" .. outputdir .. "\\yaml-cpp\\yaml-cpp.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
+        }
+
         postbuildcommands
         {
             "call \"compile.bat\""
@@ -206,14 +244,27 @@ project "Editor"
     filter "configurations:Debug"
         defines "MADAM_DEBUG"
         symbols "on"
+        defines "YAML_CPP_STATIC_DEFINE"
+    
+    filter "configurations:DebugDLL"
+        defines "MADAM_DEBUG"
+        symbols "on"
+        staticruntime "off"
+        defines { 
+            "YAML_CPP_DLL";
+            "MADAM_DYNAMIC_LINK";
+        }
 
     filter "configurations:Release"
         defines "MADAM_RELEASE"
         optimize "on"
+        defines "YAML_CPP_STATIC_DEFINE"
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
         optimize "on"
+        defines "YAML_CPP_STATIC_DEFINE"
+
 project "Sandbox"
     location "Sandbox"
     kind "SharedLib"

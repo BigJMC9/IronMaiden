@@ -22,8 +22,12 @@ LibDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
 LibDir["glfw"] = "%{wks.location}/IronMaiden/vendors/glfw-3.3.8.bin.WIN64/lib-vc2022"
 LibDir["yaml_cpp"] = "%{wks.location}/IronMaiden/vendors/yaml-cpp/bin/%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}/yaml-cpp"
 
+StaticLib = {}
+StaticLib["Vulkan"] = "vulkan-1.lib"
+StaticLib["glfw"] = "glfw3_mt.lib"
+StaticLib["yaml_cpp"] = "yaml-cpp.lib"
+
 Lib = {}
 Lib["Vulkan"] = "vulkan-1.lib"
-Lib["glfw"] = "glfw3_mt.lib"
+Lib["glfw"] = "glfw3.lib"
 Lib["yaml_cpp"] = "yaml-cpp.lib"
-

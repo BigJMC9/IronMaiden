@@ -12,6 +12,7 @@
 #include "../Core/Base.hpp"
 
 namespace Madam {
+    //Create solution that don't involve using virtual functions.
     namespace Rendering {
 
         struct DefaultPushConstantData {
@@ -61,7 +62,7 @@ namespace Madam {
 
             Device& device;
 
-            std::unique_ptr<Pipeline> jcvbPipeline;
+            std::unique_ptr<Pipeline> pipeline;
             VkPipelineLayout pipelineLayout;
 		};
 
@@ -122,7 +123,7 @@ namespace Madam {
         class MADAM_API RenderStack {
 
         public:
-            RenderStack(Device& device, Renderer& renderer) : device{ device }, jcvbRenderer{ renderer } {}
+            RenderStack(Device& device, Renderer& renderer) : device{ device }, renderer{ renderer } {}
             ~RenderStack();
 
             void StartUp();
@@ -140,7 +141,7 @@ namespace Madam {
                 renderSystems.push_back(std::make_unique<RenderLayer>(std::move(renderSystem)));
             }*/
 
-            Renderer& jcvbRenderer;
+            Renderer& renderer;
 
         private:
             bool isRunning = false;

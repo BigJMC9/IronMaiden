@@ -68,7 +68,10 @@ namespace Madam {
 			Rendering::CameraData cameraData;
 			cameraHandle = std::make_shared<Rendering::CameraHandle>(cameraData);
 		};
-		Camera(Camera&) = default;
+		//Camera(Camera&) = default;
+		Camera(const Camera& source) {
+			cameraHandle = std::make_shared<Rendering::CameraHandle>(source.cameraHandle->CameraData());
+		};
 	};
 
 	struct UniqueIdentifier {
@@ -82,6 +85,13 @@ namespace Madam {
 
 	struct Object {
 		std::string name = "Object";
+
+		Object() = default;
+		//Object(Object&) = default;
+		Object(const Object&) = default;
+		Object(std::string _name) {
+			name = _name;
+		}
 		//Parent
 		//Tag
 		//Layer
@@ -92,7 +102,8 @@ namespace Madam {
 		std::shared_ptr<Model> model;
 
 		MeshFilter() = default;
-		MeshFilter(MeshFilter&) = default;
+		//MeshFilter(MeshFilter&) = default;
+		MeshFilter(const MeshFilter&) = default;
 	};
 
 	//Not Component, needs to be moved
@@ -101,7 +112,8 @@ namespace Madam {
 		std::string fragShaderPath;
 
 		Shader() = default;
-		Shader(Shader&) = default;
+		//Shader(Shader&) = default;
+		Shader(const Shader&) = default;
 	};
 
 	struct Material {
@@ -113,7 +125,8 @@ namespace Madam {
 		std::shared_ptr<Texture> glossMap = nullptr;
 
 		Material() = default;
-		Material(Material&) = default;
+		//Material(Material&) = default;
+		Material(const Material&) = default;
 	};
 
 	struct MeshRenderer {
@@ -122,7 +135,8 @@ namespace Madam {
 		std::shared_ptr<Material> material = nullptr;
 
 		MeshRenderer() = default;
-		MeshRenderer(MeshRenderer&) = default;
+		//MeshRenderer(MeshRenderer&) = default;
+		MeshRenderer(const MeshRenderer&) = default;
 
 		std::shared_ptr<Model> getModel() {
 			return mesh.model;
@@ -139,7 +153,8 @@ namespace Madam {
 		float intensity = 1.0f;
 
 		PointLight() = default;
-		PointLight(PointLight&) = default;
+		//PointLight(PointLight&) = default;
+		PointLight(const PointLight&) = default;
 	};
 
 	struct Transform {
@@ -210,6 +225,7 @@ namespace Madam {
 
 
 		Transform() = default;
+		//Transform(Transform&) = default;
 		Transform(const Transform&) = default;
 		//Transform(const glm::mat4& transform) : m_transform(transform) {}
 
@@ -264,9 +280,12 @@ namespace Madam {
 		
 
 		NativeScriptComponent() = default;
-		NativeScriptComponent(NativeScriptComponent&) = default;
+		NativeScriptComponent(const NativeScriptComponent&) = default;
+		//NativeScriptComponent(const NativeScriptComponent&) = default;
 
-		//Bind ?!?!??
+		//Bind ?!?! How do we work this with dll?
+		//Pain （πーπ）
+		//At this point I wonder if C# monobehaviour would be better for this (╥﹏╥)
 		template<typename T>
 		void Bind() {
 			InstantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
@@ -288,5 +307,5 @@ namespace Madam {
 
 	using AllComponents =
 		ComponentGroup<Transform, MeshRenderer,
-		MeshFilter, Material, Camera, PointLight>;
+		MeshFilter, Camera, PointLight, NativeScriptComponent>;
 }

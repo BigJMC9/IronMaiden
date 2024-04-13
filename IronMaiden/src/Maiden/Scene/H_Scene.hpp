@@ -9,11 +9,13 @@
 //When we add animation, we will have to compress the data when loaded into the GPU or it will be very memory intensive. see (pg 63)
 
 //Look into frustum culling and Spacial subdivision culling (pg 47)
+
+//Rank Each Camera by priority and render in that order. Put the editor camera at the top of the list.
 namespace Madam {
 	struct Material;
 
 	class Entity;
-	struct UUID;
+	class UUID;
 	class MADAM_API Scene
 	{
 	public:
@@ -23,13 +25,14 @@ namespace Madam {
 		Entity CreateEntity();
 		Entity CreateEntity(entt::entity _entity);
 		Entity CreateEntity(UUID uuid);
-		Entity CreateGameObject();
+		Entity CreateEntity(UUID uuid, const std::string& name);
 		Entity LoadGameObject(std::shared_ptr<Model> model);
 		Entity LoadGameObject(std::shared_ptr<Model> model, Material mat);
 
 		void Start();
 		void Update();
 		void Render();
+		std::shared_ptr<Scene> Copy();
 
 		entt::registry& Reg() { return registry; }
 
@@ -46,6 +49,13 @@ namespace Madam {
 			}
 			return *this;
 		}
+
+		template<typename... Components>
+		auto GetAllEntitiesWith()
+		{
+			return registry.view<Components...>();
+		}
+
 	private:
 		std::vector<std::shared_ptr<Rendering::CameraHandle>> cameras;
 

@@ -43,7 +43,7 @@ namespace Madam {
 			framePools[i] = framePoolBuilder.build();
 		}
 		
-		scene = std::make_unique<Scene>();
+		scene = std::make_shared<Scene>();
 		pSceneSerializer = new SceneSerializer(scene, device);
 
 		char buff[FILENAME_MAX];

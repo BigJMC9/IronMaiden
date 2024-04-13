@@ -53,7 +53,7 @@ namespace Madam {
 		VkDescriptorSet globalDescriptorSet;
 		DescriptorPool& frameDescriptorPool;
 		//Map& gameObjects;
-		std::unique_ptr<Scene>& scene;
+		std::shared_ptr<Scene>& scene;
 		GlobalUbo ubo;
 	};
 

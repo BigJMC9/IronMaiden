@@ -1,12 +1,15 @@
 #include "maidenpch.hpp"
 #include "H_SceneSerializer.hpp"
+#include "H_Scene.hpp"
 #include "H_Entity.hpp"
 #include "../Core/H_Application.hpp"
 //#include "H_components.hpp"
 
 //libs
-#ifndef YAML_CPP_STATIC_DEFINE
-	#define YAML_CPP_STATIC_DEFINE
+#ifndef MADAM_DYNAMIC_LINK
+	#ifndef YAML_CPP_STATIC_DEFINE
+		#define YAML_CPP_STATIC_DEFINE
+	#endif
 #endif
 #include <yaml-cpp/yaml.h>
 
@@ -307,7 +310,6 @@ namespace Madam {
 			out << YAML::EndMap;
 		}
 
-		//Add after component Camera is updated
 		if (entity.HasComponent<Camera>()) {
 			out << YAML::Key << "Camera";
 			out << YAML::BeginMap;
@@ -327,7 +329,7 @@ namespace Madam {
 		out << YAML::EndMap;
 	}
 
-	SceneSerializer::SceneSerializer(std::unique_ptr<Scene>& scene, Device& _device) : m_Scene(scene), device(_device) {
+	SceneSerializer::SceneSerializer(std::shared_ptr<Scene> scene, Device& _device) : m_Scene(scene), device(_device) {
 
 	}
 	
@@ -478,8 +480,12 @@ namespace Madam {
 					
 					camera.cameraHandle->setViewDirection(cameraNode["ViewPosition"].as<glm::vec3>(), cameraNode["ViewDirection"].as<glm::vec3>());
 					if (cameraNode["Main"].as<bool>()) {
+						MADAM_CORE_INFO("Is Main Camera");
 						camera.cameraHandle->setMain();
 						isMain = true;
+					}
+					else {
+						MADAM_CORE_INFO("Is Not Main Camera");
 					}
 				}
 			}
@@ -498,7 +504,10 @@ namespace Madam {
 			camera.GetComponent<Camera>().cameraHandle->setMain();
 		}
 
-		m_Scene = std::make_unique<Scene>(std::move(newScene));
+		m_Scene = std::make_shared<Scene>(std::move(newScene));
+		Application::Get().PrimeReserve(m_Scene);
+		Application::Get().SwitchScenes(true);
+
 		return true;
 	}
 

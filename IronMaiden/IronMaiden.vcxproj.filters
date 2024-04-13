@@ -193,5 +193,6 @@
     <ClCompile Include="src\Maiden\Scene\Texture.cpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Core\iBase.cpp" />
   </ItemGroup>
 </Project>

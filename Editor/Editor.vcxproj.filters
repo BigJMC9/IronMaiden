@@ -7,22 +7,29 @@
     <Filter Include="Assets\Scripts">
       <UniqueIdentifier>{6FC36DC7-5B91-61CD-4425-D2F330923D32}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Internal">
+      <UniqueIdentifier>{0291F903-EE5D-540F-1777-42B703A3899D}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\Scripting">
       <UniqueIdentifier>{6FBC2D98-DB7C-A9CE-A4B7-F24B1037EEAA}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Scripting\Core">
+      <UniqueIdentifier>{27FE884C-13E2-49A2-7C42-44F568453424}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Internal\HeaderSample.hpp">
+      <Filter>Internal</Filter>
+    </ClInclude>
     <ClInclude Include="src\H_Editor.hpp">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Scripting\H_Compiler.hpp">
+    <ClInclude Include="src\Scripting\H_ScriptEngine.hpp">
       <Filter>src\Scripting</Filter>
     </ClInclude>
-    <ClInclude Include="src\Scripting\Core\NativeBehaviour.hpp" />
-    <ClInclude Include="Internal\HeaderSample.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\Scripts\controller.cpp">
@@ -32,7 +39,7 @@
     <ClCompile Include="src\Editor.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Scripting\Compiler.cpp">
+    <ClCompile Include="src\Scripting\ScriptEngine.cpp">
       <Filter>src\Scripting</Filter>
     </ClCompile>
   </ItemGroup>

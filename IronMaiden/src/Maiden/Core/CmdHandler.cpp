@@ -52,11 +52,25 @@ namespace Madam {
 			else if (commandWords[0] == "snap") {
 				Application::Get().debug = true;
 			}
-			else if (commandWords[0] == "scan") {
-				Application::Get().setScan();
+			else if (commandWords[0] == "get") {
+				if (commandWords.size() < 2) {
+					handler.Write("Commands for get: \nget script");
+				}
+				else if (commandWords[1] == "script") {
+					Application::Get().setScripts();
+				}
+				else {
+					handler.Write("Unknown Command!\nCommands for get: \nget script");
+				}
 			}
-			else if (commandWords[0] == "compile") {
-				Application::Get().setCompile();
+			else if (commandWords[0] == "play") {
+				Application::Get().setRuntimeFlag();
+			}
+			else if (commandWords[0] == "stop") {
+				Application::Get().RuntimeStop();
+			}
+			else if (commandWords[0] == "scan") {
+				Application::Get().setUpdate();
 			}
 			else if (commandWords[0] == "create") {
 				if (commandWords.size() < 2) {
@@ -152,13 +166,13 @@ namespace Madam {
 		}
 
 
-		void CommandHandler::HandleRuntime(std::vector<std::string> commandWords, PipeHandler& handler) {
+		/*void CommandHandler::HandleRuntime(std::vector<std::string> commandWords, PipeHandler& handler) {
 			if (commandWords.size() < 2) {
 				handler.Write("Commands for Runtime: \nRuntime start");
 			}
 			else if (commandWords[1] == "start") {
 				Application::Get().isRuntime = true;
 			}
-		}
+		}*/
 	}
 }
