@@ -19,6 +19,7 @@ include("dpc.lua")
 
 group("Dependencies")
     include("IronMaiden/vendors/yaml-cpp")
+    include("IronMaiden/vendors/imgui")
 
 group("")
 
@@ -57,19 +58,20 @@ project "IronMaiden"
         "%{IncludeDir.glfw}",
         "%{IncludeDir.glm}",
         "%{IncludeDir.spdlog}",
-        "%{IncludeDir.yaml_cpp}",
         "%{IncludeDir.imgui}",
-        "%{IncludeDir.stb}",
         "%{IncludeDir.entt}",
+        "%{IncludeDir.yaml_cpp}",
         "%{IncludeDir.tinyobj}",
-        "%{IncludeDir.openfbx}",
+        "%{IncludeDir.stb}",
+        "%{IncludeDir.openfbx}"
     }
 
     libdirs 
     { 
         "%{LibDir.VulkanSDK}",
         "%{LibDir.glfw}",
-        "%{LibDir.yaml_cpp}"
+        "%{LibDir.yaml_cpp}",
+        "%{LibDir.imgui}",
     }
 
     filter "system:windows"
@@ -104,9 +106,11 @@ project "IronMaiden"
         {
             "%{Lib.Vulkan}",
             "%{Lib.glfw}",
-            "%{Lib.yaml_cpp}"
+            "%{Lib.yaml_cpp}",
+            "%{Lib.imgui}",
         }
         defines "MADAM_DYNAMIC_LINK"
+        defines "IMGUI_API"
 
     filter "configurations:Release"
         defines "MADAM_RELEASE"
@@ -227,7 +231,7 @@ project "Editor"
         {
             "_CRT_SECURE_NO_WARNINGS";
             "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
-            "MADAM_PLATFORM_WINDOWS";
+            "MADAM_PLATFORM_WINDOWS";   
         }
 
         prebuildcommands
@@ -265,51 +269,3 @@ project "Editor"
         optimize "on"
         defines "YAML_CPP_STATIC_DEFINE"
 
-project "Sandbox"
-    location "Sandbox"
-    kind "SharedLib"
-    language "C++"
-    cppdialect "C++17"
-
-    targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-
-    files
-    {
-        "%{prj.name}/**.h",
-        "%{prj.name}/**.hpp",
-        "%{prj.name}/**.c",
-        "%{prj.name}/**.cpp"
-    }
-
-    includedirs
-    {
-        
-    }
-
-    links
-    {
-
-    }
-
-    filter "system:windows"
-        systemversion "latest"
-
-        defines
-        {
-            "_CRT_SECURE_NO_WARNINGS";
-            "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
-            "MADAM_PLATFORM_WINDOWS";
-        }
-
-    filter "configurations:Debug"
-        defines "MADAM_DEBUG"
-        symbols "on"
-
-    filter "configurations:Release"
-        defines "MADAM_RELEASE"
-        optimize "on"
-
-    filter "configurations:Dist"
-        defines "MADAM_DIST"
-        optimize "on"

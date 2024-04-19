@@ -26,7 +26,7 @@ namespace Madam {
 				std::string message;
 				message = "Commands: \ninstantiate\nload [Scene Path]\nsave [Scene Path]\n";
 				message += "[!n!]";
-				std::cout << message << std::endl;
+				MADAM_CORE_INFO(message);
 				handler.Write(message);
 				handler.Write("[!n!]");
 				return;
@@ -68,6 +68,7 @@ namespace Madam {
 			}
 			else if (commandWords[0] == "stop") {
 				Application::Get().RuntimeStop();
+				Application::Get().setRuntimeStopFlag();
 			}
 			else if (commandWords[0] == "scan") {
 				Application::Get().setUpdate();
@@ -82,11 +83,16 @@ namespace Madam {
 					}
 					else {
 						std::string defaultFileType = ".cpp";
-						std::string fileType = commandWords[2].substr(commandWords[2].size() - defaultFileType.size());
-						if (fileType == defaultFileType) {
-							Application::Get().setCreateNative(commandWords[2]);
+						try {
+							std::string fileType = commandWords[2].substr(commandWords[2].size() - defaultFileType.size());
+							if (fileType == defaultFileType) {
+								Application::Get().setCreateNative(commandWords[2]);
+							}
+							else {
+								Application::Get().setCreateNative(commandWords[2] + ".cpp");
+							}
 						}
-						else {
+						catch (std::exception e) {
 							Application::Get().setCreateNative(commandWords[2] + ".cpp");
 						}
 					}
@@ -98,13 +104,17 @@ namespace Madam {
 			else if (commandWords[0] == "quit") {
 				Application::Get().quit();
 				if (!handler.Write("[!c!]")) {
-					std::cout << "Error: unable to send end of write to pipe!" << std::endl;
+					MADAM_CORE_ERROR("Error: unable to send end of write to pipe!");
 				}
 				return;
 			}
+			else {
+				MADAM_CORE_INFO("UNKNOWN COMMAND!");
+				handler.Write("Unknown Command!: " + command);
+			}
 
 			if (!handler.Write("[!n!]")) {
-				std::cout << "Error: unable to send end of write to pipe!" << std::endl;
+				MADAM_CORE_ERROR("Error: unable to send end of write to pipe!");
 			}
 		}
 
@@ -121,7 +131,7 @@ namespace Madam {
 					i += 1;
 				}
 				handler.Write(systemNames);
-				std::cout << systemNames << std::endl;
+				MADAM_CORE_INFO(systemNames);
 			}
 			else if (commandWords[1] == "switch") {
 				if (commandWords.size() > 3) {

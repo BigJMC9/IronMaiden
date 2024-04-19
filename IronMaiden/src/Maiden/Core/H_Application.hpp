@@ -11,7 +11,7 @@
 #include "H_ProcessHandler.hpp"
 #include "../Events/Event.hpp"
 #include "H_Time.hpp"
-#include "H_Surface.h"
+#include "H_Layer.h"
 
 //int main();
 
@@ -27,7 +27,8 @@ namespace Madam {
 		std::string version = "0.05";
 		uint32_t windowWidth = 1600, windowHeight = 900;
 		std::string workingDirectory;
-		std::string projectFolder = "../Sandbox/"; //This should be the folder where the project is stored
+		std::string projectFolder = "C:/Users/xbox/Desktop/Development/IronMaiden Projects/Sandbox/Sandbox/"; //This should be the folder to the project is stored
+		std::string projectWorkingDirectory = "C:/Users/xbox/Desktop/Development/IronMaiden Projects/Sandbox/"; //This should be the folder where the project folder is stored
 		std::string internals = "Internal/";
 		std::string assets = "Assets/";
 		bool is2D = false;
@@ -50,15 +51,20 @@ namespace Madam {
 			return renderer.getAspectRatio();
 		}
 
-		void addSurface(std::unique_ptr<Surface> _surface) {
+		void addSurface(std::unique_ptr<Layer> _surface) {
 			pSurface = std::move(_surface);
-			MADAM_CORE_INFO("Surface added");
+			MADAM_CORE_INFO("Layer added");
 		}
 
 		static Application& Get() {
 			//static Application instance;
 			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
 			return *instance;
+		}
+
+		static Application* GetPtr() {
+			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
+			return instance;
 		}
 
 		// Use const func() const {} for readonly vars
@@ -126,6 +132,16 @@ namespace Madam {
 
 		void setRuntimeFlag() {
 			runtimeFlag = true;
+		}
+
+		void setRuntimeStopFlag() {
+			runtimeStopFlag = true;
+		}
+
+		bool isRuntimeStopFlag() {
+			bool temp = runtimeStopFlag;
+			runtimeStopFlag = false;
+			return temp;
 		}
 
 		void RuntimeStart() {
@@ -209,7 +225,7 @@ namespace Madam {
 
 		void quit();
 
-		std::unique_ptr<Surface> pSurface = nullptr;
+		std::unique_ptr<Layer> pSurface = nullptr;
 
 	private:
 
@@ -235,6 +251,7 @@ namespace Madam {
 		bool isCompiling = false;
 		bool runtime = false;
 		bool runtimeFlag = false;
+		bool runtimeStopFlag = false;
 		bool isGettingScripts = false;
 		//bool isTesting = false;
 		bool isUpdating = false;

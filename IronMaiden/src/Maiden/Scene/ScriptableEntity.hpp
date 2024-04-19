@@ -13,6 +13,7 @@ namespace Madam {
 			return entity.GetComponent<T>();
 		}
 
+		bool enabled = true;
 	protected:
 		//virtual void OnBind() {}
 	private:

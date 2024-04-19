@@ -138,6 +138,10 @@ namespace Madam {
 
 	}
 
+	void Scene::RunTimeStart() {
+
+	}
+
 	void Scene::Update() {
 		{
 			registry.view <NativeScriptComponent>().each([=](auto entity, auto& nsc) {

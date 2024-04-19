@@ -58,12 +58,12 @@ namespace Madam {
 		}
 	};
 
-	EditorSurface::EditorSurface() : Surface("Editor") 
+	EditorLayer::EditorLayer() : Layer("Editor") 
 	{
 
 	}
 
-	void EditorSurface::OnAttach()
+	void EditorLayer::OnAttach()
 	{
 		MADAM_INFO("Editor Server Attached");
 		scriptEngine = std::make_shared<Scripting::ScriptEngine>();
@@ -92,7 +92,7 @@ namespace Madam {
 
 	}
 
-	void EditorSurface::OnUpdate()
+	void EditorLayer::OnUpdate()
 	{
 		if (isFirst) {
 
@@ -107,8 +107,6 @@ namespace Madam {
 			MADAM_INFO(debugStr);
 			isFirst = false;
 			entt::entity& entityID = viewerObject.GetHandleAsRef();
-
-			//Madam::Rendering::CameraHandle& cameraHandle = viewerObject->GetComponent<Camera>().cameraHandle->get();
 
 			if (viewerObject.GetComponent<Camera>().cameraHandle->isMain()) {
 				MADAM_INFO("Camera is main camera");
@@ -127,14 +125,6 @@ namespace Madam {
 			MADAM_INFO("Script Creating");
 			scriptEngine->OnCreateScript(scriptPath);
 		}
-		/*if (Application::Get().isScan()) {
-			MADAM_CORE_INFO("Scanning for scripts");
-			scriptEngine->RescanScripts();
-		}
-		if (Application::Get().isCompile()) {
-			MADAM_CORE_INFO("Compiling scripts");
-			scriptEngine->Compile();
-		}*/
 
 		//Fix in future plz, have scene load after dll loaded
 		if (Application::Get().isRuntimeFlag()) {
@@ -142,14 +132,20 @@ namespace Madam {
 			std::shared_ptr<Scene> runtimeScene = Application::Get().getScene().Copy();
 			Application::Get().PrimeReserve(runtimeScene);
 			Application::Get().SwitchScenes();
-			Entity& testEnt = Application::Get().getScene().CreateEntity();
-			if (scriptEngine->Runtime(testEnt)) {
+			Entity& gameManager = Application::Get().getScene().CreateEntity();
+			if (scriptEngine->Runtime(gameManager)) {
 				Application::Get().RuntimeStart();
-				
 			}
 			else {
-				Application::Get().SwitchScenes(true);
+				MADAM_INFO("Runtime failed");
+				viewerObject.GetComponent<Camera>().setAsMainCamera();
+				MADAM_INFO("CameraHandle use count: {0}", viewerObject.GetComponent<Camera>().cameraHandle.use_count());
 			}
+		}
+		if (Application::Get().isRuntimeStopFlag()) {
+			MADAM_INFO("Runtime stopped");
+			viewerObject.GetComponent<Camera>().setAsMainCamera();
+			MADAM_INFO("CameraHandle use count: {0}", viewerObject.GetComponent<Camera>().cameraHandle.use_count());
 		}
 		if (Application::Get().isUpdate()) {
 			MADAM_INFO("Updating scripts");
@@ -170,7 +166,7 @@ namespace Madam {
 
 	//Tag component could fix camera issue?
 	//Should be handled as an event
-	void EditorSurface::OnSceneLoad() {
+	void EditorLayer::OnSceneLoad() {
 		MADAM_INFO("Scene Loaded");
 		Application::Get().getScene().Reg().view<entt::entity>().each([&](auto entityID) {
 			Entity entity = { entityID, &Application::Get().getScene() };

@@ -6,6 +6,16 @@
 namespace Madam {
 	namespace Scripting {
 
+		struct WindowsError {
+			DWORD errorCode;
+			std::string errorMsg;
+			LPVOID lpMsgBuf;
+
+			std::string ToString() {
+				return std::to_string(errorCode) + ": " + errorMsg;
+			}
+		};
+
 		class ScriptEngine {
 		public:
 			ScriptEngine();
@@ -18,7 +28,6 @@ namespace Madam {
 
 			void OnCreateScript(std::string file);
 			void OnDeleteScript();
-			//void SoftScanScripts();
 			void RescanScripts();
 
 			void ShowScripts() {
@@ -30,8 +39,11 @@ namespace Madam {
 			bool CheckImportStatus() {
 				return isImported;
 			}
+
 		private:
-			
+
+			typedef void (*SetAppInstance)(Application* app);
+			typedef NativeScriptComponent(*BindType)(std::string);
 
 			bool isImported = false;
 			HINSTANCE hGetProcIDDLL = NULL;
@@ -41,8 +53,29 @@ namespace Madam {
 				MultiByteToWideChar(CP_UTF8, 0, &s[0], (int)s.size(), &wstrTo[0], size_needed);
 				return wstrTo;
 			}
+
+			WindowsError GetWindowsError() {
+				WindowsError windowsError = { GetLastError(), "", nullptr };
+
+				FormatMessage(
+					FORMAT_MESSAGE_ALLOCATE_BUFFER |
+					FORMAT_MESSAGE_FROM_SYSTEM |
+					FORMAT_MESSAGE_IGNORE_INSERTS,
+					NULL,
+					windowsError.errorCode,
+					MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					(LPTSTR)&windowsError.lpMsgBuf,
+					0,
+					NULL
+				);
+				std::wstring wideStr((wchar_t*)windowsError.lpMsgBuf);
+				std::string narrowStr(wideStr.begin(), wideStr.end());
+				windowsError.errorMsg = narrowStr;
+				return windowsError;
+			}
+
 			void ReleaseLibrary();
-			
+			void CreateCMDProcess(std::string path);
 
 			std::string ReadClassName(std::string path);
 			void UpdateBehaviour();
@@ -75,51 +108,6 @@ namespace Madam {
 					"\t\t\treturn NativeScriptComponent();",
 					"\t\t}"
 			};
-
-			/*std::vector<std::string> includes{
-				"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/include",
-				"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/atlmfc/include",
-				"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/VS/include",
-				"C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/ucrt",
-				"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/VS/UnitTest/include",
-				"C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/um",
-				"C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/shared",
-				"C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/winrt",
-				"C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/cppwinrt",
-				"C:/Program Files (x86)/Windows Kits/NETFXSDK/4.8.1/Include/um",
-				"C:/Program Files/VulkanSDK/1.3.268.0/include",
-				"../IronMaiden/vendors/glfw-3.3.8.bin.WIN64/include",
-				"../IronMaiden/vendors/glm",
-				"../IronMaiden/vendors/spdlog/include",
-				"../IronMaiden/vendors/entt/single_include",
-				"../IronMaiden/src",
-				"../IronMaiden"
-			};
-
-			std::vector<std::string> preprocessors{
-				"MADAM_PLATFORM_WINDOWS",
-				"_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS",
-				"_WINDLL",
-				"_UNICODE",
-				"UNICODE"
-			};
-
-			std::vector<std::string> libPath{
-				"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/lib/x64",
-				"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/atlmfc/lib/x64",
-				"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/VS/lib/x64",
-				"C:/Program Files (x86)/Windows Kits/10/lib/10.0.22621.0/ucrt/x64",
-				"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/VS/UnitTest/lib",
-				"C:/Program Files (x86)/Windows Kits/10/lib/10.0.22621.0/um/x64",
-				"C:/Program Files (x86)/Windows Kits/NETFXSDK/4.8.1/lib/um/x64"
-			};
-
-			std::vector<std::string> libraries{
-
-			};
-			//std::map<std::string, T> scriptClass;
-			*/
 		};
-
 	}
 }

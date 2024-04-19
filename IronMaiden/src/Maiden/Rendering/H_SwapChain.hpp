@@ -24,7 +24,7 @@ namespace Madam {
 		VkImageView getImageView(int index) { return swapChainImageViews[index]; }
 		size_t imageCount() { return swapChainImages.size(); }
 		VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
-		VkExtent2D getSwapChainExtent() { return swapChainExtent; }
+		VkExtent2D getSwapChainExtent() { return swapChainExtent; } //dimension of the swap chain image
 		uint32_t width() { return swapChainExtent.width; }
 		uint32_t height() { return swapChainExtent.height; }
 

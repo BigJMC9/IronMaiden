@@ -7,7 +7,7 @@ namespace Madam
 
 		ScriptEngine::ScriptEngine()
 		{
-			//Constructor
+
 		}
 
 		ScriptEngine::~ScriptEngine()
@@ -15,7 +15,6 @@ namespace Madam
 			if (isImported) {
 				ReleaseLibrary();
 			}
-			//Destructor
 		}
 		
 		bool ScriptEngine::Runtime(Entity entity)
@@ -23,8 +22,6 @@ namespace Madam
 			if (isImported) {
 				ReleaseLibrary();
 			}
-			//Update();
-			//Application::Get().RuntimeStart();
 			return Import(entity);
 		}
 
@@ -33,106 +30,34 @@ namespace Madam
 			UpdateBehaviour();
 		}
 
-		//Include premake into editor build
-		//Use premake to generate new solution for the project
-		//Then use cl to compile the project
-		//Don't worry about this. This is a future feature
-		//Import DLL for now and focus on cleaning code
-		/*void ScriptEngine::Compile()
-		{
-			std::string path = "./" + Application::Get().getConfig().assets;
-			std::string pathint = "./" + Application::Get().getConfig().internals + "bin-int";
-			std::string commandPrefix = "cl /JMC /ZI /std:c++17 /GS /Gm- /Od /fp:precise /Zc:inline /external:W3 /MDd /Gd /EHsc /errorReport:prompt /WX- /RTC1 /FC /ifcOutput \""
-				+ pathint + "/\" /Fa\"" + pathint + "/\" /Fo\"" + pathint + "/\" /Fp\"" + pathint + "/runtime.pch\" ";
-			std::string includesDir = "";
-			for (const auto& include : includes) {
-				includesDir += "/I\"" + include + "\" ";
-			}
-			includesDir += "/I\"./Library\" ";
-			std::string macros = "";
-			for (const auto& macro : preprocessors) {
-				macros += "/D \"" + macro + "\" ";
-			}
-			std::string scriptDir = "/LD ";
-			for (const auto& script : scripts) {
-				scriptDir += script.second + " ";
-			}
-			std::string libsDir = "";
-			for (const auto& lib : libPath) {
-				libsDir += "/link /LIBPATH:\"" + lib + "\" ";
-			}
-			std::string libs = "";
-			for (const auto& lib : libraries) {
-				libs += "\"" + lib + ".lib\" ";
-			}
-			scriptDir += "./Library/NativeBehaviour.cpp ";
-			std::string outputDir = "/out:\"" + Application::Get().getConfig().internals + "runtime.dll\" /Fe:\"./" + Application::Get().getConfig().internals + "runtime.dll\"";
-			std::string customArgs = " > buildoutput.log 2>&1";
-
-			std::string command = commandPrefix + includesDir + macros + scriptDir + libsDir + libs + outputDir + customArgs;
-			MADAM_INFO("Executing Command: {0}", command);
-			system(command.c_str());
-			//Compile all scripts
-		}*/
-
 		bool ScriptEngine::Import(Entity entity)
 		{
 			std::string dllDir = Application::Get().getConfig().projectFolder + "Library/grt.dll";
 			MADAM_INFO("Importing DLL: {0}", dllDir);
 			hGetProcIDDLL = LoadLibrary(stringToWSTR(dllDir).c_str());
 			if (!hGetProcIDDLL) {
-				DWORD errorCode = GetLastError();
-				LPVOID lpMsgBuf;
-				FormatMessage(
-					FORMAT_MESSAGE_ALLOCATE_BUFFER |
-					FORMAT_MESSAGE_FROM_SYSTEM |
-					FORMAT_MESSAGE_IGNORE_INSERTS,
-					NULL,
-					errorCode,
-					MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-					(LPTSTR)&lpMsgBuf,
-					0,
-					NULL
-				);
-				char* errormessage = (char*)lpMsgBuf;
-				size_t len = strlen(errormessage);
-				if (len > 0 && errormessage[len - 1] == '\n') {
-					errormessage[len - 1] = '\0';
-				}
-				MADAM_ERROR("Unable to load DLL Function. Error code: {0}: {1}", errorCode, errormessage);
+				MADAM_ERROR("Unable to load DLL {0}", GetWindowsError().ToString());
 				FreeLibrary(hGetProcIDDLL);
 				return false;
 			}
 
-			typedef NativeScriptComponent (*BindType)(std::string);
+			SetAppInstance setAppInstance = (SetAppInstance)GetProcAddress(hGetProcIDDLL, "SetAppInstance");
+			if (!setAppInstance) {
+				MADAM_ERROR("Unable to Load Function SetAppInstance. Error code: {0}", GetWindowsError().ToString());
+				FreeLibrary(hGetProcIDDLL);
+				return false;
+			}
+			setAppInstance(Application::GetPtr());
 
 			BindType getScript = (BindType)GetProcAddress(hGetProcIDDLL, "BindType");
 			if (!getScript) {
-				DWORD errorCode = GetLastError();
-				LPVOID lpMsgBuf;
-				FormatMessage(
-					FORMAT_MESSAGE_ALLOCATE_BUFFER |
-					FORMAT_MESSAGE_FROM_SYSTEM |
-					FORMAT_MESSAGE_IGNORE_INSERTS,
-					NULL,
-					errorCode,
-					MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-					(LPTSTR)&lpMsgBuf,
-					0, 
-					NULL
-				);
-				char* errormessage = (char*)lpMsgBuf;
-				size_t len = strlen(errormessage);
-				if (len > 0 && errormessage[len - 1] == '\n') {
-					errormessage[len - 1] = '\0';
-				}
-				MADAM_ERROR("Unable to Load Function. Error code: {0}: {1}", errorCode, errormessage);
+				MADAM_ERROR("Unable to Load Function BindType. Error code: {0}", GetWindowsError().ToString());
 				FreeLibrary(hGetProcIDDLL);
 				return false;
 			}
 
 			entity.AddComponent<NativeScriptComponent>();
-			entity.GetComponent<NativeScriptComponent>() = getScript("controller");
+			entity.GetComponent<NativeScriptComponent>() = getScript("gamemanager");
 
 			isImported = true;
 			return true;
@@ -148,11 +73,11 @@ namespace Madam
 		void ScriptEngine::OnCreateScript(std::string filePath)
 		{
 			std::ifstream samplefile(Application::Get().getConfig().internals + "sample.ims", std::ios::binary);
-			if (std::ifstream(Application::Get().getConfig().assets + filePath)) {
+			if (std::ifstream(Application::Get().getConfig().projectFolder + Application::Get().getConfig().assets + filePath)) {
 				MADAM_ERROR("File already Exists");
 				return;
 			}
-			std::ofstream newfile(Application::Get().getConfig().assets + filePath, std::ios::binary);
+			std::ofstream newfile(Application::Get().getConfig().projectFolder + Application::Get().getConfig().assets + filePath, std::ios::binary);
 
 			if (!samplefile) {
 				MADAM_ERROR("Cannot Open Sample File for Native Scripts");
@@ -202,6 +127,10 @@ namespace Madam
 			newfile.close();
 
 			scripts[fileName] = filePath;
+			std::string batFile = "\"" + Application::Get().getConfig().projectWorkingDirectory + "CompileProject.bat\"";
+			MADAM_CORE_INFO("Bat File: {0}", batFile);
+			std::replace(batFile.begin(), batFile.end(), '/', '\\');
+			CreateCMDProcess(batFile);
 			RescanScripts();
 			UpdateBehaviour();
 		}
@@ -213,7 +142,7 @@ namespace Madam
 				return;
 			}
 
-			std::string path = Application::Get().getConfig().projectFolder + Application::Get().getConfig().internals + "NativeBehaviour.cpp";
+			std::string path = Application::Get().getConfig().internals + "NativeBehaviour.cpp";
 			std::ifstream behaviour(path);
 			std::vector<std::string> lines;
 			if (behaviour) {
@@ -308,16 +237,58 @@ namespace Madam
 
 		void ScriptEngine::OnDeleteScript()
 		{
+
 			//Delete a script
 		}
 
-		/*void ScriptEngine::SoftScanScripts()
+		void ScriptEngine::CreateCMDProcess(std::string path)
 		{
-			for (const auto& pair : scripts) {
-				MADAM_INFO("Script: {0} at: {1}", pair.first, pair.second);
+			STARTUPINFO si;
+			PROCESS_INFORMATION pi;
+
+			std::wstring wstr(path.begin(), path.end());
+			const wchar_t* wCharArray = wstr.c_str();
+
+			ZeroMemory(&si, sizeof(si));
+			si.cb = sizeof(si);
+			ZeroMemory(&pi, sizeof(pi));
+
+			if (!CreateProcess(NULL,   // No module name (use command line)
+				(LPWSTR)wCharArray,  // Command line
+				NULL,           // Process handle not inheritable
+				NULL,           // Thread handle not inheritable
+				FALSE,          // Set handle inheritance to FALSE
+				0,              // No creation flags
+				NULL,           // Use parent's environment block
+				NULL,           // Use parent's starting directory 
+				&si,            // Pointer to STARTUPINFO structure
+				&pi)           // Pointer to PROCESS_INFORMATION structure
+				)
+			{
+				DWORD errorCode = GetLastError();
+				LPVOID lpMsgBuf;
+				FormatMessage(
+					FORMAT_MESSAGE_ALLOCATE_BUFFER |
+					FORMAT_MESSAGE_FROM_SYSTEM |
+					FORMAT_MESSAGE_IGNORE_INSERTS,
+					NULL,
+					errorCode,
+					MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					(LPTSTR)&lpMsgBuf,
+					0,
+					NULL
+				);
+				std::wstring wideStr((wchar_t*)lpMsgBuf);
+				std::string narrowStr(wideStr.begin(), wideStr.end());
+				MADAM_ERROR("CreateProcess failed {0} : {1}", errorCode, narrowStr);
+				LocalFree(lpMsgBuf);
+				return;
 			}
-			//Scan all scripts
-		}*/
+
+			// Close process and thread handles. 
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+		}
 
 		void ScriptEngine::RescanScripts() 
 		{
@@ -341,19 +312,26 @@ namespace Madam
 			}
 		}
 
-		std::string ScriptEngine::ReadClassName(std::string path)
+		std::string ScriptEngine::ReadClassName(std::string _path)
 		{
+			std::string path = Application::Get().getConfig().projectFolder + _path;
 			std::ifstream script(path);
 			std::vector<std::string> lines;
-			if (script) {
+			if (script.is_open()) {
 				std::string line;
 				while (std::getline(script, line)) {
 					lines.push_back(line);
 				}
 				script.close();
 			}
+			else if (script.fail()) {
+				MADAM_ERROR("Unable to open file: {0}", path);
+				perror("Error: ");
+				return "";
+			}
 			else {
 				MADAM_ERROR("Unable to open file: {0}", path);
+				return "";
 			}
 			size_t pos = lines[4].find("class");
 			if (pos != std::string::npos) {

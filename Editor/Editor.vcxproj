@@ -125,13 +125,12 @@ copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Debug-windows-x86_64\yaml-cpp
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_DEBUG;YAML_CPP_DLL;MADAM_DYNAMIC_LINK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\include;..\IronMaiden\vendors\glfw-3.3.8.bin.WIN64\include;..\IronMaiden\vendors\glm;..\IronMaiden\vendors\spdlog\include;..\IronMaiden\vendors\entt\single_include;..\IronMaiden\src;..\IronMaiden;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\include;..\IronMaiden\vendors\glfw-3.3.8.bin.WIN64\include;..\IronMaiden\vendors\glm;..\IronMaiden\vendors\spdlog\include;..\IronMaiden\vendors\entt\single_include;..\IronMaiden\src;..\IronMaiden;..\IronMaiden\vendors\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
-      <DisableSpecificWarnings>4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -208,12 +207,10 @@ copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Dist-windows-x86_64\yaml-cpp\
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Internal\HeaderSample.hpp" />
     <ClInclude Include="src\H_Editor.hpp" />
     <ClInclude Include="src\Scripting\H_ScriptEngine.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Assets\Scripts\controller.cpp" />
     <ClCompile Include="EditorApp.cpp" />
     <ClCompile Include="src\Editor.cpp" />
     <ClCompile Include="src\Scripting\ScriptEngine.cpp" />

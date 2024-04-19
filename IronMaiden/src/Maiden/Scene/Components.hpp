@@ -83,6 +83,18 @@ namespace Madam {
 		};
 	};
 
+	struct Tag {
+		std::string tag = "Untagged";
+
+		Tag() = default;
+		Tag(const Tag& other) = default;
+		Tag(const std::string& _tag)
+			: tag(_tag) {}
+
+		operator std::string& () { return tag; }
+		operator const std::string& () const { return tag; }
+	};
+
 	struct Object {
 		std::string name = "Object";
 
@@ -262,9 +274,10 @@ namespace Madam {
 	};
 
 	//Maybe set default functions? virtual functions may need to be avoided
-	struct NativeScriptComponent {
+	struct NativeScriptComponent{
 
 		ScriptableEntity* Instance = nullptr;
+
 
 		//std::function<void()> InstantiateScript;
 		ScriptableEntity* (*InstantiateScript)();

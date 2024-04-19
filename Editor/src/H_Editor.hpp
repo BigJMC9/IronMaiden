@@ -4,10 +4,10 @@
 #include "Scripting/H_ScriptEngine.hpp"
 
 namespace Madam {
-	class EditorSurface : public Surface {
+	class EditorLayer : public Layer {
 	public:
-		EditorSurface();
-		virtual ~EditorSurface() = default;
+		EditorLayer();
+		virtual ~EditorLayer() = default;
 
 		virtual void OnAttach() override;
 		//virtual void OnDetach() override;

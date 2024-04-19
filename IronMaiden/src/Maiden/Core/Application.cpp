@@ -4,6 +4,7 @@
 #include "H_CmdHandler.hpp"
 #include "../Events/H_Input.hpp"
 #include "../Rendering/H_Buffer.hpp"
+//#include "../GUI/H_GUI.hpp"
 
 //Define fixes, hacky solution, will fix when headers are restructured
 #ifdef min
@@ -104,6 +105,7 @@ namespace Madam {
 			pipeHandler.StartAsyncRead();
 		}
 
+		//std::unique_ptr<UI::GUI> pGUI = std::make_unique<UI::GUI>();
 
 		std::vector < std::unique_ptr<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (int i = 0; i < uboBuffers.size(); i++)
@@ -134,6 +136,7 @@ namespace Madam {
 		firstFrame = true;
 
 		pSurface->OnAttach();
+		//pGUI->OnAttach();
 
 		time.StartTime();
 
@@ -144,7 +147,7 @@ namespace Madam {
 
 			std::string command = pipeHandler.Read();
 			if (!command.empty()) {
-				std::cout << "command: " << command << std::endl;
+				MADAM_INFO("command: {0}", command);
 				App::CommandHandler::HandleCommand(command, pipeHandler, pSceneSerializer);
 			}
 			
@@ -175,6 +178,7 @@ namespace Madam {
 
 				// render
 				scene->Render();
+				//pGUI->OnUpdate();
 				renderer.beginSwapChainRenderPass(commandBuffer);
 				renderStack.render(frameInfo);
 				renderer.endSwapChainRenderPass(commandBuffer);

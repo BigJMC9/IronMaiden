@@ -9,7 +9,7 @@ namespace Madam{
 	public:
 		Editor() : Madam::Application()
 		{
-			std::unique_ptr<EditorSurface> editorSurface = std::make_unique<EditorSurface>(EditorSurface());
+			std::unique_ptr<EditorLayer> editorSurface = std::make_unique<EditorLayer>(EditorLayer());
 			addSurface(std::move(editorSurface));
 			MADAM_CORE_INFO("Editor Created");
 

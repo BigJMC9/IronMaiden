@@ -30,8 +30,14 @@ namespace Madam {
 		Entity LoadGameObject(std::shared_ptr<Model> model, Material mat);
 
 		void Start();
+		void RunTimeStart();
 		void Update();
 		void Render();
+
+
+		std::shared_ptr<Rendering::CameraHandle> GetCurrentCamera() {
+			return cameras[mainCameraIndex];
+		}
 		std::shared_ptr<Scene> Copy();
 
 		entt::registry& Reg() { return registry; }
@@ -58,6 +64,7 @@ namespace Madam {
 
 	private:
 		std::vector<std::shared_ptr<Rendering::CameraHandle>> cameras;
+		int mainCameraIndex = 0;
 
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);

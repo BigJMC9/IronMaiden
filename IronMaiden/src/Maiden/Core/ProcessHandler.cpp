@@ -1,5 +1,6 @@
 #include "maidenpch.hpp"
 #include "H_ProcessHandler.hpp"
+#include "H_Logger.hpp"
 
 namespace Madam {
 	namespace App {
@@ -43,9 +44,9 @@ namespace Madam {
             }
             else {
                 while (!ConnectNamedPipe(p1, NULL)) {
-                    std::cerr << "Failed to wait for client connection. Error code: " << GetLastError() << std::endl;
+                    MADAM_CORE_ERROR("Failed to wait for client connection. Error code: {0}", GetLastError());
                 }
-                std::cout << "Client connected to the pipe." << std::endl;
+                MADAM_CORE_INFO("Client connected to the pipe.");
                 Write("Connection Successful! \n");
                 Write("[!n!]");
                 return true;
@@ -63,17 +64,17 @@ namespace Madam {
                     0,
                     NULL);
                 if (p2 == INVALID_HANDLE_VALUE) {
-                    std::cerr << "Failed to open pipe. Error code: " << GetLastError() << std::endl;
+                    MADAM_CORE_ERROR("Failed to open pipe. Error code: {0}", GetLastError());
                 }
             } while (p2 == INVALID_HANDLE_VALUE);
 
             CHAR chBuf[1024];
             DWORD dwRead;
             while (!ReadFile(p2, chBuf, sizeof(chBuf), &dwRead, NULL)) {
-                std::cerr << "Failed to read from pipe. Error code: " << GetLastError() << std::endl;
+                MADAM_CORE_ERROR("Failed to read from pipe. Error code: {0}", GetLastError());
             }
             chBuf[dwRead] = '\0';
-            std::cout << chBuf << std::endl;
+            MADAM_CORE_INFO("Buffer: {0}", chBuf);
             return true;
         }
 
@@ -85,20 +86,21 @@ namespace Madam {
 
         bool PipeHandler::Write(const std::string& message) {
             DWORD dwWritten;
-            std::cout << "Message: " << message << std::endl;
+            MADAM_CORE_INFO("Write: {0}", message);
             BOOL bSuccess = WriteFile(p1, message.c_str(), strlen(message.c_str()), &dwWritten, NULL);
             if (!bSuccess) {
                 DWORD dwError = GetLastError();
                 if (dwError == ERROR_PIPE_BUSY) {
                     // Pipe is full, handle accordingly or retry after waiting
-                    std::cerr << "Pipe is full. Unable to write." << std::endl;
+                    MADAM_CORE_ERROR("Pipe is full. Unable to write.");
                 }
                 else {
-                    std::cerr << "Failed to write to pipe. Error code: " << dwError << std::endl;
+                    MADAM_CORE_ERROR("Failed to write to pipe. Error code: {0}", dwError);
                 }
             }
             if (dwWritten != message.length()) {
-                std::cerr << "Incomplete write to pipe. Expected " << message.length() << " bytes, wrote " << dwWritten << " bytes." << std::endl;
+                
+                MADAM_CORE_ERROR("Incomplete write to pipe. Expected {0} bytes, wrote {1} bytes.", message.length(), dwWritten);
                 return false;
             }
             return bSuccess && (dwWritten == message.length());
