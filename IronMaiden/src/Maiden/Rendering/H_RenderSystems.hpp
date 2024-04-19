@@ -120,6 +120,29 @@ namespace Madam {
             void createPipeline(VkRenderPass renderPass) override;
         };
 
+        class MADAM_API GUILayer {
+
+        public:
+            GUILayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout guiSetLayout, std::string _name = "Default");
+            ~GUILayer();
+
+            std::string name = "GUI";
+
+            virtual void preRender(FrameInfo& frameInfo);
+            virtual void render(FrameInfo& frameInfo);
+
+        protected:
+            virtual void createPipelineLayout(VkDescriptorSetLayout guiSetLayout);
+            virtual void createPipeline(VkRenderPass renderPass);
+
+            bool isFirstFrame = true;
+
+            Device& device;
+
+            std::unique_ptr<Pipeline> pipeline;
+            VkPipelineLayout pipelineLayout;
+        };
+
         class MADAM_API RenderStack {
 
         public:

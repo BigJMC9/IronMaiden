@@ -457,6 +457,101 @@ namespace Madam {
 		}
 
 		/*
+		------------------GUI Render System------------------
+		*/
+
+		GUILayer::GUILayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout guiSetLayout, std::string _name)
+			: device{ device }, name{ std::move(_name) } {
+
+			createPipelineLayout(guiSetLayout);
+			createPipeline(renderPass);
+		}
+
+		GUILayer::~GUILayer() {
+			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+		}
+
+		void GUILayer::createPipelineLayout(VkDescriptorSetLayout guiSetLayout) {
+			VkPushConstantRange pushConstantRange{};
+			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+			pushConstantRange.offset = 0;
+			pushConstantRange.size = sizeof(DefaultPushConstantData);
+
+			std::vector<VkDescriptorSetLayout> descriptorSetLayout{ guiSetLayout };
+
+			VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayout.size());
+			pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
+			pipelineLayoutInfo.pushConstantRangeCount = 1;
+			pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+			if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+				throw std::runtime_error("Failed to create pipeline layout!");
+			}
+		}
+
+		void GUILayer::createPipeline(VkRenderPass renderPass) {
+			assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+
+			PipelineConfigInfo pipelineConfig{};
+			Pipeline::setDescriptions(pipelineConfig);
+			pipelineConfig.renderPass = renderPass;
+			pipelineConfig.pipelineLayout = pipelineLayout;
+			pipeline = std::make_unique<Pipeline>(device, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
+		}
+
+		void GUILayer::preRender(FrameInfo& frameInfo) {
+			//std::cout << "PreRendering \n";
+		}
+
+		void GUILayer::render(FrameInfo& frameInfo) {
+			pipeline->bind(frameInfo.commandBuffer);
+
+			vkCmdBindDescriptorSets(
+				frameInfo.commandBuffer,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				pipelineLayout,
+				0,
+				1,
+				&frameInfo.globalDescriptorSet,
+				0,
+				nullptr);
+			entt::registry& entities = frameInfo.scene->Reg();
+			auto group = entities.view<Transform, MeshRenderer>();
+			for (auto entity : group)
+			{
+				auto [transform, meshRenderer] = group.get<Transform, MeshRenderer>(entity);
+
+				if (!entities.valid(entity)) {
+					std::cerr << "Error, entity is not valid" << std::endl;
+					continue;
+				}
+				if (meshRenderer.getModel() == nullptr) continue;
+
+				std::shared_ptr<Material> material = meshRenderer.getMaterial();
+				if (material != nullptr) continue;
+
+				if (isFirstFrame) {
+					std::cout << "Standard Rendering " << std::endl;
+				}
+
+				DefaultPushConstantData push{};
+				push.modelMatrix = transform.m_transform();
+				push.normalMatrix = transform.normalMatrix();
+
+				vkCmdPushConstants(
+					frameInfo.commandBuffer,
+					pipelineLayout,
+					VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+					0,
+					sizeof(DefaultPushConstantData),
+					&push);
+				meshRenderer.getModel()->bind(frameInfo.commandBuffer);
+				meshRenderer.getModel()->draw(frameInfo.commandBuffer);
+			}
+			isFirstFrame = false;
+		}
+		/*
 		------------------Master Render System------------------
 		*/
 

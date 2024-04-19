@@ -3,13 +3,11 @@
 
 namespace Madam {
 	namespace Rendering {
-		Renderer::Renderer(Window& window, Device& device) : jcvbWindow{ window }, device{ device } {
-			//recreateSwapChain();
-			//createCommandBuffers();
+		Renderer::Renderer(Window& window, Device& device) : window{ window }, device{ device } {
+
 		}
 
 		Renderer::~Renderer() {
-			//freeCommandBuffers();
 			if (isRunning) {
 				MADAM_CORE_WARN("Renderer prematurally shutdown");
 				ShutDown();
@@ -28,22 +26,22 @@ namespace Madam {
 		}
 
 		void Renderer::recreateSwapChain() {
-			auto extent = jcvbWindow.getExtent();
+			auto extent = window.getExtent();
 			while (extent.width == 0 || extent.height == 0) {
-				extent = jcvbWindow.getExtent();
+				extent = window.getExtent();
 				glfwWaitEvents();
 			}
 			vkDeviceWaitIdle(device.device());
 
-			if (jcvbSwapChain == nullptr) {
-				jcvbSwapChain = nullptr;
-				jcvbSwapChain = std::make_unique<SwapChain>(device, extent);
+			if (swapChain == nullptr) {
+				swapChain = nullptr;
+				swapChain = std::make_unique<SwapChain>(device, extent);
 			}
 			else {
-				std::shared_ptr<SwapChain> oldSwapChain = std::move(jcvbSwapChain);
-				jcvbSwapChain = std::make_unique<SwapChain>(device, extent, oldSwapChain);
+				std::shared_ptr<SwapChain> oldSwapChain = std::move(swapChain);
+				swapChain = std::make_unique<SwapChain>(device, extent, oldSwapChain);
 
-				if (!oldSwapChain->compareSwapFormats(*jcvbSwapChain.get())) {
+				if (!oldSwapChain->compareSwapFormats(*swapChain.get())) {
 					throw std::runtime_error("Swap chain image(or depth) format has changed!");
 				}
 			}
@@ -71,9 +69,9 @@ namespace Madam {
 		}
 
 		VkCommandBuffer Renderer::beginFrame() {
-			assert(!isFrameStarted && "Can't call beginFrame while already in progress");
+			MADAM_CORE_ASSERT(!isFrameStarted, "Can't call beginFrame while already in progress");
 
-			auto result = jcvbSwapChain->acquireNextImage(&currentImageIndex);
+			auto result = swapChain->acquireNextImage(&currentImageIndex);
 			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 				recreateSwapChain();
 				return nullptr;
@@ -98,16 +96,16 @@ namespace Madam {
 		}
 
 		void Renderer::endFrame() {
-			assert(isFrameStarted && "Can't call endFrame while frame is not in progress");
+			MADAM_CORE_ASSERT(isFrameStarted, "Can't call endFrame while frame is not in progress");
 			auto commandBuffer = getCurrentCommandBuffer();
 
 			if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 				throw std::runtime_error("Failed to record command buffer!");
 			}
 
-			auto result = jcvbSwapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
-			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || jcvbWindow.wasWindowResized()) {
-				jcvbWindow.resetWindowResizedFlag();
+			auto result = swapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
+			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized()) {
+				window.resetWindowResizedFlag();
 				recreateSwapChain();
 			}
 			else if (result != VK_SUCCESS) {
@@ -118,16 +116,16 @@ namespace Madam {
 			currentFrameIndex = (currentFrameIndex + 1) % SwapChain::MAX_FRAMES_IN_FLIGHT;
 		}
 		void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
-			assert(isFrameStarted && "Can't call beginSwapChainRenderPass if frame is not in progress");
-			assert(commandBuffer == getCurrentCommandBuffer() && "Can't begin render pass on command buffer from a different frame");
+			MADAM_CORE_ASSERT(isFrameStarted, "Can't call beginSwapChainRenderPass if frame is not in progress");
+			MADAM_CORE_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't begin render pass on command buffer from a different frame");
 
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = jcvbSwapChain->getRenderPass();
-			renderPassInfo.framebuffer = jcvbSwapChain->getFrameBuffer(currentImageIndex);
+			renderPassInfo.renderPass = swapChain->getRenderPass();
+			renderPassInfo.framebuffer = swapChain->getFrameBuffer(currentImageIndex);
 
 			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = jcvbSwapChain->getSwapChainExtent();
+			renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
 			std::array<VkClearValue, 2> clearValues{};
 			clearValues[0].color = { 0.01f, 0.01f, 0.01f, 1.0f };
@@ -140,17 +138,17 @@ namespace Madam {
 			VkViewport viewport{};
 			viewport.x = 0.0f;
 			viewport.y = 0.0f;
-			viewport.width = static_cast<float>(jcvbSwapChain->getSwapChainExtent().width);
-			viewport.height = static_cast<float>(jcvbSwapChain->getSwapChainExtent().height);
+			viewport.width = static_cast<float>(swapChain->getSwapChainExtent().width);
+			viewport.height = static_cast<float>(swapChain->getSwapChainExtent().height);
 			viewport.minDepth = 0.0f;
 			viewport.maxDepth = 1.0f;
-			VkRect2D scissor{ {0, 0}, jcvbSwapChain->getSwapChainExtent() };
+			VkRect2D scissor{ {0, 0}, swapChain->getSwapChainExtent() };
 			vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 		}
 		void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer) {
-			assert(isFrameStarted && "Can't call endSwapChainRenderPass if frame is not in progress");
-			assert(commandBuffer == getCurrentCommandBuffer() && "Can't end render pass on command buffer from a different frame");
+			MADAM_CORE_ASSERT(isFrameStarted, "Can't call endSwapChainRenderPass if frame is not in progress");
+			MADAM_CORE_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't end render pass on command buffer from a different frame");
 			vkCmdEndRenderPass(commandBuffer);
 		}
 	}
