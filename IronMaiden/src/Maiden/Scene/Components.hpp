@@ -1,7 +1,7 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/Base.hpp"
+#include "../Core/H_Utils.hpp"
 #include "H_Model.hpp"
 #include "H_Texture.hpp"
 #include "ScriptableEntity.hpp"
@@ -25,7 +25,7 @@ namespace Madam {
 	struct Camera {
 		//Shared pointer to camera data?
 		//Rendering::CameraData cameraData = Rendering::CameraData();
-		std::shared_ptr<Rendering::CameraHandle> cameraHandle;
+		Ref<Rendering::CameraHandle> cameraHandle;
 
 		const glm::mat4& getProjection() const {
 			return cameraHandle->getProjection();
@@ -111,7 +111,7 @@ namespace Madam {
 	};
 
 	struct MeshFilter {
-		std::shared_ptr<Model> model;
+		Ref<Model> model;
 
 		MeshFilter() = default;
 		//MeshFilter(MeshFilter&) = default;
@@ -129,12 +129,12 @@ namespace Madam {
 	};
 
 	struct Material {
-		std::shared_ptr<Shader> shader = nullptr;
+		Ref<Shader> shader = nullptr;
 
-		std::shared_ptr<Texture> diffuseMap = nullptr;
-		std::shared_ptr<Texture> normalMap = nullptr;
-		std::shared_ptr<Texture> ambientOcclusionMap = nullptr;
-		std::shared_ptr<Texture> glossMap = nullptr;
+		Ref<Texture> diffuseMap = nullptr;
+		Ref<Texture> normalMap = nullptr;
+		Ref<Texture> ambientOcclusionMap = nullptr;
+		Ref<Texture> glossMap = nullptr;
 
 		Material() = default;
 		//Material(Material&) = default;
@@ -144,17 +144,17 @@ namespace Madam {
 	struct MeshRenderer {
 
 		MeshFilter mesh;
-		std::shared_ptr<Material> material = nullptr;
+		Ref<Material> material = nullptr;
 
 		MeshRenderer() = default;
 		//MeshRenderer(MeshRenderer&) = default;
 		MeshRenderer(const MeshRenderer&) = default;
 
-		std::shared_ptr<Model> getModel() {
+		Ref<Model> getModel() {
 			return mesh.model;
 		}
 
-		std::shared_ptr<Material> getMaterial() {
+		Ref<Material> getMaterial() {
 			return material;
 		}
 	};

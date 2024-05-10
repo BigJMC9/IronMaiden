@@ -27,14 +27,16 @@ namespace Madam {
 	Application::Application() {
 		
 		StartUp();
+		//Data to be shared among all objects (UBO)
 		globalPool = 
 			DescriptorPool::Builder(device)
-				.setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT) //Storage Allocation
-				.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
+				.setMaxSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT) //Maximun number of frames being rendered
+				.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT)
 				.build();
 
 		// build frame descriptor pools
-		framePools.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		// ???
+		framePools.resize(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT); //Maximun number of frames being rendered
 		auto framePoolBuilder = DescriptorPool::Builder(device)
 			.setMaxSets(1000) //Storage allocation
 			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
@@ -84,7 +86,7 @@ namespace Madam {
 		MADAM_CORE_INFO("{0}", e);
 	}
 
-	const std::vector<std::shared_ptr<Rendering::RenderLayer>>& Application::getRenderLayers() const {
+	const std::vector<Ref<Rendering::RenderLayer>>& Application::getRenderLayers() const {
 		return renderStack.getRenderLayers();
 	}
 
@@ -102,12 +104,14 @@ namespace Madam {
 
 		if (pipeHandler.isConnected) {
 			std::cout << "Is connected, starting read!" << std::endl;
+			MADAM_CORE_INFO("Is connected, starting read!");
 			pipeHandler.StartAsyncRead();
 		}
 
-		std::unique_ptr<UI::GUI> pGUI = std::make_unique<UI::GUI>();
-
-		std::vector < std::unique_ptr<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		Scope<UI::GUI> pGUI = std::make_unique<UI::GUI>();
+		MADAM_CORE_INFO("GUI Created");
+		std::vector < Scope<Buffer>> uboBuffers(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
+		MADAM_CORE_INFO("uboBuffers Created");
 		for (int i = 0; i < uboBuffers.size(); i++)
 		{
 			uboBuffers[i] = std::make_unique<Buffer>(
@@ -118,23 +122,30 @@ namespace Madam {
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 			uboBuffers[i]->map();
 		}
-
-		std::unique_ptr<DescriptorSetLayout> globalSetLayout = DescriptorSetLayout::Builder(device)
+		MADAM_CORE_INFO("uboBuffers mapped");
+		Scope<DescriptorSetLayout> globalSetLayout = DescriptorSetLayout::Builder(device)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 			.build();
-
-		std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		//MADAM_CORE_INFO("globalSetLayout Assigned");
+		std::vector<VkDescriptorSet> globalDescriptorSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
+		MADAM_CORE_INFO("globalSetLayout vector populated");
 		for (int i = 0; i < globalDescriptorSets.size(); i++) {
 			auto bufferInfo = uboBuffers[i]->descriptorInfo();
 			DescriptorWriter(*globalSetLayout, *globalPool)
 				.writeBuffer(0, &bufferInfo)
 				.build(globalDescriptorSets[i]);
 		}
-
+		MADAM_CORE_INFO("globalSetLayout vector");
 		renderStack.initialize(globalSetLayout);
-
+		MADAM_CORE_INFO("renderStack initialized");
 		firstFrame = true;
 
+		if (device.device() != VK_NULL_HANDLE) {
+			MADAM_CORE_INFO("Device is not null");
+		}
+		else {
+			MADAM_CORE_INFO("Device is null");
+		}
 		pSurface->OnAttach();
 		pGUI->OnAttach();
 
@@ -142,7 +153,6 @@ namespace Madam {
 
 		while (!window.shouldClose()) {
 			glfwPollEvents();
-
 			time.UpdateTime();
 
 			std::string command = pipeHandler.Read();
@@ -154,7 +164,8 @@ namespace Madam {
 			pSurface->OnUpdate();
 			scene->Update();
 
-			if (auto commandBuffer = renderer.beginFrame()) {
+			if (renderer.beginFrame()) {
+				auto commandBuffer = renderer.beginCommandBuffer();
 				int frameIndex = renderer.getFrameIndex();
 				framePools[frameIndex]->resetPool();
 				GlobalUbo ubo{};
@@ -167,7 +178,7 @@ namespace Madam {
 					scene,
 					ubo};
 
-				//Should be done in render stack
+				//Should be done in renderer
 				Rendering::CameraHandle& camera = Rendering::CameraHandle::getMain();
 				frameInfo.ubo.projection = camera.getProjection();
 				frameInfo.ubo.view = camera.getView();
@@ -178,10 +189,15 @@ namespace Madam {
 
 				// render
 				scene->Render();
-				pGUI->OnUpdate();
-				renderer.beginSwapChainRenderPass(commandBuffer);
+				renderer.beginRenderPass(commandBuffer, 0);
 				renderStack.render(frameInfo);
+				renderer.endRenderPass(commandBuffer);
+				renderer.PipelineBarrier(commandBuffer, false, false, frameIndex, 0);
+				renderer.beginSwapChainRenderPass(commandBuffer);
+				pGUI->OnUpdate();
+				pGUI->Record(commandBuffer);
 				renderer.endSwapChainRenderPass(commandBuffer);
+				//renderer.PipelineBarrier(commandBuffer, false, true, frameIndex, 0); //need semaphore for image in future
 				renderer.endFrame();
 				if (firstFrame) {
 					firstFrame = false;

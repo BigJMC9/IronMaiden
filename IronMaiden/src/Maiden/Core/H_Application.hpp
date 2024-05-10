@@ -3,8 +3,9 @@
 //Fix these headers, only essential headers are needed, the rest can reside in the implementation
 #include "maidenpch.hpp"
 #include "Main/core.hpp"
+#include "H_Utils.hpp"
 #include "H_Logger.hpp"
-#include "../Rendering/H_Descriptors.hpp"
+#include "../Rendering/H_DescriptorSetLayout.hpp"
 #include "../Rendering/H_Renderer.hpp"
 #include "../Rendering/H_RenderSystems.hpp"
 #include "../Scene/H_Scene.hpp"
@@ -51,7 +52,7 @@ namespace Madam {
 			return renderer.getAspectRatio();
 		}
 
-		void addSurface(std::unique_ptr<Layer> _surface) {
+		void addSurface(Scope<Layer> _surface) {
 			pSurface = std::move(_surface);
 			MADAM_CORE_INFO("Layer added");
 		}
@@ -70,10 +71,8 @@ namespace Madam {
 		// Use const func() const {} for readonly vars
 
 		Window& getWindow() { return window;  }
-		Device& getDevice() { return device; }
 		Rendering::RenderStack& getMasterRenderSystem() { return renderStack; }
-		const std::vector<std::shared_ptr<Rendering::RenderLayer>>& getRenderLayers() const;
-		Rendering::Renderer& getRenderer() { return renderer; }
+		const std::vector<Ref<Rendering::RenderLayer>>& getRenderLayers() const;
 		Scene& getScene() { return *scene; }
 		const Time& getTime() const { return time; }
 		ApplicationConfig getConfig() {
@@ -157,7 +156,7 @@ namespace Madam {
 
 
 		//Temp solution. Need to move to Scene Management class and needs to be safer
-		void PrimeReserve(std::shared_ptr<Scene> _scene) {
+		void PrimeReserve(Ref<Scene> _scene) {
 			reservedScene = _scene;
 		}
 
@@ -166,7 +165,7 @@ namespace Madam {
 				MADAM_CORE_ERROR("Scene has not been primed into reserve");
 			}
 			else {
-				std::shared_ptr<Scene> temp = scene;
+				Ref<Scene> temp = scene;
 				scene = reservedScene;
 				reservedScene = temp;
 			}
@@ -177,7 +176,7 @@ namespace Madam {
 				MADAM_CORE_ERROR("Scene has not been primed into reserve");
 			}
 			else {
-				std::shared_ptr<Scene> temp = scene;
+				Ref<Scene> temp = scene;
 				scene = reservedScene;
 				if (drop) {
 					reservedScene = nullptr;
@@ -225,7 +224,7 @@ namespace Madam {
 
 		void quit();
 
-		std::unique_ptr<Layer> pSurface = nullptr;
+		Scope<Layer> pSurface = nullptr;
 
 	private:
 
@@ -240,8 +239,8 @@ namespace Madam {
 		Time time = Time{};
 
 		//Move this somewhere
-		std::unique_ptr<DescriptorPool> globalPool{};
-		std::vector<std::unique_ptr<DescriptorPool>> framePools;
+		Scope<DescriptorPool> globalPool{};
+		std::vector<Scope<DescriptorPool>> framePools;
 
 		bool isRunning = false;
 		bool firstFrame = true;
@@ -257,8 +256,8 @@ namespace Madam {
 		bool isUpdating = false;
 
 		//Need Scene Management class
-		std::shared_ptr<Scene> scene;
-		std::shared_ptr<Scene> reservedScene = nullptr;
+		Ref<Scene> scene;
+		Ref<Scene> reservedScene = nullptr;
 		SceneSerializer* pSceneSerializer;
 	protected:
 		

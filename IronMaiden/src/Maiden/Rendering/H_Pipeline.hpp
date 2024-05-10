@@ -14,6 +14,7 @@ namespace Madam {
 			inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 			inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
 			inputAssemblyInfo.pNext = nullptr;
+			inputAssemblyInfo.flags = 0;
 
 			viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 			viewportInfo.viewportCount = 1;
@@ -21,6 +22,7 @@ namespace Madam {
 			viewportInfo.scissorCount = 1;
 			viewportInfo.pScissors = nullptr;
 			viewportInfo.pNext = nullptr;
+			viewportInfo.flags = 0;
 
 			rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 			rasterizationInfo.depthClampEnable = VK_FALSE;
@@ -34,6 +36,7 @@ namespace Madam {
 			rasterizationInfo.depthBiasClamp = 0.0f;           // Optional
 			rasterizationInfo.depthBiasSlopeFactor = 0.0f;     // Optional
 			rasterizationInfo.pNext = nullptr;
+			rasterizationInfo.flags = 0;
 
 			multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 			multisampleInfo.sampleShadingEnable = VK_FALSE;
@@ -43,6 +46,7 @@ namespace Madam {
 			multisampleInfo.alphaToCoverageEnable = VK_FALSE;  // Optional
 			multisampleInfo.alphaToOneEnable = VK_FALSE;       // Optional
 			multisampleInfo.pNext = nullptr;
+			multisampleInfo.flags = 0;
 
 			colorBlendAttachment.colorWriteMask =
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
@@ -65,6 +69,7 @@ namespace Madam {
 			colorBlendInfo.blendConstants[2] = 0.0f;  // Optional
 			colorBlendInfo.blendConstants[3] = 0.0f;  // Optional
 			colorBlendInfo.pNext = nullptr;
+			colorBlendInfo.flags = 0;
 
 			depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 			depthStencilInfo.depthTestEnable = VK_TRUE;
@@ -77,13 +82,14 @@ namespace Madam {
 			depthStencilInfo.front = {};  // Optional
 			depthStencilInfo.back = {};   // Optional
 			depthStencilInfo.pNext = nullptr;
+			depthStencilInfo.flags = 0;
 
 			dynamicStateEnables = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 			dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 			dynamicStateInfo.pDynamicStates = dynamicStateEnables.data();
 			dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
-			dynamicStateInfo.flags = 0;
 			dynamicStateInfo.pNext = nullptr;
+			dynamicStateInfo.flags = 0;
 		}
 
 		void enableAlphaBlending() {

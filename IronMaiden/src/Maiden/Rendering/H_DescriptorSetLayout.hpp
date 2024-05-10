@@ -1,8 +1,10 @@
 #pragma once
 
 #include "maidenpch.hpp"
+#include "../Core/H_Utils.hpp"
 #include "../Core/Main/Core.hpp"
 #include "../Core/H_Device.hpp"
+#include "../GUI/H_GUI.hpp"
 
 // std
 #include <memory>
@@ -10,7 +12,6 @@
 #include <vector>
 
 namespace Madam {
-
     class DescriptorSetLayout {
     public:
         class Builder {
@@ -22,7 +23,8 @@ namespace Madam {
                 VkDescriptorType descriptorType,
                 VkShaderStageFlags stageFlags,
                 uint32_t count = 1);
-            std::unique_ptr<DescriptorSetLayout> build() const;
+            Scope<DescriptorSetLayout> build() const;
+            Ref<DescriptorSetLayout> buildRef() const;
 
         private:
             Device& device;
@@ -32,8 +34,8 @@ namespace Madam {
         DescriptorSetLayout(
             Device& device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
         ~DescriptorSetLayout();
-        DescriptorSetLayout(const DescriptorSetLayout&) = delete;
-        DescriptorSetLayout& operator=(const DescriptorSetLayout&) = delete;
+        //DescriptorSetLayout(const DescriptorSetLayout&) = delete;
+        //DescriptorSetLayout& operator=(const DescriptorSetLayout&) = delete;
 
         VkDescriptorSetLayout getDescriptorSetLayout() const { return descriptorSetLayout; }
 
@@ -54,7 +56,7 @@ namespace Madam {
             Builder& addPoolSize(VkDescriptorType descriptorType, uint32_t count);
             Builder& setPoolFlags(VkDescriptorPoolCreateFlags flags);
             Builder& setMaxSets(uint32_t count);
-            std::unique_ptr<DescriptorPool> build() const;
+            Scope<DescriptorPool> build() const;
 
         private:
             Device& device;
@@ -84,6 +86,7 @@ namespace Madam {
         VkDescriptorPool descriptorPool;
 
         friend class DescriptorWriter;
+        friend class Madam::UI::GUI;
     };
 
     class DescriptorWriter {

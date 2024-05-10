@@ -2,7 +2,7 @@
 
 //#include "H_JCVB_camera.hpp"
 #include "maidenpch.hpp"
-#include "H_Descriptors.hpp"
+#include "H_DescriptorSetLayout.hpp"
 //#include "H_Scene.hpp"
 //#include "H_Game_Object.hpp"
 
@@ -53,7 +53,7 @@ namespace Madam {
 		VkDescriptorSet globalDescriptorSet;
 		DescriptorPool& frameDescriptorPool;
 		//Map& gameObjects;
-		std::shared_ptr<Scene>& scene;
+		Ref<Scene>& scene;
 		GlobalUbo ubo;
 	};
 

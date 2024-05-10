@@ -2,7 +2,7 @@
 #include "../Core/H_Application.hpp"
 #include "H_Model.hpp"
 
-#include "../Core/utils.hpp"
+#include "../Core/H_Utils.hpp"
 
 //libs
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -32,7 +32,7 @@ namespace Madam {
 
 	Model::~Model() {}
 
-	std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::string& rawFilePath) {
+	Scope<Model> Model::createModelFromFile(Device& device, const std::string& rawFilePath) {
 		Builder builder{};
 		builder.fileStr = Application::Get().getConfig().internals + rawFilePath;
 		builder.loadModel(rawFilePath);

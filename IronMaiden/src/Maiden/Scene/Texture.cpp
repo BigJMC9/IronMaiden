@@ -37,7 +37,6 @@ namespace Madam {
             imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         }
 
-        // Don't like this, should I be using an image array instead of multiple images?
         VkImageCreateInfo imageInfo{};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -107,7 +106,7 @@ namespace Madam {
         vkFreeMemory(mDevice.device(), mTextureImageMemory, nullptr);
     }
 
-    std::unique_ptr<Texture> Texture::createTextureFromFile(
+    Scope<Texture> Texture::createTextureFromFile(
         Device& device, const std::string& rawFilePath) {
         std::string filePath = Application::Get().getConfig().internals + rawFilePath;
         return std::make_unique<Texture>(device, filePath);

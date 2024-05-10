@@ -54,7 +54,7 @@ namespace Madam {
 		Model(const Model&) = delete;
 		Model &operator=(const Model&) = delete;
 
-		static std::unique_ptr<Model> createModelFromFile(Device& device, const std::string& rawFilePath);
+		static Scope<Model> createModelFromFile(Device& device, const std::string& rawFilePath);
 
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
@@ -69,11 +69,11 @@ namespace Madam {
 
 		Device& device;
 
-		std::unique_ptr<Buffer> vertexBuffer;
+		Scope<Buffer> vertexBuffer;
 		uint32_t vertexCount;
 
 		bool hasIndexBuffer = false;
-		std::unique_ptr<Buffer> indexBuffer;
+		Scope<Buffer> indexBuffer;
 		uint32_t indexCount;
 
 		std::string file;

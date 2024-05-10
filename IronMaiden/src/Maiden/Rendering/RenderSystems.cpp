@@ -84,7 +84,7 @@ namespace Madam {
 				}
 				if (meshRenderer.getModel() == nullptr) continue;
 
-				std::shared_ptr<Material> material = meshRenderer.getMaterial();
+				Ref<Material> material = meshRenderer.getMaterial();
 				if (material != nullptr) continue;
 
 				if (isFirstFrame) {
@@ -278,7 +278,7 @@ namespace Madam {
 				// skip objects that don't have both a model and texture
 				//JcvbMeshRenderer* meshRenderer = obj.getComponent<JcvbMeshRenderer>();
 				//if (meshRenderer == nullptr) continue;
-				std::shared_ptr<Material> material = meshRenderer.getMaterial();
+				Ref<Material> material = meshRenderer.getMaterial();
 				if (material == nullptr) continue;
 				if (material->diffuseMap == nullptr) continue;
 
@@ -384,7 +384,7 @@ namespace Madam {
 		}
 
 		void PointLightRenderLayer::preRender(FrameInfo& frameInfo) {
-			auto rotateLight = glm::rotate(glm::mat4(1.f), frameInfo.frameTime, { 0.f, -1.f, 0.f });
+			auto rotateLight = glm::rotate(glm::mat4(1.f), frameInfo.frameTime/ 5.0f, { 0.f, -1.f, 0.f });
 			int lightIndex = 0;
 
 			entt::registry& entities = frameInfo.scene->Reg();
@@ -528,7 +528,7 @@ namespace Madam {
 				}
 				if (meshRenderer.getModel() == nullptr) continue;
 
-				std::shared_ptr<Material> material = meshRenderer.getMaterial();
+				Ref<Material> material = meshRenderer.getMaterial();
 				if (material != nullptr) continue;
 
 				if (isFirstFrame) {
@@ -572,40 +572,46 @@ namespace Madam {
 			isRunning = false;
 		}
 
-		void RenderStack::initialize(std::unique_ptr<DescriptorSetLayout>& globalSetLayout) {
-
-			renderSystems.push_back(std::make_unique<TextureRenderLayer>
-				(
-					device,
-					renderer.getSwapChainRenderPass(),
-					globalSetLayout->getDescriptorSetLayout(),
-					"Texture Render System"
-				));
-
-			renderSystems.push_back(std::make_unique<RenderLayer>
-				(
-					device,
-					renderer.getSwapChainRenderPass(),
-					globalSetLayout->getDescriptorSetLayout(),
-					"Render System"
-				));
-
-			renderSystems.push_back(std::make_unique<GridRenderLayer>
-				(
-					device,
-					renderer.getSwapChainRenderPass(),
-					globalSetLayout->getDescriptorSetLayout(),
-					"Grid Render System"
-				));
-
-			renderSystems.push_back(std::make_unique<PointLightRenderLayer>
-				(
-					device,
-					renderer.getSwapChainRenderPass(),
-					globalSetLayout->getDescriptorSetLayout(),
-					"Point Light Render System"
-				));
-			
+		void RenderStack::initialize(Scope<DescriptorSetLayout>& globalSetLayout) {
+			MADAM_CORE_INFO("Pushing Render Systems in vector");
+			try {
+				renderSystems.push_back(std::make_unique<TextureRenderLayer>
+					(
+						device,
+						renderer.getMainRenderPass(),
+						globalSetLayout->getDescriptorSetLayout(),
+						"Texture Render System"
+					));
+				MADAM_CORE_INFO("Texture Render Layer Complete");
+				renderSystems.push_back(std::make_unique<RenderLayer>
+					(
+						device,
+						renderer.getMainRenderPass(),
+						globalSetLayout->getDescriptorSetLayout(),
+						"Render System"
+					));
+				MADAM_CORE_INFO("Default Render Layer Complete");
+				renderSystems.push_back(std::make_unique<GridRenderLayer>
+					(
+						device,
+						renderer.getMainRenderPass(),
+						globalSetLayout->getDescriptorSetLayout(),
+						"Grid Render System"
+					));
+				MADAM_CORE_INFO("Grid Render Layer Complete");
+				renderSystems.push_back(std::make_unique<PointLightRenderLayer>
+					(
+						device,
+						renderer.getMainRenderPass(),
+						globalSetLayout->getDescriptorSetLayout(),
+						"Point Light Render System"
+					));
+				MADAM_CORE_INFO("Point Light Render Layer Complete");
+			}
+			catch (const std::exception& e) {
+				MADAM_CORE_ERROR("Error: {0}", e.what());
+			}
+			MADAM_CORE_INFO("Pushing Render Systems in vector is completed");
 		}
 
 		void RenderStack::preRender(FrameInfo& frameInfo) {

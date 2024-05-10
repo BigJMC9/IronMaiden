@@ -40,9 +40,9 @@ namespace Madam {
 		CopyComponent<Component...>(dst, src, enttMap);
 	}
 
-	std::shared_ptr<Scene> Scene::Copy()
+	Ref<Scene> Scene::Copy()
 	{
-		std::shared_ptr<Scene> newScene = std::make_shared<Scene>();
+		Ref<Scene> newScene = std::make_shared<Scene>();
 		std::unordered_map<UUID, entt::entity> enttMap;
 		//Copy all entities
 		auto IdView = registry.view<UniqueIdentifier>();
@@ -102,7 +102,7 @@ namespace Madam {
 		return entity;
 	}
 
-	Entity Scene::LoadGameObject(std::shared_ptr<Model> model) {
+	Entity Scene::LoadGameObject(Ref<Model> model) {
 		Entity entity = { registry.create(), this};
 		entity.AddComponent<UniqueIdentifier>();
 		entity.AddComponent<Object>();
@@ -115,7 +115,7 @@ namespace Madam {
 		return entity;
 	}
 
-	Entity Scene::LoadGameObject(std::shared_ptr<Model> model, Material mat) {
+	Entity Scene::LoadGameObject(Ref<Model> model, Material mat) {
 		Entity entity = { registry.create(), this};
 		entity.AddComponent<UniqueIdentifier>();
 		entity.AddComponent<Object>();

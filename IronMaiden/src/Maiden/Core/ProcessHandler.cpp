@@ -80,6 +80,7 @@ namespace Madam {
 
         void PipeHandler::StartAsyncRead() {
             // Start a new thread for asynchronous reading
+            MADAM_CORE_INFO("Starting async read.");
             isRunning = true;
             std::thread(&PipeHandler::ReadAsync, this).detach();
         }

@@ -15,6 +15,14 @@
 
 namespace YAML {
 
+	template<typename T>
+	using Ref = std::shared_ptr<T>;
+	template<typename T, typename ... Args>
+	constexpr Ref<T> CreateRef(Args&& ... args)
+	{
+		return std::make_shared<T>(std::forward<Args>(args)...);
+	}
+
 	template<>
 	struct convert<glm::vec2>
 	{
@@ -108,9 +116,9 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<std::shared_ptr<Madam::Shader>>
+	struct convert<Ref<Madam::Shader>>
 	{
-		static Node encode(const std::shared_ptr<Madam::Shader>& shader)
+		static Node encode(const Ref<Madam::Shader>& shader)
 		{
 			Node node;
 			node.push_back(shader->vertShaderPath);
@@ -118,7 +126,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, std::shared_ptr<Madam::Shader>& shader)
+		static bool decode(const Node& node, Ref<Madam::Shader>& shader)
 		{
 			shader->vertShaderPath = node[0].as<std::string>();
 			shader->fragShaderPath = node[1].as<std::string>();
@@ -222,7 +230,7 @@ namespace Madam {
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const std::shared_ptr<Shader> s)
+	YAML::Emitter& operator<<(YAML::Emitter& out, const Ref<Shader> s)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << s->vertShaderPath << s->fragShaderPath << YAML::EndSeq;
@@ -329,7 +337,7 @@ namespace Madam {
 		out << YAML::EndMap;
 	}
 
-	SceneSerializer::SceneSerializer(std::shared_ptr<Scene> scene, Device& _device) : m_Scene(scene), device(_device) {
+	SceneSerializer::SceneSerializer(Ref<Scene> scene, Device& _device) : m_Scene(scene), device(_device) {
 
 	}
 	

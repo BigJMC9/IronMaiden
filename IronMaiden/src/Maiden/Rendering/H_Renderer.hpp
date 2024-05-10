@@ -1,15 +1,30 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/H_Device.hpp"
+//#include "../Core/H_Device.hpp"
 #include "H_SwapChain.hpp"
-#include "../Core/H_Window.hpp"
 
 //Low level rendering should be completely agnostic. see (pg 47)
 namespace Madam {
 	namespace Rendering {
-		class Renderer {
 
+		struct ImageData {
+			std::string debugName;
+			VkImageView imageView;
+			VkImage image;
+			VkDeviceMemory imageMemory;
+			VkFramebuffer frameBuffer;
+			VkBuffer debugBuffer;
+			VkDeviceMemory debugBufferMemory;
+		};
+		struct Frame {
+			std::vector<ImageData> images;
+		};
+		struct CommandBufferGroup {
+			std::vector<VkCommandBuffer> commandBuffers;
+		};
+
+		class Renderer {
 		public:
 
 			Renderer(Window& window, Device& device);
@@ -17,11 +32,13 @@ namespace Madam {
 
 			Renderer(const Renderer&) = delete;
 			Renderer& operator=(const Renderer&) = delete;
+			Renderer& operator=(Renderer&&) = delete;
 
 			void StartUp();
 			void ShutDown();
 
 			VkRenderPass getSwapChainRenderPass() const { return swapChain->getRenderPass(); }
+			VkRenderPass getMainRenderPass() const { return renderPasses[0]; }
 			float getAspectRatio() const {
 				return swapChain->extentAspectRatio();
 			}
@@ -37,37 +54,95 @@ namespace Madam {
 				return currentFrameIndex;
 			}
 
-			ImGui_ImplVulkan_InitInfo* getImGuiInitInfo() {
-				ImGui_ImplVulkan_InitInfo* init_info = &ImGui_ImplVulkan_InitInfo();
-				init_info->Device = device.device();
-				init_info->PipelineCache = VK_NULL_HANDLE;
-				init_info->Allocator = VK_NULL_HANDLE;
-				init_info->MinImageCount = swapChain->imageCount();
-				init_info->ImageCount = swapChain->imageCount();
-				init_info->CheckVkResultFn = nullptr;
-				device.getImGuiInitInfo(*init_info);
+			VkImageView getImageView(int index) const {
+				return frames[currentFrameIndex].images[index].imageView;
+			}
+
+			uint32_t getViewportWidth() const { return viewportWidth; }
+			uint32_t getViewportHeight() const { return viewportHeight; }
+
+			ImGui_ImplVulkan_InitInfo getImGuiInitInfo() {
+				ImGui_ImplVulkan_InitInfo init_info = ImGui_ImplVulkan_InitInfo();
+				init_info.Device = device.device();
+				init_info.PipelineCache = VK_NULL_HANDLE;
+				init_info.Allocator = VK_NULL_HANDLE;
+				init_info.MinImageCount = swapChain->imageCount();
+				init_info.ImageCount = swapChain->imageCount();
+				init_info.CheckVkResultFn = nullptr;
+				device.getImGuiInitInfo(&init_info);
 				return init_info;
 			};
 
-			VkCommandBuffer beginFrame();
+			static Renderer& Get() {
+				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
+				if (instance == nullptr) {
+					MADAM_CORE_ERROR("Renderer instance is null pointer");
+				}
+				return *instance;
+			}
+
+			static VkDevice GetLogicDevice() {
+				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
+				return Get().device.device_;
+			}
+
+			static Device& GetDevice() {
+				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
+				return Get().device;
+			}
+
+			static SwapChain& GetSwapChain() {
+				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
+				if (Get().swapChain == nullptr) {
+					MADAM_CORE_ERROR("SwapChain is null pointer");
+				}
+				return *Get().swapChain;
+			}
+
+			bool beginFrame();
 			void endFrame();
+			VkCommandBuffer beginCommandBuffer();
+			void endCommandBuffer(VkCommandBuffer commandBuffer);
+			void beginRenderPass(VkCommandBuffer commandBuffer, int renderpassIndex);
+			void endRenderPass(VkCommandBuffer commandBuffer);
 			void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
 			void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
+			VkRenderPass createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies);
+
+			void PipelineBarrier(VkCommandBuffer commandBuffer, bool isSwapchain, bool isSwitch, int frameIndex, int renderIndex);
 		private:
 			void createCommandBuffers();
+			void createMainRenderImages();
+			void createMainRenderPass();
+			void saveAsImage(VkCommandBuffer commandBuffer);
+			void setImageBuffer(int index);
+			void mapImageBuffer(int index);
 			void freeCommandBuffers();
+			void freeImageBuffers(int index);
 			void recreateSwapChain();
+			//VkRenderPass createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies, bool isSwapChain);
+
+			static Renderer* instance;
+			static bool instanceFlag;
 
 			Window& window;
 			Device& device;
-			std::unique_ptr<SwapChain> swapChain;
+			Scope<SwapChain> swapChain = nullptr;
 			std::vector<VkCommandBuffer> commandBuffers;
 
 			uint32_t currentImageIndex;
 			int currentFrameIndex = 0;
+			uint32_t currentCommandBufferIndex = 0;
 			bool isFrameStarted = false;
 			bool isRunning = false;
+			std::vector<VkRenderPass> renderPasses;
+			std::vector<Frame> frames;
+			std::vector<CommandBufferGroup> commandBufferGroups;
+			//std::vector<ImageView> imageViews;
+
+			uint32_t viewportWidth = 800, viewportHeight = 450;
+
 		};
 	}
 }

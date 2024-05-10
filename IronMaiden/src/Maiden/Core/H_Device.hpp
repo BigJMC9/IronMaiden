@@ -1,8 +1,9 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "Main/Core.hpp"
 #include "H_Window.hpp"
+#define IMGUI_ENABLE_VIEWPORTS
+#define IMGUI_ENABLE_DOCKING
 #define IMGUI_IMPL_API
 #define IMGUI_API
 #include "imgui.h"
@@ -12,6 +13,10 @@
 //GDI Graphical Device Interface
 //See pg 46
 namespace Madam {
+
+	namespace Rendering {
+		class Renderer;
+	}
 
 	struct SwapChainSupportDetails {
 		VkSurfaceCapabilitiesKHR capabilities;
@@ -52,13 +57,13 @@ namespace Madam {
 		VkQueue graphicsQueue() { return graphicsQueue_; }
 		VkQueue presentQueue() { return presentQueue_; }
 		
-		ImGui_ImplVulkan_InitInfo getImGuiInitInfo(ImGui_ImplVulkan_InitInfo init_info) {
-			init_info.Instance = instance;
-			init_info.PhysicalDevice = physicalDevice;
-			init_info.QueueFamily = findPhysicalQueueFamilies().graphicsFamily;
-			init_info.Queue = graphicsQueue_;
-			init_info.PipelineCache = VK_NULL_HANDLE;
-			init_info.DescriptorPool = VK_NULL_HANDLE;
+		ImGui_ImplVulkan_InitInfo* getImGuiInitInfo(ImGui_ImplVulkan_InitInfo* init_info) {
+			init_info->Instance = instance;
+			init_info->PhysicalDevice = physicalDevice;
+			init_info->QueueFamily = findPhysicalQueueFamilies().graphicsFamily;
+			init_info->Queue = graphicsQueue_;
+			init_info->PipelineCache = VK_NULL_HANDLE;
+			init_info->DescriptorPool = VK_NULL_HANDLE;
 			return init_info;
 		}
 
@@ -130,6 +135,7 @@ namespace Madam {
 		const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 		bool isRunning = false;
+		friend class Rendering::Renderer;
 	};
 
 }  // namespace lve

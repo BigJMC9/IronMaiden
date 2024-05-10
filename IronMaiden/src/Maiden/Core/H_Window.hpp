@@ -1,10 +1,11 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "Main/Core.hpp"
 #include "H_Logger.hpp"
 #define GLFW_INCLUDE_VULKAN
+#define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
 namespace Madam {
 
@@ -38,6 +39,9 @@ namespace Madam {
 		GLFWwindow* getGLFWwindow() const {
 			return window;
 		}
+
+		int getWidth() const { return data.width; }
+		int getHeight() const { return data.height; }
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 

@@ -38,7 +38,7 @@ namespace Madam {
 			VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout
 		);
 
-		static std::unique_ptr<Texture> createTextureFromFile(
+		static Scope<Texture> createTextureFromFile(
 			Device& device,
 			const std::string& rawFilePath
 		);

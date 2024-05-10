@@ -26,8 +26,8 @@ namespace Madam {
 		Entity CreateEntity(entt::entity _entity);
 		Entity CreateEntity(UUID uuid);
 		Entity CreateEntity(UUID uuid, const std::string& name);
-		Entity LoadGameObject(std::shared_ptr<Model> model);
-		Entity LoadGameObject(std::shared_ptr<Model> model, Material mat);
+		Entity LoadGameObject(Ref<Model> model);
+		Entity LoadGameObject(Ref<Model> model, Material mat);
 
 		void Start();
 		void RunTimeStart();
@@ -35,10 +35,10 @@ namespace Madam {
 		void Render();
 
 
-		std::shared_ptr<Rendering::CameraHandle> GetCurrentCamera() {
+		Ref<Rendering::CameraHandle> GetCurrentCamera() {
 			return cameras[mainCameraIndex];
 		}
-		std::shared_ptr<Scene> Copy();
+		Ref<Scene> Copy();
 
 		entt::registry& Reg() { return registry; }
 
@@ -63,7 +63,7 @@ namespace Madam {
 		}
 
 	private:
-		std::vector<std::shared_ptr<Rendering::CameraHandle>> cameras;
+		std::vector<Ref<Rendering::CameraHandle>> cameras;
 		int mainCameraIndex = 0;
 
 		template<typename T>
