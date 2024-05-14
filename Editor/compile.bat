@@ -1,0 +1,12 @@
+setlocal
+set "current_dir=%~dp0"
+cd "C:\Program Files\VulkanSDK\1.3.268.0\Bin"
+glslc.exe "%current_dir%\Internal\shaders\simple_shader.vert" -o "%current_dir%\Internal\shaders\simple_shader.vert.spv"
+glslc.exe "%current_dir%\Internal\shaders\simple_shader.frag" -o "%current_dir%\Internal\shaders\simple_shader.frag.spv"
+glslc.exe "%current_dir%\Internal\shaders\point_light.vert" -o "%current_dir%\Internal\shaders\point_light.vert.spv"
+glslc.exe "%current_dir%\Internal\shaders\point_light.frag" -o "%current_dir%\Internal\shaders\point_light.frag.spv"
+glslc.exe "%current_dir%\Internal\shaders\texture_shader.vert" -o "%current_dir%\Internal\shaders\texture_shader.vert.spv"
+glslc.exe "%current_dir%\Internal\shaders\texture_shader.frag" -o "%current_dir%\Internal\shaders\texture_shader.frag.spv"
+glslc.exe "%current_dir%\Internal\shaders\grid_shader.vert" -o "%current_dir%\Internal\shaders\grid_shader.vert.spv"
+glslc.exe "%current_dir%\Internal\shaders\grid_shader.frag" -o "%current_dir%\Internal\shaders\grid_shader.frag.spv"
+pause

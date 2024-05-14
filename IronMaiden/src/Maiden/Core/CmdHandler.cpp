@@ -1,0 +1,188 @@
+#include "maidenpch.hpp"
+#include "H_CmdHandler.hpp"
+#include "../Rendering/H_RenderSystems.hpp"
+#include "H_Application.hpp"
+
+
+// std
+#include <cctype> 
+
+namespace Madam {
+	namespace App {
+
+		static std::string toLowerCase(const std::string& str) {
+			std::string result;
+			for (char c : str) {
+				result += std::tolower(c);
+			}
+			return result;
+		}
+
+		//Handle on seperate thread and then use switch with int to handle command when meeting with main thread
+		//All essential options should now be restructured to be available to be accessed by this command handler
+		void CommandHandler::HandleCommand(std::string command, PipeHandler& handler, SceneSerializer* scene) {
+
+			if (command[0] == '?') {
+				std::string message;
+				message = "Commands: \ninstantiate\nload [Scene Path]\nsave [Scene Path]\n";
+				message += "[!n!]";
+				MADAM_CORE_INFO(message);
+				handler.Write(message);
+				handler.Write("[!n!]");
+				return;
+			}
+
+			std::stringstream commandStream(command);
+			std::vector<std::string> commandWords;
+
+			std::string word;
+			while (commandStream >> word) {
+				commandWords.push_back(toLowerCase(word));
+			}
+
+			if (commandWords[0] == "object") {
+				HandleObject(commandWords, handler);
+			}
+			else if (commandWords[0] == "scene") {
+				HandleScene(commandWords, handler, scene);
+			}
+			else if (commandWords[0] == "render") {
+				HandleRendering(commandWords, handler, scene);
+			}
+			else if (commandWords[0] == "snap") {
+				Application::Get().debug = true;
+			}
+			else if (commandWords[0] == "get") {
+				if (commandWords.size() < 2) {
+					handler.Write("Commands for get: \nget script");
+				}
+				else if (commandWords[1] == "script") {
+					Application::Get().setScripts();
+				}
+				else {
+					handler.Write("Unknown Command!\nCommands for get: \nget script");
+				}
+			}
+			else if (commandWords[0] == "play") {
+				Application::Get().setRuntimeFlag();
+			}
+			else if (commandWords[0] == "stop") {
+				Application::Get().RuntimeStop();
+				Application::Get().setRuntimeStopFlag();
+			}
+			else if (commandWords[0] == "scan") {
+				Application::Get().setUpdate();
+			}
+			else if (commandWords[0] == "create") {
+				if (commandWords.size() < 2) {
+					handler.Write("Commands for create: \ncreate script [location]");
+				}
+				else if (commandWords[1] == "script") {
+					if (commandWords.size() < 3) {
+						Application::Get().setCreateNative("NewScript.cpp");
+					}
+					else {
+						std::string defaultFileType = ".cpp";
+						try {
+							std::string fileType = commandWords[2].substr(commandWords[2].size() - defaultFileType.size());
+							if (fileType == defaultFileType) {
+								Application::Get().setCreateNative(commandWords[2]);
+							}
+							else {
+								Application::Get().setCreateNative(commandWords[2] + ".cpp");
+							}
+						}
+						catch (std::exception e) {
+							Application::Get().setCreateNative(commandWords[2] + ".cpp");
+						}
+					}
+					/*else {
+						handler.Write("Commands for create script: \ncreate script [location]");
+					}*/
+				}
+			}
+			else if (commandWords[0] == "quit") {
+				Application::Get().quit();
+				if (!handler.Write("[!c!]")) {
+					MADAM_CORE_ERROR("Error: unable to send end of write to pipe!");
+				}
+				return;
+			}
+			else {
+				MADAM_CORE_INFO("UNKNOWN COMMAND!");
+				handler.Write("Unknown Command!: " + command);
+			}
+
+			if (!handler.Write("[!n!]")) {
+				MADAM_CORE_ERROR("Error: unable to send end of write to pipe!");
+			}
+		}
+
+		void CommandHandler::HandleRendering(std::vector<std::string> commandWords, PipeHandler& handler, SceneSerializer* scene) {
+			if (commandWords.size() < 2) {
+				handler.Write("Commands for Rendering: \nrender switch [Render System number] [Render System number] \nrender order ");
+			}
+			else if (commandWords[1] == "order") {
+				auto renderSystems = Application::Get().getRenderLayers();
+				std::string systemNames = "";
+				int i = 0;
+				for (auto& system : renderSystems) {
+					systemNames += std::to_string(i) + " - " + system->name + "\n";
+					i += 1;
+				}
+				handler.Write(systemNames);
+				MADAM_CORE_INFO(systemNames);
+			}
+			else if (commandWords[1] == "switch") {
+				if (commandWords.size() > 3) {
+					int first = std::stoi(commandWords[2]);
+					int second = std::stoi(commandWords[3]);
+					Application::Get().getMasterRenderSystem().switchRenderSystems(first, second);
+				}
+				else {
+					handler.Write("Commands for switch: \nrender switch [Render System number] [Render System number]");
+				}
+			}
+		}
+
+		void CommandHandler::HandleObject(std::vector<std::string> commandWords, PipeHandler& handler) {
+			if (commandWords.size() < 2) {
+				handler.Write("Commands for Object: \nObject load [Object Path]");
+			}
+		}
+
+		void CommandHandler::HandleScene(std::vector<std::string> commandWords, PipeHandler& handler, SceneSerializer* scene) {
+			if (commandWords.size() < 2) {
+				handler.Write("Commands for Scene: \nscene load [Scene Path]\nscene save [Scene Path]");
+			}
+			else if (commandWords[1] == "load") {
+				if (commandWords.size() > 2) {
+					scene->Deserialize(commandWords[2]);
+					Application::Get().pSurface->OnSceneLoad();
+				}
+				else {
+					scene->Deserialize("scenes/temp.scene");
+					Application::Get().pSurface->OnSceneLoad();
+				}
+			}
+			else if (commandWords[1] == "save") {
+				if (commandWords.size() > 2) {
+					scene->Serialize(commandWords[2]);
+				}
+				else {
+					scene->Serialize("scenes/temp.scene");
+				}
+			}
+		}
+
+
+		/*void CommandHandler::HandleRuntime(std::vector<std::string> commandWords, PipeHandler& handler) {
+			if (commandWords.size() < 2) {
+				handler.Write("Commands for Runtime: \nRuntime start");
+			}
+			else if (commandWords[1] == "start") {
+				Application::Get().isRuntime = true;
+			}
+		}*/
+	}
+}

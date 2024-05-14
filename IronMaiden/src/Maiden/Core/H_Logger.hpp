@@ -1,0 +1,42 @@
+#pragma once
+
+#include "maidenpch.hpp"
+#include "Main/Core.hpp"
+#include "H_Utils.hpp"
+
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h> 
+
+namespace Madam
+{
+	class MADAM_API Logger 
+	{
+	public:
+		static void Init();
+
+		inline static Ref<spdlog::logger>& GetCoreLogger() { return s_CoreLogger; }
+		inline static Ref<spdlog::logger>& GetClientLogger() { return s_ClientLogger; } 
+	private:
+
+		static Ref<spdlog::logger> s_CoreLogger;
+		static Ref<spdlog::logger> s_ClientLogger;
+	};
+};
+
+//Core log macros
+#define MADAM_CORE_TRACE(...)     ::Madam::Logger::GetCoreLogger()->trace(__VA_ARGS__)
+#define MADAM_CORE_INFO(...)      ::Madam::Logger::GetCoreLogger()->info(__VA_ARGS__)
+#define MADAM_CORE_NOT_IMPL(...)  ::Madam::Logger::GetCoreLogger()->info(__VA_ARGS__)
+#define MADAM_CORE_WARN(...)      ::Madam::Logger::GetCoreLogger()->warn(__VA_ARGS__)
+#define MADAM_CORE_ERROR(...)     ::Madam::Logger::GetCoreLogger()->error(__VA_ARGS__)
+#define MADAM_CORE_FATAL(...)     ::Madam::Logger::GetCoreLogger()->fatal(__VA_ARGS__)
+#define MADAM_CORE_ASSERT(x, ...) { if(!(x)) { MADAM_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+#define MADAM_CORE_POINTER(...)   ::fmt::ptr(__VA_ARGS__)
+
+//Client log macros
+#define MADAM_TRACE(...)      ::Madam::Logger::GetClientLogger()->trace(__VA_ARGS__)
+#define MADAM_INFO(...)       ::Madam::Logger::GetClientLogger()->info(__VA_ARGS__)
+#define MADAM_WARN(...)       ::Madam::Logger::GetClientLogger()->warn(__VA_ARGS__)
+#define MADAM_ERROR(...)      ::Madam::Logger::GetClientLogger()->error(__VA_ARGS__)
+#define MADAM_FATAL(...)      ::Madam::Logger::GetClientLogger()->fatal(__VA_ARGS__)
+
