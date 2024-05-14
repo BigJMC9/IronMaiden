@@ -19,6 +19,7 @@ namespace Madam {
 		};
 		struct Frame {
 			std::vector<ImageData> images;
+			uint32_t width, height;
 		};
 		struct CommandBufferGroup {
 			std::vector<VkCommandBuffer> commandBuffers;

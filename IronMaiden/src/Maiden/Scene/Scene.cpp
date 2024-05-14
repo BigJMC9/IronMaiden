@@ -48,7 +48,7 @@ namespace Madam {
 		auto IdView = registry.view<UniqueIdentifier>();
 		for (entt::entity entity : IdView) {
 			UUID& uuid = registry.get<UniqueIdentifier>(entity).uuid;
-			const auto& name = registry.get<Object>(entity).name;
+			const auto& name = registry.get<GameObject>(entity).name;
 			Entity newEntity = newScene->CreateEntity(uuid, name);
 			enttMap[uuid] = (entt::entity)newEntity;
 		}
@@ -64,10 +64,8 @@ namespace Madam {
 	Entity Scene::CreateEntity() {
 		Entity entity = { registry.create(), this };
 		entity.AddComponent<UniqueIdentifier>();
-		entity.AddComponent<Object>();
+		entity.AddComponent<GameObject>();
 		entity.AddComponent<Transform>();
-		//entity.transform = entity.GetComponent<Transform>();
-		//m_EntityMap.emplace(entity.GetUUID(), entity);
 		return entity;
 	}
 
@@ -75,37 +73,35 @@ namespace Madam {
 	Entity Scene::CreateEntity(entt::entity _entity) {
 		Entity entity = { registry.create(_entity), this };
 		entity.AddComponent<UniqueIdentifier>();
-		entity.AddComponent<Object>();
+		entity.AddComponent<GameObject>();
 		entity.AddComponent<Transform>();
-		//entity.transform = entity.GetComponent<Transform>();
-		//m_EntityMap.emplace(entity.GetUUID(), entity);
 		return entity;
 	}
 
 	Entity Scene::CreateEntity(UUID uuid) {
 		Entity entity = { registry.create(), this};
 		entity.AddComponent<UniqueIdentifier>(uuid);
-		entity.AddComponent<Object>();
+		entity.AddComponent<GameObject>();
 		entity.AddComponent<Transform>();
-		//entity.transform = entity.GetComponent<Transform>();
-		//m_EntityMap.emplace(entity.GetUUID(), entity);
 		return entity;
 	}
 
 	Entity Scene::CreateEntity(UUID uuid, const std::string& name) {
 		Entity entity = { registry.create(), this };
 		entity.AddComponent<UniqueIdentifier>(uuid);
-		entity.AddComponent<Object>(name);
+		entity.AddComponent<GameObject>(name);
 		entity.AddComponent<Transform>();
-		//entity.transform = entity.GetComponent<Transform>();
-		//m_EntityMap.emplace(entity.GetUUID(), entity);
 		return entity;
+	}
+
+	void Scene::DestroyEntity(Entity entity) {
+		registry.destroy(entity);
 	}
 
 	Entity Scene::LoadGameObject(Ref<Model> model) {
 		Entity entity = { registry.create(), this};
 		entity.AddComponent<UniqueIdentifier>();
-		entity.AddComponent<Object>();
+		entity.AddComponent<GameObject>();
 		entity.AddComponent<MeshRenderer>();
 		entity.AddComponent<MeshFilter>();
 		entity.GetComponent<MeshFilter>().model = model;
@@ -118,7 +114,7 @@ namespace Madam {
 	Entity Scene::LoadGameObject(Ref<Model> model, Material mat) {
 		Entity entity = { registry.create(), this};
 		entity.AddComponent<UniqueIdentifier>();
-		entity.AddComponent<Object>();
+		entity.AddComponent<GameObject>();
 		entity.AddComponent<MeshRenderer>();
 		entity.AddComponent<MeshFilter>();
 		entity.GetComponent<MeshFilter>().model = model;
@@ -180,7 +176,7 @@ namespace Madam {
 	}
 
 	template<>
-	void MADAM_API Scene::OnComponentAdded<Object>(Entity entity, Object& component)
+	void MADAM_API Scene::OnComponentAdded<GameObject>(Entity entity, GameObject& component)
 	{
 
 	}

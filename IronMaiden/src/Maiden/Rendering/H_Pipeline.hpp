@@ -127,6 +127,7 @@ namespace Madam {
 	class MADAM_API Pipeline {
 	public:
 		Pipeline(Device& device, const std::string& rawVertFilepath, const std::string& rawFragFilepath, const PipelineConfigInfo& configInfo);
+		Pipeline(Device& device, const std::vector<uint32_t>& rawVert, const std::vector<uint32_t>& rawFrag, const PipelineConfigInfo& configInfo);
 		~Pipeline();
 
 		Pipeline(const Pipeline&) = delete;
@@ -142,9 +143,10 @@ namespace Madam {
 		static std::vector<char> readFile(const std::string& filepath);
 
 		void createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo);
+		void createGraphicsPipeline(const std::vector<uint32_t>& rawVert, const std::vector<uint32_t>& rawFrag, const PipelineConfigInfo& configInfo);
 
 		void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule); //pointer to pointer
-
+		void createShaderModule(const std::vector<uint32_t>& code, VkShaderModule* shaderModule); //pointer to pointer
 		
 
 		Device& device; //outlive any instance of any class that depends on it so it will not crash the engine (aggregation)

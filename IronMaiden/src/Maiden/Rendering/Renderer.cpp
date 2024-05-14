@@ -45,6 +45,7 @@ namespace Madam {
 
 		//Recreate swapchain if window is resized
 		void Renderer::recreateSwapChain() {
+			MADAM_CORE_INFO("Recreating SwapChain");
 			auto extent = window.getExtent();
 			while (extent.width == 0 || extent.height == 0) {
 				extent = window.getExtent();
@@ -61,6 +62,31 @@ namespace Madam {
 
 				if (!oldSwapChain->compareSwapFormats(*swapChain.get())) {
 					MADAM_CORE_ERROR("Swap chain image(or depth) format has changed!");
+				}
+
+				//temporary, update this
+				bool isRecreate = false;
+				for (size_t i = 0; i < frames.size(); i++)
+				{
+					if (frames[i].width < swapChain->getSwapChainExtent().width || frames[i].height < swapChain->getSwapChainExtent().height) {
+						isRecreate = true;
+						break;
+					}
+				}
+				if (isRecreate) {
+					for (size_t i = 0; i < frames.size(); i++)
+					{ 
+						vkDestroyFramebuffer(device.device(), frames[i].images[0].frameBuffer, nullptr);
+						vkDestroyImageView(device.device(), frames[i].images[0].imageView, nullptr);
+						vkDestroyImage(device.device(), frames[i].images[0].image, nullptr);
+						vkFreeMemory(device.device(), frames[i].images[0].imageMemory, nullptr);
+						vkDestroyImageView(device.device(), frames[i].images[1].imageView, nullptr);
+						vkDestroyImage(device.device(), frames[i].images[1].image, nullptr);
+						vkFreeMemory(device.device(), frames[i].images[1].imageMemory, nullptr);
+					}
+					frames.clear();
+					frames.resize(swapChain->imageCount());
+					createMainRenderPass();
 				}
 			}
 		}
@@ -89,10 +115,10 @@ namespace Madam {
 
 		bool Renderer::beginFrame() {
 			MADAM_CORE_ASSERT(!isFrameStarted, "Can't call beginFrame while already in progress");
-			//MADAM_CORE_INFO("Begining Frame");
 
 			auto result = swapChain->acquireNextImage(&currentImageIndex);
 			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+				MADAM_CORE_INFO("Recreating Swapchain on begin frame");
 				recreateSwapChain();
 				return false;
 			}
@@ -103,7 +129,6 @@ namespace Madam {
 
 			isFrameStarted = true;
 			return true;
-			//MADAM_CORE_INFO("Frame Started");
 		}
 
 		void Renderer::endFrame() {
@@ -118,7 +143,7 @@ namespace Madam {
 			auto result = swapChain->submitCommandBuffers(&commandBuffer, &currentCommandBufferIndex);
 			//mapImageBuffer(currentFrameIndex);
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized()) {
-				window.resetWindowResizedFlag();
+				MADAM_CORE_INFO("Recreating Swapchain on end frame");
 				recreateSwapChain();
 			}
 			else if (result != VK_SUCCESS) {
@@ -276,6 +301,9 @@ namespace Madam {
 				viewInfo.subresourceRange.levelCount = 1;
 				viewInfo.subresourceRange.baseArrayLayer = 0;
 				viewInfo.subresourceRange.layerCount = 1;
+				viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+				viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+				viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 				viewInfo.components.a = VK_COMPONENT_SWIZZLE_ONE;
 
 				ImageData imageData;
@@ -288,6 +316,8 @@ namespace Madam {
 				}
 
 				frames[i].images.push_back(imageData);
+				frames[i].width = swapChain->getSwapChainExtent().width;
+				frames[i].height = swapChain->getSwapChainExtent().height;
 				//setImageBuffer(i);
 
 				VkImage depthImage;
@@ -438,8 +468,8 @@ namespace Madam {
 				framebufferInfo.renderPass = renderPass;
 				framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 				framebufferInfo.pAttachments = imageAttachments.data();
-				framebufferInfo.width = swapChain->getSwapChainExtent().width;
-				framebufferInfo.height = swapChain->getSwapChainExtent().height;
+				framebufferInfo.width = frames[i].width;
+				framebufferInfo.height = frames[i].height;
 				framebufferInfo.layers = 1;
 
 				if (vkCreateFramebuffer(

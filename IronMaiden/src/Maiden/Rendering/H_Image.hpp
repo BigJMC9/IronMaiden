@@ -49,8 +49,11 @@ namespace Madam {
 					break;
 				default:
 					MADAM_CORE_ERROR("Image format not specified");
+					return VK_FORMAT_UNDEFINED;
 					break;
 				}
+
+				return VK_FORMAT_UNDEFINED;
 			}
 
 			VkImageLayout GetLayout() {
@@ -73,8 +76,11 @@ namespace Madam {
 					break;
 				default:
 					MADAM_CORE_ERROR("Image layout not specified");
+					return VK_IMAGE_LAYOUT_UNDEFINED;
 					break;
 				}
+
+				return VK_IMAGE_LAYOUT_UNDEFINED;
 			}
 
 			VkImageAspectFlags GetAspect() {
@@ -146,8 +152,11 @@ namespace Madam {
 					break;
 				default:
 					MADAM_CORE_ERROR("Image usage not specified");
+					return 0;
 					break;
 				}
+
+				return 0;
 			}
 
 			friend class SwapChain;

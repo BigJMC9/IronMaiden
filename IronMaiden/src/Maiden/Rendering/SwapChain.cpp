@@ -29,7 +29,7 @@ namespace Madam {
 			createSwapChain();
 			createImageViews();
 			createRenderPass();
-			createDepthResources();
+			//createDepthResources();
 			createFramebuffers();
 			createSyncObjects();
 			MADAM_CORE_INFO("SwapChain image count: {0}", imageCount());
@@ -77,6 +77,7 @@ namespace Madam {
 		}
 
 		VkResult SwapChain::acquireNextImage(uint32_t* imageIndex) {
+			//MADAM_CORE_INFO("Current Image Index from acquireNextImage before func: {0}, Current Frame: {1}", *imageIndex, currentFrame);
 			vkWaitForFences(
 				device.device(),
 				1,
@@ -91,7 +92,7 @@ namespace Madam {
 				imageAvailableSemaphores[currentFrame],  // must be a not signaled semaphore
 				VK_NULL_HANDLE,
 				imageIndex); //is a pointer to a uint32_t in which the index of the next image to use (i.e. an index into the array of images returned by vkGetSwapchainImagesKHR) is returned.
-
+			//MADAM_CORE_INFO("Current Image Index from acquireNextImage after func: {0}, Current Frame: {1}", *imageIndex, currentFrame);
 			return result;
 		}
 
@@ -152,8 +153,7 @@ namespace Madam {
 			VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
 			uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-			if (swapChainSupport.capabilities.maxImageCount > 0 &&
-				imageCount > swapChainSupport.capabilities.maxImageCount) {
+			if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
 				imageCount = swapChainSupport.capabilities.maxImageCount;
 			}
 
@@ -193,10 +193,16 @@ namespace Madam {
 			//Validation Error, no renderpass provided (null renderpass).
 			//Validation Error is normal! It is because we have not created a renderpass yet.
 			MADAM_CORE_INFO("VkCreateSwapChainKHR");
-			if (vkCreateSwapchainKHR(device.device(), &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
+			auto result = vkCreateSwapchainKHR(device.device(), &createInfo, nullptr, &swapChain);
+			if (result != VK_SUCCESS) {
 				throw std::runtime_error("failed to create swap chain!");
 			}
-			MADAM_CORE_INFO("VkCreateSwapChainKHR Done");
+			else if (result == VK_SUCCESS) {
+				MADAM_CORE_INFO("VkCreateSwapChainKHR Done");
+			}
+			else {
+				MADAM_CORE_ERROR("VkCreateSwapChainKHR threw unknown error, result code: {0}", result);
+			}
 			// we only specified a minimum number of images in the swap chain, so the implementation is
 			// allowed to create a swap chain with more. That's why we'll first query the final number of
 			// images with vkGetSwapchainImagesKHR, then resize the container and finally call it again to
@@ -207,8 +213,8 @@ namespace Madam {
 
 			swapChainImageFormat = surfaceFormat.format;
 			swapChainExtent = extent;
-			VkFormat depthFormat = findDepthFormat();
-			swapChainDepthFormat = depthFormat;
+			//VkFormat depthFormat = findDepthFormat();
+			//swapChainDepthFormat = depthFormat;
 		}
 
 		void SwapChain::createImageViews() {
@@ -234,32 +240,6 @@ namespace Madam {
 
 		//Look into this in more depth
 		void SwapChain::createRenderPass() {
-			//create attachment description
-
-			/*Rendering::RenderPassLoadType loadType = Rendering::RenderPassLoadType::Clear;
-			Rendering::RenderPassAttachmentType attachmentType = Rendering::RenderPassAttachmentType::Depth;
-			Rendering::RenderPassAttachmentSpecifications depthConfig = Rendering::RenderPassAttachmentSpecifications(loadType, attachmentType, swapChainDepthFormat);
-
-			loadType = Rendering::RenderPassLoadType::Clear;
-			attachmentType = Rendering::RenderPassAttachmentType::Color;
-			Rendering::RenderPassAttachmentSpecifications colorConfig = Rendering::RenderPassAttachmentSpecifications(loadType, attachmentType, swapChainImageFormat);
-
-
-			Rendering::SubpassConfig subpassConfig = Rendering::SubpassConfig::Builder()
-				.Attach(colorConfig)
-				.Attach(depthConfig)
-				.Build();
-
-
-			Rendering::RenderPassAttachmentGroup attachmentGroup = Rendering::RenderPassAttachmentGroup();
-			attachmentGroup.Attach(colorConfig);
-			attachmentGroup.Attach(depthConfig);
-
-			renderPass = Rendering::RenderPass::Builder()
-				.Attach(attachmentGroup)
-				.Attach(subpassConfig)
-				.Build();
-			*/
 
 			VkAttachmentDescription colorAttachment = {};
 			colorAttachment.format = getSwapChainImageFormat();
@@ -312,8 +292,8 @@ namespace Madam {
 			}
 		}
 
-		void SwapChain::createSceneResources() {
-			/*sceneImages.resize(imageCount());
+		/*void SwapChain::createSceneResources() {
+			sceneImages.resize(imageCount());
 			sceneImageMemorys.resize(imageCount());
 			sceneImageViews.resize(imageCount());
 
@@ -354,10 +334,10 @@ namespace Madam {
 				if (vkCreateImageView(device.device(), &viewInfo, nullptr, &sceneImageViews[i]) != VK_SUCCESS) {
 					throw std::runtime_error("failed to create texture image view!");
 				}
-			}*/
-		}
+			}
+		}*/
 
-		void SwapChain::createDepthResources() {
+		/*void SwapChain::createDepthResources() {
 			VkExtent2D swapChainExtent = getSwapChainExtent();
 
 			depthImages.resize(imageCount());
@@ -396,7 +376,7 @@ namespace Madam {
 			imageSpecs.mipLevels = 1;
 			imageSpecs.arrayLayers = 1;
 			imageSpecs.depth = 1;*/
-
+			/*
 			for (int i = 0; i < depthImages.size(); i++) {
 				//depthImages[i] = CreateRef<Rendering::Image>(imageSpecs);
 				VkImageCreateInfo imageInfo{};
@@ -436,7 +416,7 @@ namespace Madam {
 					throw std::runtime_error("failed to create texture image view!");
 				}
 			}
-		}
+		}*/
 
 		void SwapChain::createFramebuffers() {
 
@@ -487,8 +467,8 @@ namespace Madam {
 			}
 		}
 
-		VkSurfaceFormatKHR SwapChain::chooseSwapSurfaceFormat(
-			const std::vector<VkSurfaceFormatKHR>& availableFormats) {
+		//Update at some point maybe?
+		VkSurfaceFormatKHR SwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
 			for (const auto& availableFormat : availableFormats) {
 				if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
 					availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {

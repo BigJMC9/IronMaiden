@@ -5,6 +5,8 @@
 #include "H_Scene.hpp"
 //#include "Components.hpp"
 
+#define MADAM_ENTT_HEADER_FLAG
+
 // std
 #include <cassert>
 

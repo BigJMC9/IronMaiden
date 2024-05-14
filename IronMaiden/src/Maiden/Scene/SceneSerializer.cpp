@@ -502,7 +502,7 @@ namespace Madam {
 		//Will need to be updated for runtime
 		if (!isMain) {
 			Entity camera = newScene.CreateEntity();
-			camera.GetComponent<Object>().name = "Editor Camera";
+			camera.GetComponent<GameObject>().name = "Editor Camera";
 			camera.GetComponent<Transform>().translation.z = -2.5f;
 			Rendering::CameraData cameraData;
 			cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;

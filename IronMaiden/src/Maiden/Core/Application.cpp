@@ -1,4 +1,5 @@
 #include "maidenpch.hpp"
+#define MADAM_APP_IMPL_FLAG
 #include "H_Application.hpp"
 #include "../Scene/H_SceneSerializer.hpp"
 #include "H_CmdHandler.hpp"
@@ -197,8 +198,12 @@ namespace Madam {
 				pGUI->OnUpdate();
 				pGUI->Record(commandBuffer);
 				renderer.endSwapChainRenderPass(commandBuffer);
-				//renderer.PipelineBarrier(commandBuffer, false, true, frameIndex, 0); //need semaphore for image in future
 				renderer.endFrame();
+				if (window.wasWindowResized()) {
+					pGUI->ReCreate();
+					window.resetWindowResizedFlag();
+				}
+				
 				if (firstFrame) {
 					firstFrame = false;
 				}

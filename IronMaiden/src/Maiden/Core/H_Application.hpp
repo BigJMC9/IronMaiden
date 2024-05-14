@@ -241,6 +241,8 @@ namespace Madam {
 		//Move this somewhere
 		Scope<DescriptorPool> globalPool{};
 		std::vector<Scope<DescriptorPool>> framePools;
+		
+		bool windowResized = false;
 
 		bool isRunning = false;
 		bool firstFrame = true;

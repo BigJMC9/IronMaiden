@@ -26,6 +26,7 @@ namespace Madam {
 		Entity CreateEntity(entt::entity _entity);
 		Entity CreateEntity(UUID uuid);
 		Entity CreateEntity(UUID uuid, const std::string& name);
+		void DestroyEntity(Entity entity);
 		Entity LoadGameObject(Ref<Model> model);
 		Entity LoadGameObject(Ref<Model> model, Material mat);
 
@@ -60,6 +61,12 @@ namespace Madam {
 		auto GetAllEntitiesWith()
 		{
 			return registry.view<Components...>();
+		}
+
+		template<typename... Components, typename... Args>
+		auto GetAllEntitiesWith(Args&&... args)
+		{
+			return registry.view<Components...>(std::forward<Args>(args)...);
 		}
 
 	private:

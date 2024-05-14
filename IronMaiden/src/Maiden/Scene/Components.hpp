@@ -95,19 +95,23 @@ namespace Madam {
 		operator const std::string& () const { return tag; }
 	};
 
-	struct Object {
+	struct GameObject {
 		std::string name = "Object";
 
-		Object() = default;
+		GameObject() = default;
 		//Object(Object&) = default;
-		Object(const Object&) = default;
-		Object(std::string _name) {
+		GameObject(const GameObject&) = default;
+		GameObject(std::string _name) {
 			name = _name;
 		}
 		//Parent
 		//Tag
 		//Layer
 		//Icon
+	};
+
+	struct MaidenInternal {
+		std::string name = "Object";
 	};
 
 	struct MeshFilter {

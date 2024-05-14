@@ -21,7 +21,7 @@ namespace Madam {
 				MADAM_CORE_WARN("validation layer: {0}", pCallbackData->pMessage);
 				break;
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-				MADAM_CORE_ERROR("validation layer: {0}", pCallbackData->pMessage);
+				MADAM_CORE_WARN("validation layer: {0}", pCallbackData->pMessage);
 				break;
 			default:
 				break;

@@ -71,8 +71,9 @@ namespace Madam {
 		cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
 		cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().getAspectRatio(), 0.1f, 1000.0f);
 		Entity& obj = Application::Get().getScene().CreateEntity();
-		obj.GetComponent<Object>().name = "Editor Camera";
+		obj.GetComponent<GameObject>().name = "Editor Camera";
 		obj.GetComponent<Transform>().translation.z = -2.5f;
+		obj.AddComponent<MaidenInternal>().name = "Editor Camera";
 		obj.AddComponent<Camera>(cameraData);
 		viewerObject = Entity(obj);
 		viewerObject.GetComponent<Camera>().cameraHandle->setViewDirection(glm::vec3(0.f, 2.0f, 0.f), glm::vec3(0.f, 0.f, 0.f));

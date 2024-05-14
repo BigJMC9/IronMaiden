@@ -52,8 +52,8 @@ namespace Madam {
 			void startUp();
 			void createSwapChain();
 			void createImageViews();
-			void createDepthResources();
-			void createSceneResources();
+			//void createDepthResources();
+			//void createSceneResources();
 			void createRenderPass();
 			void createFramebuffers();
 			void createSyncObjects();
