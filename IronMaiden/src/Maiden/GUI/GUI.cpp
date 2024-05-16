@@ -3,9 +3,12 @@
 #include "../Events/H_Input.hpp"
 #include "../Scene/H_Entity.hpp"
 #include "../Core/H_Application.hpp"
+#include "../Scene/H_SceneSerializer.hpp"
 #include "../Rendering/H_Pipeline.hpp"
 
-#include <glm/gtc/type_ptr.hpp>
+//windows includes
+#include <locale>
+#include <codecvt>
 
 
 static std::vector<uint32_t> vertCode = {
@@ -347,17 +350,31 @@ namespace Madam::UI {
 		fonts.push_back(font);
 
 		style = ImGui::GetStyle();
+		//Windows
 		style.Colors[ImGuiCol_WindowBg] = RGBCon(17, 17, 21);
 		style.Colors[ImGuiCol_Border] = RGBCon(25, 31, 36);
 
+		//Titles
 		style.Colors[ImGuiCol_TitleBg] = RGBCon(21, 19, 25);
 		style.Colors[ImGuiCol_TitleBgActive] = RGBCon(35, 33, 39);
+		//style.Colors[ImGuiCol_TitleBgCollapsed] = RGBCon(21, 19, 25);
 
+		style.Colors[ImGuiCol_MenuBarBg] = RGBCon(27, 22, 31);
+		//Tabs
 		style.Colors[ImGuiCol_Tab] = RGBCon(48, 111, 112);
 		style.Colors[ImGuiCol_TabHovered] = RGBCon(47, 121, 125);
 		style.Colors[ImGuiCol_TabActive] = RGBCon(57, 169, 113);
 		style.Colors[ImGuiCol_TabUnfocused] = RGBCon(37, 60, 68);
 		style.Colors[ImGuiCol_TabUnfocusedActive] = RGBCon(38, 103, 104);
+
+		style.Colors[ImGuiCol_Button] = RGBCon(37, 98, 82);
+		style.Colors[ImGuiCol_ButtonHovered] = RGBCon(36, 119, 83);
+		style.Colors[ImGuiCol_ButtonActive] = RGBCon(36, 136, 78);
+
+		style.Colors[ImGuiCol_Header] = RGBCon(37, 98, 82);
+		style.Colors[ImGuiCol_HeaderHovered] = RGBCon(36, 119, 83);
+		style.Colors[ImGuiCol_HeaderActive] = RGBCon(36, 136, 78);
+
 		ImGui::GetStyle() = style;
 	}
 
@@ -368,6 +385,7 @@ namespace Madam::UI {
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+		ImGuizmo::BeginFrame();
 
 		EditorUI();
 
@@ -393,10 +411,52 @@ namespace Madam::UI {
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("New Scene")) {}
-				if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {}
+				if (ImGui::MenuItem("Open Scene", "Ctrl+O")) 
+				{
+					//Window Specific
+					HWND hWnd = GetConsoleWindow(); // Get the window handle of the console window
+					WCHAR fileName[MAX_PATH]; // Buffer to store the selected file name
+					
+					std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+
+					if (openFileDialog(hWnd, fileName, MAX_PATH)) {
+						// File selected, do something with the file
+						std::wstring ws(fileName);
+
+						std::string fileNameStr = converter.to_bytes(ws);
+						Application::GetSceneSerializer()->Deserialize(fileNameStr, true);
+						Application::Get().pSurface->OnSceneLoad();
+						//MessageBox(hWnd, fileName, L"Selected File", MB_OK | MB_ICONINFORMATION);
+					}
+					else {
+						// User canceled or error occurred
+						MessageBox(hWnd, L"No file selected.", L"Info", MB_OK | MB_ICONINFORMATION);
+					}
+				}
 				ImGui::Separator();
-				if (ImGui::MenuItem("Save", "Ctrl+S")) {}
-				if (ImGui::MenuItem("Save As..")) {}
+				if (ImGui::MenuItem("Save", "Ctrl+S")) {
+					Application::GetSceneSerializer()->Serialize("temp.scene");
+				}
+				if (ImGui::MenuItem("Save As..")) {
+					//Window Specific
+					HWND hWnd = GetConsoleWindow(); // Get the window handle of the console window
+					WCHAR fileName[MAX_PATH]; // Buffer to store the selected file name
+
+					std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+
+					if (saveFileDialog(hWnd, fileName, MAX_PATH)) {
+						// File selected, do something with the file
+						std::wstring ws(fileName);
+
+						std::string fileNameStr = converter.to_bytes(ws);
+						Application::GetSceneSerializer()->Serialize(fileNameStr, true);
+						//MessageBox(hWnd, fileName, L"Selected File", MB_OK | MB_ICONINFORMATION);
+					}
+					else {
+						// User canceled or error occurred
+						MessageBox(hWnd, L"Could not save scene.", L"Info", MB_OK | MB_ICONINFORMATION);
+					}
+				}
 				if (ImGui::MenuItem("Exit")) Application::Get().quit();
 				ImGui::EndMenu();
 			}
@@ -429,7 +489,7 @@ namespace Madam::UI {
 		static bool opt_padding = false;
 		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
 		if (opt_fullscreen)
 		{
 			const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -492,6 +552,37 @@ namespace Madam::UI {
 			drawList->AddCallback(viewportCallback, &viewportPipelineInfo);
 			ImGui::Image(viewportSet, displaySize, uv0, ImVec2(1,1), ImVec4(1, 1, 1, 1));
 			drawList->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
+
+			//imGuizmo
+			if (selectedEntity) {
+				if (Rendering::CameraHandle::getMain().CameraData().projectionType == Rendering::CameraData::ProjectionType::Orthographic) {
+					ImGuizmo::SetOrthographic(true);
+				}
+				else {
+					ImGuizmo::SetOrthographic(false);
+				}
+				ImGuizmo::SetDrawlist();
+				float windowWidth = (float)ImGui::GetWindowWidth();
+				float windowHeight = (float)ImGui::GetWindowHeight();
+				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, displaySize.x, displaySize.y);
+
+				auto& cameraHandle = Rendering::CameraHandle::getMain();
+				glm::mat4 cameraProjection = cameraHandle.getProjection();
+				cameraProjection[1][1] *= -1;
+
+				glm::mat4 cameraView = cameraHandle.getView();
+				MADAM_CORE_INFO("Window Size: ({0},{1}), Image Size: ({2},{3}) Display Size: ({4},{5})", windowSize.x, windowSize.y, imageSize.x, imageSize.y,
+					displaySize.x, displaySize.y);
+
+				glm::mat4 transform = selectedEntity->GetComponent<Transform>();
+
+				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), ImGuizmo::OPERATION::TRANSLATE,
+					ImGuizmo::LOCAL, glm::value_ptr(transform));
+
+				if (ImGuizmo::IsUsing()) {
+					selectedEntity->GetComponent<Transform>().UpdateTransform(transform);
+				}
+			}
 		}
 		ImGui::End();
 	}
@@ -521,7 +612,7 @@ namespace Madam::UI {
 	}
 
 	void GUI::Inspector() {
-		if (ImGui::Begin("Inspector")) {
+		if (ImGui::Begin("Properties")) {
 			if (selectedEntity) {
 				DrawEntityComponents(*selectedEntity);
 
@@ -558,8 +649,7 @@ namespace Madam::UI {
 	}
 
 	void GUI::Project() {
-		if (ImGui::Begin("Project")) {
-
+		if (ImGui::Begin("FileSystem")) {
 			
 		}
 		ImGui::End();
@@ -568,7 +658,6 @@ namespace Madam::UI {
 
 	void GUI::Console() {
 		if (ImGui::Begin("Console")) {
-
 			
 		}
 		ImGui::End();
@@ -610,36 +699,47 @@ namespace Madam::UI {
 			char buffer[256];
 			memset(buffer, 0, sizeof(buffer));
 			strcpy_s(buffer, sizeof(buffer), gameObject.name.c_str());
-			if (ImGui::InputText("Name", buffer, sizeof(buffer))) {
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
+			if (ImGui::InputText("##Name", buffer, sizeof(buffer))) {
 				entity.GetComponent<GameObject>().name = std::string(buffer);
 			}
-		}
-
-		if (entity.HasComponent<Transform>()) {
-			auto& transform = entity.GetComponent<Transform>();
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(Transform).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform");
-			ImGui::SameLine();
-
-			if (ImGui::Button("...", ImVec2{ 20, 20 })) {
-				ImGui::OpenPopup("ComponentSettings");
-			}
 			ImGui::PopStyleVar();
-
-			if (ImGui::BeginPopup("ComponentSettings")) {
-				ImGui::EndPopup();
-			}
-
-			if (open) {
-				ImGui::DragFloat3("Position", glm::value_ptr(transform.translation), 0.5f);
-				ImGui::DragFloat3("Rotation", glm::value_ptr(transform.rotation), 0.5f);
-				ImGui::DragFloat3("Scale", glm::value_ptr(transform.scale), 0.5f);
-
-				ImGui::TreePop();
-			}
 		}
 
 		const ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth;
+
+		if (entity.HasComponent<Transform>()) {
+			auto& transform = entity.GetComponent<Transform>();
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
+			bool open = ImGui::TreeNodeEx((void*)typeid(Transform).hash_code(), headerFlags, "Transform");
+			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
+
+			float lineHeight = ImGui::GetFontSize() + 8;
+			if (ImGui::Button("...", ImVec2{ 20, lineHeight })) {
+				ImGui::OpenPopup("Component Settings");
+			}
+			ImGui::PopStyleVar();
+
+			if (ImGui::BeginPopup("Component Settings")) {
+				ImGui::EndPopup();
+			}
+			
+			if (open) {
+				//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
+				DrawVec3("Translation", transform.translation.value);
+				//ImGui::DragFloat3("Position", glm::value_ptr(transform.translation), 0.5f);
+				glm::vec3 rotation = glm::degrees(transform.rotation.EulerAngles());
+				DrawVec3("Rotation", rotation);
+				transform.rotation = glm::radians(rotation);
+				DrawVec3("Scale", transform.scale.value);
+				ImGui::PopStyleVar();
+				//ImGui::PopStyleVar();
+				ImGui::TreePop();
+			}
+		}
 
 		if (entity.HasComponent<Camera>()) {
 			auto& camera = entity.GetComponent<Camera>();
@@ -647,13 +747,14 @@ namespace Madam::UI {
 			bool open = ImGui::TreeNodeEx((void*)typeid(Camera).hash_code(), headerFlags, "Camera");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
-			if (ImGui::Button("...", ImVec2{ 20, 20 })) {
-				ImGui::OpenPopup("ComponentSettings");
+			float lineHeight = ImGui::GetFontSize() + 8;
+			if (ImGui::Button("...", ImVec2{ 20, lineHeight })) {
+				ImGui::OpenPopup("Component Settings");
 			}
 			ImGui::PopStyleVar();
 
 			bool removeComponent = false;
-			if (ImGui::BeginPopup("ComponentSettings")) {
+			if (ImGui::BeginPopup("Component Settings")) {
 				if (ImGui::MenuItem("Remove Component")) {
 					removeComponent = true;
 				}
@@ -710,7 +811,8 @@ namespace Madam::UI {
 			bool open = ImGui::TreeNodeEx((void*)typeid(MeshFilter).hash_code(), headerFlags, "Mesh Filter");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
-			if (ImGui::Button("...", ImVec2{ 20, 20 })) {
+			float lineHeight = ImGui::GetFontSize() + 8;
+			if (ImGui::Button("...", ImVec2{ 20, lineHeight })) {
 				ImGui::OpenPopup("ComponentSettings");
 			}
 			ImGui::PopStyleVar();
@@ -739,7 +841,8 @@ namespace Madam::UI {
 			bool open = ImGui::TreeNodeEx((void*)typeid(MeshRenderer).hash_code(), headerFlags, "Mesh Renderer");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
-			if (ImGui::Button("...", ImVec2{ 20, 20 })) {
+			float lineHeight = ImGui::GetFontSize() + 8;
+			if (ImGui::Button("...", ImVec2{ 20, lineHeight })) {
 				ImGui::OpenPopup("ComponentSettings");
 			}
 			ImGui::PopStyleVar();
@@ -768,7 +871,8 @@ namespace Madam::UI {
 			bool open = ImGui::TreeNodeEx((void*)typeid(PointLight).hash_code(), headerFlags, "Point Light");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
-			if (ImGui::Button("...", ImVec2{ 20, 20 })) {
+			float lineHeight = ImGui::GetFontSize() + 8;
+			if (ImGui::Button("...", ImVec2{ 20, lineHeight })) {
 				ImGui::OpenPopup("ComponentSettings");
 			}
 			ImGui::PopStyleVar();
@@ -800,7 +904,8 @@ namespace Madam::UI {
 			bool open = ImGui::TreeNodeEx((void*)typeid(Material).hash_code(), headerFlags, "Material");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
-			if (ImGui::Button("...", ImVec2{ 20, 20 })) {
+			float lineHeight = ImGui::GetFontSize() + 8;
+			if (ImGui::Button("...", ImVec2{ 20, lineHeight })) {
 				ImGui::OpenPopup("ComponentSettings");
 			}
 			ImGui::PopStyleVar();
@@ -824,23 +929,79 @@ namespace Madam::UI {
 		}
 	}
 
+	void GUI::DrawVec3(const std::string& label, glm::vec3& values, float resetValue, float columnWidth) {
+
+		ImGuiIO& io = ImGui::GetIO();
+		auto boldFont = io.Fonts->Fonts[1];
+
+		ImGui::PushID(label.c_str());
+
+		ImGui::Columns(2);
+		ImGui::SetColumnWidth(0, columnWidth);
+		ImGui::Text(label.c_str());
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 2, 4 });
+
+		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+		ImGui::PushFont(boldFont);
+		if (ImGui::Button("X", buttonSize))
+			values.x = resetValue;
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushFont(boldFont);
+		if (ImGui::Button("Y", buttonSize))
+			values.y = resetValue;
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+		ImGui::PushFont(boldFont);
+		if (ImGui::Button("Z", buttonSize))
+			values.z = resetValue;
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+
+		ImGui::PopStyleVar();
+
+		ImGui::Columns(1);
+
+		ImGui::PopID();
+	}
+
+
 	void GUI::OnSceneLoad() {
 		selectedEntity = nullptr;
 	}
 
 	void GUI::CreateViewportPipeline() {
 
-		/*std::vector<VkDescriptorSetLayout> descriptorSetLayout{ viewportSet };
-
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayout.size());
-		pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
-		pipelineLayoutInfo.pushConstantRangeCount = 1;
-		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-		if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create pipeline layout!");
-		}*/
 		PipelineConfigInfo configInfo{};
 		configInfo.renderPass = Rendering::Renderer::Get().getSwapChainRenderPass();
 		std::vector< VkVertexInputBindingDescription> bindingDescriptions;

@@ -155,7 +155,7 @@ namespace Madam {
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
 		std::string warn, err;
-		std::string filePath = Application::Get().getConfig().internals + rawFilePath;
+		std::string filePath = Application::Get().getConfig().projectFolder + Application::Get().getConfig().internals + rawFilePath;
 
 		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filePath.c_str())) {
 			throw std::runtime_error(warn + err);

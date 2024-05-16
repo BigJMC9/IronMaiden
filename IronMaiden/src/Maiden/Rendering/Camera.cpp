@@ -40,6 +40,7 @@ namespace Madam {
 			default:
 				break;
 			}
+
 		}
 
 		void CameraHandle::cameraBehaviour() {

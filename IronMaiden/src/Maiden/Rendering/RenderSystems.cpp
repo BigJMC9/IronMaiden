@@ -92,7 +92,7 @@ namespace Madam {
 				}
 
 				DefaultPushConstantData push{};
-				push.modelMatrix = transform.m_transform();
+				push.modelMatrix = transform.transformMatrix();
 				push.normalMatrix = transform.normalMatrix();
 
 				vkCmdPushConstants(
@@ -312,7 +312,7 @@ namespace Madam {
 					nullptr);
 
 				TexturePushConstantData push{};
-				push.modelMatrix = transform.m_transform();
+				push.modelMatrix = transform.transformMatrix();
 				push.normalMatrix = transform.normalMatrix();
 
 				vkCmdPushConstants(
@@ -397,10 +397,10 @@ namespace Madam {
 				assert(lightIndex < MAX_LIGHTS && "Point lights exceed maximum specified");
 
 				//update light position
-				transform.translation = glm::vec3(rotateLight * glm::vec4(transform.translation, 1.f));
+				transform.translation = glm::vec3(rotateLight * glm::vec4(transform.translation.value, 1.f));
 
 				//copy light to ubo
-				frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(transform.translation, 1.f);
+				frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(transform.translation.value, 1.f);
 				frameInfo.ubo.pointLights[lightIndex].color = glm::vec4(pointLight.color, pointLight.intensity);
 
 				lightIndex += 1;
@@ -417,7 +417,7 @@ namespace Madam {
 			auto group = entities.view<Transform, PointLight>();
 			for (auto entity : group) {
 				auto [transform, pointLight] = group.get<Transform, PointLight>(entity);
-				auto offset = Rendering::CameraHandle::getMain().getPosition() - transform.translation;
+				auto offset = Rendering::CameraHandle::getMain().getPosition() - transform.translation.value;
 				float disSquared = glm::dot(offset, offset);
 				sorted[disSquared] = entity;
 			}
@@ -439,7 +439,7 @@ namespace Madam {
 				entt::entity entity = it->second;
 				auto [transform, pointLight] = entities.get<Transform, PointLight>(entity);
 				PointLightPushConstants push{};
-				push.position = glm::vec4(transform.translation, 1.f);
+				push.position = glm::vec4(transform.translation.value, 1.f);
 				push.color = glm::vec4(pointLight.color, pointLight.intensity);
 				push.radius = pointLight.radius;
 
@@ -536,7 +536,7 @@ namespace Madam {
 				}
 
 				DefaultPushConstantData push{};
-				push.modelMatrix = transform.m_transform();
+				push.modelMatrix = transform.transformMatrix();
 				push.normalMatrix = transform.normalMatrix();
 
 				vkCmdPushConstants(

@@ -127,7 +127,7 @@ namespace Madam {
 
 			void setProjection();
 
-			void setViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up = glm::vec3{ 0.f, -1.f, 0.f }) {
+			void setViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up = glm::vec3{ 0.f, 1.f, 0.f }) {
 				const glm::vec3 w{ glm::normalize(direction) };
 				const glm::vec3 u{ glm::normalize(glm::cross(w, up)) };
 				const glm::vec3 v{ glm::cross(w, u) };
@@ -166,7 +166,7 @@ namespace Madam {
 				setViewDirection(position, target - position, up);
 			}
 
-			void setViewYXZ(glm::vec3 position, glm::vec3 rotation) {
+			void setView(glm::vec3 position, glm::vec3 rotation) {
 				const float c3 = glm::cos(rotation.z);
 				const float s3 = glm::sin(rotation.z);
 				const float c2 = glm::cos(rotation.x);

@@ -26,13 +26,18 @@ namespace Madam {
 				if (Input::Get().IsKeyDown(KeyCode::LEFT)) rotate.y -= 1.f;
 
 				if (glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()) {
-					GetComponent<Transform>().rotation += lookSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(rotate);
+					glm::vec3 lookvalue = lookSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(rotate);
+					Quaternion rotationX = glm::angleAxis(lookvalue.x, glm::vec3(1.f, 0.f, 0.f));
+					Quaternion rotationY = glm::angleAxis(lookvalue.y, glm::vec3(0.f, 1.f, 0.f));
+					GetComponent<Transform>().rotation = rotationY * rotationX * GetComponent<Transform>().rotation;
 				}
 
-				GetComponent<Transform>().rotation.x = glm::clamp(GetComponent<Transform>().rotation.x, -1.5f, 1.5f);
-				GetComponent<Transform>().rotation.y = glm::mod(GetComponent<Transform>().rotation.y, glm::two_pi<float>());
+				Vector3 rotation = GetComponent<Transform>().rotation.EulerAngles();
+				rotation.x = glm::clamp(rotation.x, -1.5f, 1.5f);
+				rotation.y = glm::mod(rotation.y, glm::two_pi<float>());
+				GetComponent<Transform>().rotation = Quaternion(rotation);
 
-				float yaw = GetComponent<Transform>().rotation.y;
+				float yaw = GetComponent<Transform>().rotation.EulerAngles().y;
 				const glm::vec3 forwardDir{ sin(yaw), 0.f, cos(yaw) };
 				const glm::vec3 rightDir{ forwardDir.z, 0.f, -forwardDir.x };
 				const glm::vec3 upDir{ 0.f, -1.f, 0.f };
@@ -159,7 +164,7 @@ namespace Madam {
 
 		Entity& obj = viewerObject;
 		Camera& camera = viewerObject.GetComponent<Camera>();
-		camera.cameraHandle->setViewYXZ(viewerObject.GetComponent<Transform>().translation, viewerObject.GetComponent<Transform>().rotation);
+		camera.cameraHandle->setView(viewerObject.GetComponent<Transform>().translation, viewerObject.GetComponent<Transform>().rotation.EulerAngles());
 		float aspect = Application::Get().getAspectRatio();
 		camera.cameraHandle->setProjection();
 		//MADAM_INFO("EditorSurface Updated");
