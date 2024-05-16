@@ -341,7 +341,7 @@ namespace Madam {
 
 	}
 	
-	void SceneSerializer::Serialize(const std::string& rawfilePath) {
+	void SceneSerializer::Serialize(const std::string& rawfilePath, bool isFullPath) {
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -361,7 +361,13 @@ namespace Madam {
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 
-		std::string filePath = Application::Get().getConfig().internals + rawfilePath;
+		std::string filePath = "";
+		if (!isFullPath) {
+			filePath = Application::Get().getConfig().projectFolder + Application::Get().getConfig().internals + rawfilePath;
+		}
+		else {
+			filePath = rawfilePath;
+		}
 
 		std::ofstream fout(filePath);
 		fout << out.c_str();
@@ -371,7 +377,7 @@ namespace Madam {
 		//Not Implemented
 	}
 
-	bool SceneSerializer::Deserialize(const std::string& rawFilePath) {
+	bool SceneSerializer::Deserialize(const std::string& rawFilePath, bool isFullPath) {
 		std::string defaultFileType = ".scene";
 		std::string fileType = rawFilePath.substr(rawFilePath.size() - defaultFileType.size());
 
@@ -380,7 +386,13 @@ namespace Madam {
 			return false;
 		}
 
-		std::string filePath = Application::Get().getConfig().internals + rawFilePath;
+		std::string filePath = "";
+		if (!isFullPath) {
+			filePath = Application::Get().getConfig().internals + rawFilePath;
+		}
+		else {
+			filePath = rawFilePath;
+		}
 
 		std::ifstream file(filePath);
 
@@ -437,13 +449,14 @@ namespace Madam {
 					Material& material = deserializedEntity.AddComponent<Material>();
 					Shader shader = materialNode["Shader"].as<Shader>();
 					material.shader = std::make_shared<Shader>(shader);
-					std::string path = materialNode["Diffuse"].as<std::string>();
+					std::string prefix = Application::Get().getConfig().projectFolder + Application::Get().getConfig().internals;
+					std::string path = prefix + materialNode["Diffuse"].as<std::string>();
 					material.diffuseMap = Texture::createTextureFromFile(device, path);
-					path = materialNode["Normal"].as<std::string>();
+					path = prefix + materialNode["Normal"].as<std::string>();
 					material.normalMap = Texture::createTextureFromFile(device, path);
-					path = materialNode["AO"].as<std::string>();
+					path = prefix + materialNode["AO"].as<std::string>();
 					material.ambientOcclusionMap = Texture::createTextureFromFile(device, path);
-					path = materialNode["Gloss"].as<std::string>();
+					path = prefix + materialNode["Gloss"].as<std::string>();
 					material.glossMap = Texture::createTextureFromFile(device, path);
 				}
 

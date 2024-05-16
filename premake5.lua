@@ -8,6 +8,7 @@ workspace "IronMaiden"
         "Debug",
         "DebugDLL",
         "Release",
+        "ReleaseDLL",
         "Dist"
     }
     startproject "Editor"
@@ -43,7 +44,7 @@ project "IronMaiden"
         "%{prj.name}/**.h", 
         "%{prj.name}/**.hpp", 
         "%{prj.name}/**.c", 
-        "%{prj.name}/**.cpp" 
+        "%{prj.name}/**.cpp",
     }
 
     removefiles 
@@ -51,6 +52,12 @@ project "IronMaiden"
         "%{prj.name}/vendors/**"
     }
     
+    files 
+    {
+        "%{prj.name}/vendors/ImGuizmo/ImGuizmo.h",
+        "%{prj.name}/vendors/ImGuizmo/ImGuizmo.cpp"
+    }
+
     includedirs
     {
         "%{prj.name}",
@@ -63,7 +70,8 @@ project "IronMaiden"
         "%{IncludeDir.yaml_cpp}",
         "%{IncludeDir.tinyobj}",
         "%{IncludeDir.stb}",
-        "%{IncludeDir.openfbx}"
+        "%{IncludeDir.openfbx}",
+        "%{IncludeDir.imguizmo}"
     }
 
     libdirs 
@@ -73,6 +81,9 @@ project "IronMaiden"
         "%{LibDir.yaml_cpp}",
         "%{LibDir.imgui}",
     }
+
+    filter "files:IronMaiden/vendors/ImGuizmo/**.cpp"
+    flags{ "NoPCH" }
 
     filter "system:windows"
         systemversion "latest"
@@ -93,7 +104,8 @@ project "IronMaiden"
         {
             "%{StaticLib.Vulkan}",
             "%{StaticLib.glfw}",
-            "%{StaticLib.yaml_cpp}"
+            "%{StaticLib.yaml_cpp}",
+            "%{StaticLib.imgui}",
         }
     
     filter "configurations:DebugDLL"
@@ -112,6 +124,10 @@ project "IronMaiden"
         defines "MADAM_DYNAMIC_LINK"
         defines "IMGUI_API"
 
+        postbuildcommands {
+            "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
+        }
+
     filter "configurations:Release"
         defines "MADAM_RELEASE"
         optimize "on"
@@ -120,8 +136,30 @@ project "IronMaiden"
         {
             "%{StaticLib.Vulkan}",
             "%{StaticLib.glfw}",
-            "%{StaticLib.yaml_cpp}"
+            "%{StaticLib.yaml_cpp}",
+            "%{StaticLib.imgui}",
         }
+
+    filter "configurations:ReleaseDLL"
+        optimize "on"
+        staticruntime "off"
+        runtime "debug"
+        kind "SharedLib"
+        links
+        {
+            "%{Lib.Vulkan}",
+            "%{Lib.glfw}",
+            "%{Lib.yaml_cpp}",
+            "%{Lib.imgui}",
+            "dwmapi.lib",
+        }
+
+        postbuildcommands {
+            "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
+        }
+        defines "MADAM_DYNAMIC_LINK"
+        defines "IMGUI_API"
+
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
@@ -209,6 +247,7 @@ project "Editor"
         "%{IncludeDir.entt}",
         --"IronMaiden/vendors/tinyobjloader",
         --"IronMaiden/vendors/OpenFBX/src",
+        "%{IncludeDir.imgui}",
         "IronMaiden/src",
         "IronMaiden"
     }
@@ -231,7 +270,7 @@ project "Editor"
         {
             "_CRT_SECURE_NO_WARNINGS";
             "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
-            "MADAM_PLATFORM_WINDOWS";   
+            "MADAM_PLATFORM_WINDOWS"; 
         }
 
         prebuildcommands
@@ -253,6 +292,14 @@ project "Editor"
     filter "configurations:DebugDLL"
         defines "MADAM_DEBUG"
         symbols "on"
+        staticruntime "off"
+        defines { 
+            "YAML_CPP_DLL";
+            "MADAM_DYNAMIC_LINK";
+        }
+
+    filter "configurations:ReleaseDLL"
+        optimize "on"
         staticruntime "off"
         defines { 
             "YAML_CPP_DLL";
