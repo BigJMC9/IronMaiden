@@ -28,3 +28,6 @@
 [submodule "IronMaiden/vendors/imgui"]
 	path = IronMaiden/vendors/imgui
 	url = https://github.com/ocornut/imgui
+[submodule "IronMaiden/vendors/ImGuizmo"]
+	path = IronMaiden/vendors/ImGuizmo
+	url = https://github.com/BigJMC9/ImGuizmo

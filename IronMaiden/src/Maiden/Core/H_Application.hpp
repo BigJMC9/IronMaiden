@@ -68,6 +68,11 @@ namespace Madam {
 			return instance;
 		}
 
+		static SceneSerializer* GetSceneSerializer() {
+			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
+			return instance->pSceneSerializer;
+		}
+
 		// Use const func() const {} for readonly vars
 
 		Window& getWindow() { return window;  }

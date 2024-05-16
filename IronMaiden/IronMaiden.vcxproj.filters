@@ -25,6 +25,12 @@
     <Filter Include="src\Maiden\Scene">
       <UniqueIdentifier>{875E4093-7357-5FE5-9C89-446A88E13EF1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="vendors">
+      <UniqueIdentifier>{86EAAF72-F2C9-2E0E-FBE1-B9E46740956F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vendors\ImGuizmo">
+      <UniqueIdentifier>{A69308E4-928C-2736-BBBE-0CBBA7160742}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="maidenpch.hpp" />
@@ -55,6 +61,9 @@
     <ClInclude Include="src\Maiden\Core\H_Time.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Core\H_Utils.hpp">
+      <Filter>src\Maiden\Core</Filter>
+    </ClInclude>
     <ClInclude Include="src\Maiden\Core\H_Window.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
@@ -63,9 +72,6 @@
     </ClInclude>
     <ClInclude Include="src\Maiden\Core\Main\EntryPoint.hpp">
       <Filter>src\Maiden\Core\Main</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_Utils.hpp">
-      <Filter>src\Maiden\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Events\Event.hpp">
       <Filter>src\Maiden\Events</Filter>
@@ -91,13 +97,22 @@
     <ClInclude Include="src\Maiden\Rendering\H_Camera.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_DescriptorAllocator.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_DescriptorSetLayout.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Image.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_Pipeline.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_RenderSystems.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_RenderUtils.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_Renderer.hpp">
@@ -127,9 +142,6 @@
     <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\H_DescriptorAllocator.hpp" />
-    <ClInclude Include="src\Maiden\Rendering\H_Image.hpp" />
-    <ClInclude Include="src\Maiden\Rendering\H_RenderUtils.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
@@ -157,6 +169,9 @@
     <ClCompile Include="src\Maiden\Core\Time.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Core\Utils.cpp">
+      <Filter>src\Maiden\Core</Filter>
+    </ClCompile>
     <ClCompile Include="src\Maiden\Core\Window.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
@@ -172,13 +187,22 @@
     <ClCompile Include="src\Maiden\Rendering\Camera.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\DescriptorAllocator.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\DescriptorSetLayout.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Image.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\Pipeline.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\RenderSystems.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\RenderUtils.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\Renderer.cpp">
@@ -202,9 +226,8 @@
     <ClCompile Include="src\Maiden\Scene\Texture.cpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\DescriptorAllocator.cpp" />
-    <ClCompile Include="src\Maiden\Core\Utils.cpp" />
-    <ClCompile Include="src\Maiden\Rendering\Image.cpp" />
-    <ClCompile Include="src\Maiden\Rendering\RenderUtils.cpp" />
+    <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">
+      <Filter>vendors\ImGuizmo</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

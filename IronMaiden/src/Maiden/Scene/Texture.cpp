@@ -108,7 +108,7 @@ namespace Madam {
 
     Scope<Texture> Texture::createTextureFromFile(
         Device& device, const std::string& rawFilePath) {
-        std::string filePath = Application::Get().getConfig().internals + rawFilePath;
+        std::string filePath = rawFilePath;
         return std::make_unique<Texture>(device, filePath);
     }
 
@@ -123,8 +123,7 @@ namespace Madam {
         if (filePath.empty()) {
             return;
         }
-        stbi_uc* pixels =
-            stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
         if (!pixels) {
