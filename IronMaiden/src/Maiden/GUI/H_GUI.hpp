@@ -3,11 +3,19 @@
 #include "../Core/H_Layer.h"
 #define IMGUI_ENABLE_DOCKING
 #define IMGUI_ENABLE_VIEWPORTS
-#define IMGUI_IMPL_API
-#define IMGUI_API
-#include "imgui.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_vulkan.h"
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
+#include <glm/gtc/type_ptr.hpp>
+#include <imgui_internal.h>
+#include <misc/cpp/imgui_stdlib.h>
+#include <glm/gtc/type_ptr.hpp>
+//#define USE_IMGUI_API
+#include "ImGuizmo.h"
+
+//Windows
+#include <windows.h>
+#include <commdlg.h>
 
 //Changes made to ImGui
 //All Backend ImGui_Impl_Vulkan formats now take R8G8B8A8_SRGB
@@ -19,6 +27,45 @@ namespace Madam {
 	class DescriptorSetLayout;
 	class Entity;
 	class Pipeline;
+}
+
+//Windows specific
+static bool openFileDialog(HWND hWnd, LPWSTR fileName, DWORD fileNameSize) {
+	OPENFILENAME ofn;
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFilter = L"All Files\0*.*\0";
+	ofn.lpstrFile = fileName;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = fileNameSize;
+	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+
+	if (GetOpenFileName(&ofn)) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+static bool saveFileDialog(HWND hWnd, LPWSTR fileName, DWORD fileNameSize) {
+	OPENFILENAME ofn;
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFilter = L"All Files\0*.*\0";
+	ofn.lpstrFile = fileName;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = fileNameSize;
+	ofn.Flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT;
+
+	if (GetSaveFileName(&ofn)) {
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 namespace Madam::UI {
@@ -46,6 +93,7 @@ namespace Madam::UI {
 		void Inspector();
 		void Project();
 		void Console();
+		void DrawVec3(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
 
 		static void DrawViewport(const ImDrawList* parentList, const ImDrawCmd* pcmd);
 	private:
