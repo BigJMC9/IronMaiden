@@ -122,7 +122,6 @@ project "IronMaiden"
             "%{Lib.imgui}",
         }
         defines "MADAM_DYNAMIC_LINK"
-        defines "IMGUI_API"
 
         postbuildcommands {
             "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
@@ -150,7 +149,6 @@ project "IronMaiden"
             "%{Lib.Vulkan}",
             "%{Lib.glfw}",
             "%{Lib.yaml_cpp}",
-            "%{Lib.imgui}",
             "dwmapi.lib",
         }
 
@@ -158,7 +156,6 @@ project "IronMaiden"
             "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
         }
         defines "MADAM_DYNAMIC_LINK"
-        defines "IMGUI_API"
 
 
     filter "configurations:Dist"
@@ -248,6 +245,7 @@ project "Editor"
         --"IronMaiden/vendors/tinyobjloader",
         --"IronMaiden/vendors/OpenFBX/src",
         "%{IncludeDir.imgui}",
+        "%{IncludeDir.imguizmo}",
         "IronMaiden/src",
         "IronMaiden"
     }
@@ -260,7 +258,8 @@ project "Editor"
 
     links
     {
-        "IronMaiden.lib"
+        "IronMaiden.lib",
+        "%{Lib.yaml_cpp}"
     }
 
     filter "system:windows"
