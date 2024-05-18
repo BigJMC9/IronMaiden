@@ -40,6 +40,7 @@ namespace Madam {
 
 			VkRenderPass getSwapChainRenderPass() const { return swapChain->getRenderPass(); }
 			VkRenderPass getMainRenderPass() const { return renderPasses[0]; }
+
 			float getAspectRatio() const {
 				return swapChain->extentAspectRatio();
 			}
@@ -98,6 +99,11 @@ namespace Madam {
 					MADAM_CORE_ERROR("SwapChain is null pointer");
 				}
 				return *Get().swapChain;
+			}
+
+			//Needs to be updated to abstract away from the VkRenderPass, we don't want to accidentally change renderpass settings while the engine is running
+			const std::vector<VkRenderPass> getRenderPasses() {
+				return renderPasses;
 			}
 
 			bool beginFrame();

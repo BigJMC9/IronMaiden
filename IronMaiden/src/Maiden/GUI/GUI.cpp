@@ -323,6 +323,7 @@ namespace Madam::UI {
 		ImGui_ImplVulkan_CreateFontsTexture();
 		viewportCallback = ImDrawCallback(DrawViewport);
 		CreateViewportPipeline();
+		gizmoButtonStates = { false, false, false};
 	}
 
 	void GUI::ReCreate() {
@@ -404,6 +405,20 @@ namespace Madam::UI {
 
 	void GUI::EditorUI() {
 		ImGui::PushFont(fonts[0]);
+		MenuBar();
+		DockingSpace();
+		if (windowStates & RENDER_SETTINGS_WINDOW) {
+			RenderingSettings();
+		}
+		Viewport();
+		Hierarchy();
+		Inspector();
+		Project();
+		Console();
+		ImGui::PopFont();
+	}
+
+	void GUI::MenuBar() {
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
@@ -468,17 +483,16 @@ namespace Madam::UI {
 				if (ImGui::MenuItem("Paste", "Ctrl+V")) {}
 				ImGui::EndMenu();
 			}
+			if (ImGui::BeginMenu("Settings"))
+			{
+				if (ImGui::MenuItem("Render Settings")) 
+				{
+					windowStates |= RENDER_SETTINGS_WINDOW;
+				}
+				ImGui::EndMenu();
+			}
 			ImGui::EndMainMenuBar();
-
 		}
-
-		DockingSpace();
-		Viewport();
-		Hierarchy();
-		Inspector();
-		Project();
-		Console();
-		ImGui::PopFont();
 	}
 
 	void GUI::DockingSpace() {
@@ -552,6 +566,7 @@ namespace Madam::UI {
 			drawList->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 
 			//imGuizmo
+			DrawViewportGizmoButtons();
 			if (selectedEntity) {
 				if (Rendering::CameraHandle::getMain().CameraData().projectionType == Rendering::CameraData::ProjectionType::Orthographic) {
 					ImGuizmo::SetOrthographic(true);
@@ -572,11 +587,16 @@ namespace Madam::UI {
 
 				glm::mat4 transform = selectedEntity->GetComponent<Transform>();
 
-				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), ImGuizmo::OPERATION::TRANSLATE,
+				
+				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)ImGuizmoType,
 					ImGuizmo::LOCAL, glm::value_ptr(transform));
 
 				if (ImGuizmo::IsUsing()) {
+					glm::vec3 rotation = selectedEntity->GetComponent<Transform>().rotation;
+
 					selectedEntity->GetComponent<Transform>().UpdateTransform(transform);
+					glm::vec3 deltaRotation = selectedEntity->GetComponent<Transform>().rotation - rotation;
+					selectedEntity->GetComponent<Transform>().rotation = rotation + deltaRotation;
 				}
 			}
 		}
@@ -659,6 +679,133 @@ namespace Madam::UI {
 			
 		}
 		ImGui::End();
+	}
+
+	void GUI::RenderingSettings() {
+		ImGuiIO& io = ImGui::GetIO();
+		auto boldFont = io.Fonts->Fonts[1];
+		bool isWindowOpened;
+		if (ImGui::Begin("Render Settings", &isWindowOpened)) {
+
+			const ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth;
+			const ImGuiTreeNodeFlags settingListFlags = headerFlags | ImGuiTreeNodeFlags_Leaf;
+			ImGui::Columns(2, "Settings");
+
+			ImGui::Separator();
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
+			bool renderPassSettings = ImGui::TreeNodeEx("Render Layers Settings", settingListFlags, "Render Layers");
+
+			if (renderPassSettings)
+			{
+				ImGui::PopStyleVar();
+				ImGui::TreePop();
+				ImGui::NextColumn();
+				//we need a renderpassInfo struct to get the name of the renderpass
+				std::vector<VkRenderPass> renderpasses = Rendering::Renderer::Get().getRenderPasses();
+				std::vector<Ref<Rendering::RenderLayer>> renderLayers;
+				for (size_t i = 0; i < renderpasses.size(); i++)
+				{
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
+					bool open = ImGui::TreeNodeEx("RPSetting " + i, headerFlags, "RenderPass " + i);
+
+					ImGui::PopStyleVar();
+
+					if (open) {
+						ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
+						if (i == 0) //only temp until renderer is probably setup to handle multiple renderpasses with multiple pipelines
+						{
+							renderLayers = Application::Get().getMasterRenderSystem().getRenderLayers();
+							ImVec4 headerColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
+							//ImVec4 headerHoveredColor = ImGui::GetStyle().Colors[ImGuiCol_HeaderHovered];
+							ImGui::PushStyleColor(ImGuiCol_HeaderHovered, headerColor);
+							ImGui::PushFont(boldFont);
+							ImGui::TreeNodeEx("Pipeline Start", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+							ImGui::PopFont();
+							ImGui::PopStyleColor();
+							for (size_t j = 0; j < renderLayers.size(); j++)
+							{
+								auto& renderLayer = renderLayers[j];
+								DrawPipelineSettings(renderLayer, j);
+							}
+							ImGui::PushStyleColor(ImGuiCol_HeaderHovered, headerColor);
+							ImGui::PushFont(boldFont);
+							ImGui::TreeNodeEx("Pipeline End", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+							ImGui::PopFont();
+							ImGui::PopStyleColor();
+						}
+						ImGui::PopStyleVar();
+						ImGui::TreePop();
+					}
+				}
+
+				auto button = [](const char* value) {
+					if (ImGui::Button(value)) {
+						return true;
+					}
+					else {
+						return false;
+					}
+					};
+
+				bool isUpHit = false;
+				bool isDownHit = false;
+
+				if (selectedPipeline.first != nullptr) {
+					if (selectedPipeline.second > 0) {
+						isUpHit = button("Up");
+					}
+					else {
+						ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+						isUpHit = button("Up");
+						ImGui::PopItemFlag();
+					}
+					ImGui::SameLine();
+					if (selectedPipeline.second < renderLayers.size() - 1) {
+						isDownHit = button("Down");
+					}
+					else {
+						ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+						isDownHit = button("Down");
+						ImGui::PopItemFlag();
+					}
+
+				}
+				else {
+					ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+					isUpHit = button("Up");
+					ImGui::SameLine();
+					isDownHit = button("Down");
+					ImGui::PopItemFlag();
+				}
+
+				if (!isUpHit && !isDownHit) {
+
+				}
+				else if (isUpHit && !isDownHit) {
+					Application::Get().getMasterRenderSystem().switchRenderSystems(selectedPipeline.second, selectedPipeline.second - 1);
+					selectedPipeline.second--;
+				}
+				else if (!isUpHit && isDownHit) {
+					MADAM_CORE_INFO("Down has been hit");
+					Application::Get().getMasterRenderSystem().switchRenderSystems(selectedPipeline.second, selectedPipeline.second + 1);
+					selectedPipeline.second++;
+				}
+				else {
+					MADAM_CORE_ERROR("Both buttons hit at same time?!?!? wtf?");
+				}
+
+				if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
+					selectedPipeline = { nullptr, -1 };
+				}
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
+			}
+
+			ImGui::PopStyleVar();
+		}
+		ImGui::End();
+		if (!isWindowOpened) {
+			windowStates &= ~RENDER_SETTINGS_WINDOW;
+		}
 	}
 
 	void GUI::DrawEntityNode(Entity entity) {
@@ -992,6 +1139,60 @@ namespace Madam::UI {
 		ImGui::Columns(1);
 
 		ImGui::PopID();
+	}
+
+	void GUI::DrawViewportGizmoButtons() {
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
+		if (ImGui::Begin("GizmoButtons", nullptr, ImGuiWindowFlags_NoTitleBar)) {
+			if (ImGui::Checkbox("Translate", &gizmoButtonStates[0])) {
+
+				if (gizmoButtonStates[0]) {
+					gizmoButtonStates[1] = false;
+					gizmoButtonStates[2] = false;
+					ImGuizmoType = ImGuizmo::TRANSLATE;
+				}
+			}
+			if (ImGui::Checkbox("Rotate", &gizmoButtonStates[1])) {
+
+				if (gizmoButtonStates[1]) {
+					gizmoButtonStates[0] = false;
+					gizmoButtonStates[2] = false;
+					ImGuizmoType = ImGuizmo::ROTATE;
+				}
+			}
+			if (ImGui::Checkbox("Scale", &gizmoButtonStates[2])) {
+
+				if (gizmoButtonStates[2]) {
+					gizmoButtonStates[0] = false;
+					gizmoButtonStates[1] = false;
+					ImGuizmoType = ImGuizmo::SCALE;
+				}
+			}
+			bool isTrue = false;
+			for (size_t i = 0; i < gizmoButtonStates.size(); i++)
+			{
+				if (gizmoButtonStates[i]) {
+					isTrue = true;
+					break;
+				}
+			}
+			if (!isTrue) {
+				ImGuizmoType = 0;
+			}
+			ImGui::End();
+		}
+		ImGui::PopStyleVar();
+	}
+
+	void GUI::DrawPipelineSettings(const Ref<Rendering::RenderLayer> pipeline, int index) {
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ((selectedPipeline.first != nullptr && selectedPipeline.first == pipeline) ? ImGuiTreeNodeFlags_Selected : 0);
+		bool opened = ImGui::TreeNodeEx(pipeline->name.c_str(), flags, pipeline->name.c_str());
+		if (ImGui::IsItemClicked()) {
+			selectedPipeline = std::make_pair(pipeline, index);
+		}
+		if (opened) {
+			ImGui::TreePop();
+		}
 	}
 
 	void GUI::OnSceneLoad() {

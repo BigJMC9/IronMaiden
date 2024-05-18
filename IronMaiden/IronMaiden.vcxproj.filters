@@ -40,9 +40,6 @@
     <ClInclude Include="src\Maiden\Core\H_Application.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_CmdHandler.hpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClInclude>
     <ClInclude Include="src\Maiden\Core\H_Device.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
@@ -53,9 +50,6 @@
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_ProcessHandler.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Core\H_Time.hpp">
@@ -73,16 +67,7 @@
     <ClInclude Include="src\Maiden\Core\Main\EntryPoint.hpp">
       <Filter>src\Maiden\Core\Main</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Events\Event.hpp">
-      <Filter>src\Maiden\Events</Filter>
-    </ClInclude>
     <ClInclude Include="src\Maiden\Events\H_Input.hpp">
-      <Filter>src\Maiden\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Events\InputEvent.hpp">
-      <Filter>src\Maiden\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Events\WindowEvent.hpp">
       <Filter>src\Maiden\Events</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\GUI\H_GUI.hpp">
@@ -151,9 +136,6 @@
     <ClCompile Include="src\Maiden\Core\Application.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Core\CmdHandler.cpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClCompile>
     <ClCompile Include="src\Maiden\Core\Device.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
@@ -164,9 +146,6 @@
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Logger.cpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Core\ProcessHandler.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Time.cpp">

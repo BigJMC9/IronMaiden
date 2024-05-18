@@ -167,51 +167,7 @@ project "IronMaiden"
             "%{StaticLib.Vulkan}",
             "%{StaticLib.glfw}",
             "%{StaticLib.yaml_cpp}"
-        }
-
-project "Editor-NoGUI"
-    location "Editor-NoGUI"
-    kind "ConsoleApp"
-    language "C++"
-
-    targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-
-    files
-    {
-        "%{prj.name}/**.h",
-        "%{prj.name}/**.hpp",
-        "%{prj.name}/**.c",
-        "%{prj.name}/**.cpp"
-    }
-
-    links
-    {
-        "kernel32"
-    }
-    
-    filter "system:windows"
-        cppdialect "C++17"
-        staticruntime "on"
-        systemversion "latest"
-
-        defines
-        {
-            "_CRT_SECURE_NO_WARNINGS";
-            "MADAM_PLATFORM_WINDOWS";
-        }
-
-    filter "configurations:Debug"
-        defines "MADAM_DEBUG"
-        symbols "on"
-
-    filter "configurations:Release"
-        defines "MADAM_RELEASE"
-        optimize "on"
-
-    filter "configurations:Dist"
-        defines "MADAM_DIST"
-        optimize "on"    
+        }  
 
 project "Editor"
     location "Editor"

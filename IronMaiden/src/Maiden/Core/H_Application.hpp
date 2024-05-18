@@ -9,8 +9,6 @@
 #include "../Rendering/H_Renderer.hpp"
 #include "../Rendering/H_RenderSystems.hpp"
 #include "../Scene/H_Scene.hpp"
-#include "H_ProcessHandler.hpp"
-#include "../Events/Event.hpp"
 #include "H_Time.hpp"
 #include "H_Layer.h"
 
@@ -46,8 +44,6 @@ namespace Madam {
 		void StartUp();
 		void ShutDown();
 
-		void onEvent(Event& e);
-
 		float getAspectRatio() {
 			return renderer.getAspectRatio();
 		}
@@ -77,7 +73,10 @@ namespace Madam {
 
 		Window& getWindow() { return window;  }
 		Rendering::RenderStack& getMasterRenderSystem() { return renderStack; }
+
+		//Depreciated
 		const std::vector<Ref<Rendering::RenderLayer>>& getRenderLayers() const;
+
 		Scene& getScene() { return *scene; }
 		const Time& getTime() const { return time; }
 		ApplicationConfig getConfig() {
@@ -86,8 +85,6 @@ namespace Madam {
 		
 		//Put in engine config header
 		const float MAX_FRAME_TIME = 0.1f;
-
-		App::PipeHandler pipeHandler;
 
 		bool debug = false;
 

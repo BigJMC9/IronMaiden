@@ -27,6 +27,10 @@ namespace Madam {
 	class DescriptorSetLayout;
 	class Entity;
 	class Pipeline;
+	namespace Rendering{
+		class RenderStack;
+		class RenderLayer;
+	}
 }
 
 //Windows specific
@@ -73,6 +77,7 @@ namespace Madam::UI {
 		Ref<Pipeline> pipeline;
 		VkPipelineLayout layout;
 	};
+
 	class GUI : public Layer {
 	public:
 		GUI();
@@ -87,20 +92,34 @@ namespace Madam::UI {
 		void Style(ImGuiIO& io);
 
 		void EditorUI();
+		//MenuBars
+		void MenuBar();
+
+		//Windows
 		void DockingSpace();
 		void Viewport();
 		void Hierarchy();
 		void Inspector();
 		void Project();
 		void Console();
-		void DrawVec3(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
+		void RenderingSettings();
+		
 
 		static void DrawViewport(const ImDrawList* parentList, const ImDrawCmd* pcmd);
 	private:
 
+		enum WindowStates {
+			RENDER_SETTINGS_WINDOW = 1 << 0
+		};
+
+		int windowStates = 0;
+		void DrawVec3(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
+		void DrawViewportGizmoButtons();
 		void CreateViewportPipeline();
 		void DrawEntityNode(Entity entity);
 		void DrawEntityComponents(Entity entity);
+		void DrawPipelineSettings(const Ref<Rendering::RenderLayer> pipeline, int index);
+
 		//void DrawViewport(const ImDrawList* parentList, const ImDrawCmd* cmd);
 
 		ImGui_ImplVulkan_InitInfo* init_info;
@@ -111,6 +130,8 @@ namespace Madam::UI {
 		std::unique_ptr<DescriptorSetLayout> viewportLayout;
 		float uiTime = 0.0f;
 		Ref<Entity> selectedEntity = nullptr;
+		std::pair<Ref<Rendering::RenderLayer>, int> selectedPipeline = { nullptr, -1 };
+		std::array<bool, 3> gizmoButtonStates;
 
 		std::vector<ImFont*> fonts;
 		ImGuiStyle style;
@@ -131,7 +152,7 @@ namespace Madam::UI {
 		//constexpr ImVec4 RGBConWithGammaCorrection(float r, float g, float b) { return ImVec4(RGBGammaCorrection(r), RGBGammaCorrection(g), RGBGammaCorrection(b), 1.0f); }
 		//constexpr float RGBGammaCorrection(float rgb) { return 1/(constPow((rgb/255), (1.0/2.2f))); }
 
-
+		int ImGuizmoType = -1;
 		
 	};
 }
