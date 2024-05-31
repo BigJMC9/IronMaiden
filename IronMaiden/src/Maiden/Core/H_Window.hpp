@@ -1,10 +1,11 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "Main/Core.hpp"
 #include "H_Logger.hpp"
 #define GLFW_INCLUDE_VULKAN
+#define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
 namespace Madam {
 
@@ -31,12 +32,16 @@ namespace Madam {
 		void ShutDown();
 
 		bool shouldClose() { return glfwWindowShouldClose(window); }
+		void quit() { glfwSetWindowShouldClose(window, GLFW_TRUE); }
 		VkExtent2D getExtent() { return { data.width, data.height }; }
 		bool wasWindowResized() { return framebufferResized; }
 		void resetWindowResizedFlag() { framebufferResized = false; }
 		GLFWwindow* getGLFWwindow() const {
 			return window;
 		}
+
+		int getWidth() const { return data.width; }
+		int getHeight() const { return data.height; }
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 

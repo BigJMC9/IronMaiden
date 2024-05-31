@@ -1,5 +1,6 @@
 #include "maidenpch.hpp"
 #include "H_Window.hpp"
+#include "dwmapi.h"
 
 namespace Madam {
 
@@ -41,6 +42,33 @@ namespace Madam {
 		window = glfwCreateWindow((int)data.width, (int)data.height, data.windowName.c_str(), nullptr, nullptr);
 		glfwSetWindowUserPointer(window, this);
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+		/*HWND hwnd = glfwGetWin32Window(window);
+
+		// check state of NCRendering
+		BOOL isNCRenderingEnabled{ FALSE };
+		auto hr = DwmGetWindowAttribute(hwnd, DWMWA_NCRENDERING_ENABLED, &isNCRenderingEnabled, sizeof(isNCRenderingEnabled));
+		if (hr != S_OK) {
+			MADAM_CORE_ERROR("Failed to get DWMWA_NCRENDERING_ENABLED attribute: {0}", hr);
+		}
+		else {
+			MADAM_CORE_INFO("Successfully got DWMWA_NCRENDERING_ENABLED attribute: {0}", hr);
+		}
+		RECT extendedFrameBounds{ 0,0,0,0 };
+		hr = DwmGetWindowAttribute(hwnd,
+			DWMWA_EXTENDED_FRAME_BOUNDS,
+			&extendedFrameBounds,
+			sizeof(extendedFrameBounds));
+		if (hr != S_OK) {
+			MADAM_CORE_ERROR("Failed to get DWMWA_EXTENDED_FRAME_BOUNDS attribute: {0}", hr);
+		}
+		else {
+			MADAM_CORE_INFO("Successfully got DWMWA_EXTENDED_FRAME_BOUNDS attribute: {0}", hr);
+		}
+		COLORREF colour = 0xC32E4E40;
+		DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, &colour, sizeof(colour));*/
+		//SetWindowRgn(hwnd, CreateRectRgn(0, 0, data.width, data.height), true);
+		//SetWindowLongPtr(hwnd, GWL_STYLE, WS_EX_TRANSPARENT);
+		//SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, data.width, data.height, SWP_FRAMECHANGED);
 	}
 
 	void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface) {

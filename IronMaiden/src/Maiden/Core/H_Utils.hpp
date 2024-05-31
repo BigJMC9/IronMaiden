@@ -4,46 +4,35 @@
 
 namespace Madam {
 
+	// from: https://stackoverflow.com/a/57595105
+	template <typename T, typename... Rest>
+	void hashCombine(std::size_t& seed, const T& v, const Rest&... rest) {
+		seed ^= std::hash<T>{}(v)+0x9e3779b9 + (seed << 6) + (seed >> 2);
+		(hashCombine(seed, rest), ...);
+	};
+
 	class Entity;
 
 	using id_t = unsigned int;
 	using Map = std::unordered_map<id_t, Entity>;
 
-	struct UUID {
+	class UUID {
 
 	public:
-		UUID() {
-			std::random_device rd;
-			std::mt19937_64 gen(rd());
-			std::uniform_int_distribution<uint64_t> dis;
+		UUID();
 
-			//For 128bits (16 bytes)
-			uint64_t data[2];
-			for (int i = 0; i < 2; i++)
-			{
-				data[i] = dis(gen);
-			}
-
-			std::stringstream ss;
-			ss << std::hex << std::setfill('0');
-			for (int i = 0; i < 2; i++)
-			{
-				ss << std::setw(16) << data[i];
-				if (i < 1) ss << "-";
-			}
-
-			_UUID = ss.str();
-		}
-
-		UUID(std::string uuid) {
-			_UUID = uuid;
-		}
-		//UUID(const UUID&) = delete;
+		UUID(std::string uuid);
+		UUID(const UUID&) = default;
 
 		operator std::string() const { return _UUID; }
+
 		friend std::ostream& operator<<(std::ostream& os, const UUID& uuid) {
 			os << "UUID: " << uuid._UUID;
 			return os;
+		}
+
+		friend bool operator==(const UUID& left, const UUID& right) {
+			return left._UUID == right._UUID;
 		}
 
 	private:
@@ -55,19 +44,34 @@ namespace Madam {
 	//Add Custom Smart Pointer that is owned but can be shared. When Owner is destroyed and reference is > 0, Tell garbage collector to delete it and set the pointer to nullptr.
 	//Maybe Garbage Collector use a tree to keep track of which memory address each pointer points to.
 
-	/*template<typename T>
+	template<typename T>
 	using Scope = std::unique_ptr<T>;
 	template<typename T, typename ... Args>
 	constexpr Scope<T> CreateScope(Args&& ... args)
 	{
 		return std::make_unique<T>(std::forward<Args>(args)...);
 	}
-
 	template<typename T>
 	using Ref = std::shared_ptr<T>;
 	template<typename T, typename ... Args>
 	constexpr Ref<T> CreateRef(Args&& ... args)
 	{
 		return std::make_shared<T>(std::forward<Args>(args)...);
-	}*/
+	}
+
+}
+
+namespace std {
+
+	template <typename T> struct hash;
+
+	template<>
+	struct hash<Madam::UUID>
+	{
+		std::size_t operator()(const Madam::UUID& uuid) const
+		{
+			return std::hash<std::string>{}((std::string)(uuid));
+		}
+	};
+
 }

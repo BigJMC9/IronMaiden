@@ -2,16 +2,17 @@
 
 #include "maidenpch.hpp"
 //#include "H_JCVB_camera.hpp"
-#include "H_Descriptors.hpp"
+#include "H_DescriptorSetLayout.hpp"
 #include "../Core/H_Device.hpp"
 #include "FrameInfo.hpp"
 #include "../Scene/Components.hpp"
 #include "../Scene/H_Entity.hpp"
 #include "H_Pipeline.hpp"
 #include "H_Renderer.hpp"
-#include "../Core/Base.hpp"
+#include "../Core/H_Utils.hpp"
 
 namespace Madam {
+    //Create solution that don't involve using virtual functions.
     namespace Rendering {
 
         struct DefaultPushConstantData {
@@ -36,8 +37,7 @@ namespace Madam {
         };*/
 
 
-        //Call these systems as renderlayers instead of systems.
-        //Call master render system as renderstack.
+        //Update this!!
 		class MADAM_API RenderLayer {
 
 		public:
@@ -61,7 +61,7 @@ namespace Madam {
 
             Device& device;
 
-            std::unique_ptr<Pipeline> jcvbPipeline;
+            Scope<Pipeline> pipeline;
             VkPipelineLayout pipelineLayout;
 		};
 
@@ -77,7 +77,7 @@ namespace Madam {
             void createPipelineLayout(VkDescriptorSetLayout globalSetLayout) override;
             void createPipeline(VkRenderPass renderPass) override;
 
-            std::unique_ptr<DescriptorSetLayout> renderSystemLayout;
+            Scope<DescriptorSetLayout> renderSystemLayout;
         };
 
         class MADAM_API TextureRenderLayer : public RenderLayer {
@@ -97,7 +97,7 @@ namespace Madam {
             void createPipelineLayout(VkDescriptorSetLayout globalSetLayout) override;
             void createPipeline(VkRenderPass renderPass) override;
 
-            std::unique_ptr<DescriptorSetLayout> renderSystemLayout;
+            Scope<DescriptorSetLayout> renderSystemLayout;
         };
 
         class MADAM_API PointLightRenderLayer : public RenderLayer {
@@ -119,20 +119,43 @@ namespace Madam {
             void createPipeline(VkRenderPass renderPass) override;
         };
 
+        class MADAM_API GUILayer {
+
+        public:
+            GUILayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout guiSetLayout, std::string _name = "Default");
+            ~GUILayer();
+
+            std::string name = "GUI";
+
+            virtual void preRender(FrameInfo& frameInfo);
+            virtual void render(FrameInfo& frameInfo);
+
+        protected:
+            virtual void createPipelineLayout(VkDescriptorSetLayout guiSetLayout);
+            virtual void createPipeline(VkRenderPass renderPass);
+
+            bool isFirstFrame = true;
+
+            Device& device;
+
+            Scope<Pipeline> pipeline;
+            VkPipelineLayout pipelineLayout;
+        };
+
         class MADAM_API RenderStack {
 
         public:
-            RenderStack(Device& device, Renderer& renderer) : device{ device }, jcvbRenderer{ renderer } {}
+            RenderStack(Device& device, Renderer& renderer) : device{ device }, renderer{ renderer } {}
             ~RenderStack();
 
             void StartUp();
             void ShutDown();
 
-            void initialize(std::unique_ptr<DescriptorSetLayout>& globalSetLayout);
+            void initialize(Scope<DescriptorSetLayout>& globalSetLayout);
             void preRender(FrameInfo& frameInfo);
             void render(FrameInfo& frameInfo);
             bool switchRenderSystems(int first, int second);
-            const std::vector<std::shared_ptr<RenderLayer>>& getRenderLayers() const {
+            const std::vector<Ref<RenderLayer>>& getRenderLayers() const {
                 return renderSystems;
             }
 
@@ -140,12 +163,12 @@ namespace Madam {
                 renderSystems.push_back(std::make_unique<RenderLayer>(std::move(renderSystem)));
             }*/
 
-            Renderer& jcvbRenderer;
+            Renderer& renderer;
 
         private:
             bool isRunning = false;
             Device& device;
-            std::vector<std::shared_ptr<RenderLayer>> renderSystems;
+            std::vector<Ref<RenderLayer>> renderSystems;
             //std::vector<std::function<void()>> orderOfExecution;
         };
     }

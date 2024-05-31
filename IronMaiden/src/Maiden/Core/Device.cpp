@@ -10,8 +10,22 @@ namespace Madam {
 		VkDebugUtilsMessageTypeFlagsEXT messageType,
 		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 		void* pUserData) {
-		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-
+		switch (messageSeverity) {
+			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+				MADAM_CORE_TRACE("validation layer: {0}", pCallbackData->pMessage);
+				break;
+			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+				MADAM_CORE_INFO("validation layer: {0}", pCallbackData->pMessage);
+				break;
+			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+				MADAM_CORE_WARN("validation layer: {0}", pCallbackData->pMessage);
+				break;
+			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+				MADAM_CORE_WARN("validation layer: {0}", pCallbackData->pMessage);
+				break;
+			default:
+				break;
+		}
 		return VK_FALSE;
 	}
 
@@ -478,11 +492,12 @@ namespace Madam {
 		submitInfo.pCommandBuffers = &commandBuffer;
 
 		vkQueueSubmit(graphicsQueue_, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(graphicsQueue_);
+		vkQueueWaitIdle(graphicsQueue_); //Doesn't matter with single command queues but you probably should look into vkfences for multiple commands
 
 		vkFreeCommandBuffers(device_, commandPool, 1, &commandBuffer);
 	}
 
+	//Probably should be in buffer file
 	void Device::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 

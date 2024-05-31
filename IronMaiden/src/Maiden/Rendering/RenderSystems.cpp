@@ -53,7 +53,7 @@ namespace Madam {
 			Pipeline::setDescriptions(pipelineConfig);
 			pipelineConfig.renderPass = renderPass;
 			pipelineConfig.pipelineLayout = pipelineLayout;
-			jcvbPipeline = std::make_unique<Pipeline>(device, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
+			pipeline = std::make_unique<Pipeline>(device, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
         }
 
 		void RenderLayer::preRender(FrameInfo& frameInfo) {
@@ -61,7 +61,7 @@ namespace Madam {
 		}
 
 		void RenderLayer::render(FrameInfo& frameInfo) {
-			jcvbPipeline->bind(frameInfo.commandBuffer);
+			pipeline->bind(frameInfo.commandBuffer);
 
 			vkCmdBindDescriptorSets(
 				frameInfo.commandBuffer,
@@ -84,7 +84,7 @@ namespace Madam {
 				}
 				if (meshRenderer.getModel() == nullptr) continue;
 
-				std::shared_ptr<Material> material = meshRenderer.getMaterial();
+				Ref<Material> material = meshRenderer.getMaterial();
 				if (material != nullptr) continue;
 
 				if (isFirstFrame) {
@@ -162,11 +162,11 @@ namespace Madam {
 			pipelineConfig.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
 			pipelineConfig.depthStencilInfo.stencilTestEnable = VK_FALSE;
 			//pipelineConfig.rasterizationInfo.depthClampEnable = VK_TRUE;
-			jcvbPipeline = std::make_unique<Pipeline>(device, "shaders/grid_shader.vert.spv", "shaders/grid_shader.frag.spv", pipelineConfig);
+			pipeline = std::make_unique<Pipeline>(device, "shaders/grid_shader.vert.spv", "shaders/grid_shader.frag.spv", pipelineConfig);
 		}
 
 		void GridRenderLayer::render(FrameInfo& frameInfo) {
-			jcvbPipeline->bind(frameInfo.commandBuffer);
+			pipeline->bind(frameInfo.commandBuffer);
 
 			if (isFirstFrame) {
 				std::cout << "Rendering Grid" << std::endl;
@@ -244,7 +244,7 @@ namespace Madam {
 			Pipeline::setDescriptions(pipelineConfig);
 			pipelineConfig.renderPass = renderPass;
 			pipelineConfig.pipelineLayout = pipelineLayout;
-			jcvbPipeline = std::make_unique<Pipeline>(
+			pipeline = std::make_unique<Pipeline>(
 				device,
 				"shaders/texture_shader.vert.spv",
 				"shaders/texture_shader.frag.spv",
@@ -252,7 +252,7 @@ namespace Madam {
 		}
 
 		void TextureRenderLayer::render(FrameInfo& frameInfo) {
-			jcvbPipeline->bind(frameInfo.commandBuffer);
+			pipeline->bind(frameInfo.commandBuffer);
 
 			vkCmdBindDescriptorSets(
 				frameInfo.commandBuffer,
@@ -278,7 +278,7 @@ namespace Madam {
 				// skip objects that don't have both a model and texture
 				//JcvbMeshRenderer* meshRenderer = obj.getComponent<JcvbMeshRenderer>();
 				//if (meshRenderer == nullptr) continue;
-				std::shared_ptr<Material> material = meshRenderer.getMaterial();
+				Ref<Material> material = meshRenderer.getMaterial();
 				if (material == nullptr) continue;
 				if (material->diffuseMap == nullptr) continue;
 
@@ -294,7 +294,7 @@ namespace Madam {
 				auto ambientOcclusionInfo = meshRenderer.getMaterial()->ambientOcclusionMap->getImageInfo();
 				auto glossInfo = meshRenderer.getMaterial()->glossMap->getImageInfo();
 				VkDescriptorSet descriptorSet1;
-				JcvbDescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
+				DescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
 					.writeImage(0, &imageInfo)
 					.writeImage(1, &normalInfo)
 					.writeImage(2, &ambientOcclusionInfo)
@@ -380,11 +380,11 @@ namespace Madam {
 			pipelineConfig.bindingDescriptions.clear();
 			pipelineConfig.renderPass = renderPass;
 			pipelineConfig.pipelineLayout = pipelineLayout;
-			jcvbPipeline = std::make_unique<Pipeline>(device, "shaders/point_light.vert.spv", "shaders/point_light.frag.spv", pipelineConfig);
+			pipeline = std::make_unique<Pipeline>(device, "shaders/point_light.vert.spv", "shaders/point_light.frag.spv", pipelineConfig);
 		}
 
 		void PointLightRenderLayer::preRender(FrameInfo& frameInfo) {
-			auto rotateLight = glm::rotate(glm::mat4(1.f), frameInfo.frameTime, { 0.f, -1.f, 0.f });
+			auto rotateLight = glm::rotate(glm::mat4(1.f), frameInfo.frameTime/ 5.0f, { 0.f, -1.f, 0.f });
 			int lightIndex = 0;
 
 			entt::registry& entities = frameInfo.scene->Reg();
@@ -422,7 +422,7 @@ namespace Madam {
 				sorted[disSquared] = entity;
 			}
 
-			jcvbPipeline->bind(frameInfo.commandBuffer);
+			pipeline->bind(frameInfo.commandBuffer);
 
 			vkCmdBindDescriptorSets(
 				frameInfo.commandBuffer,
@@ -457,6 +457,101 @@ namespace Madam {
 		}
 
 		/*
+		------------------GUI Render System------------------
+		*/
+
+		GUILayer::GUILayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout guiSetLayout, std::string _name)
+			: device{ device }, name{ std::move(_name) } {
+
+			createPipelineLayout(guiSetLayout);
+			createPipeline(renderPass);
+		}
+
+		GUILayer::~GUILayer() {
+			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+		}
+
+		void GUILayer::createPipelineLayout(VkDescriptorSetLayout guiSetLayout) {
+			VkPushConstantRange pushConstantRange{};
+			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+			pushConstantRange.offset = 0;
+			pushConstantRange.size = sizeof(DefaultPushConstantData);
+
+			std::vector<VkDescriptorSetLayout> descriptorSetLayout{ guiSetLayout };
+
+			VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayout.size());
+			pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
+			pipelineLayoutInfo.pushConstantRangeCount = 1;
+			pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+			if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+				throw std::runtime_error("Failed to create pipeline layout!");
+			}
+		}
+
+		void GUILayer::createPipeline(VkRenderPass renderPass) {
+			assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+
+			PipelineConfigInfo pipelineConfig{};
+			Pipeline::setDescriptions(pipelineConfig);
+			pipelineConfig.renderPass = renderPass;
+			pipelineConfig.pipelineLayout = pipelineLayout;
+			pipeline = std::make_unique<Pipeline>(device, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
+		}
+
+		void GUILayer::preRender(FrameInfo& frameInfo) {
+			//std::cout << "PreRendering \n";
+		}
+
+		void GUILayer::render(FrameInfo& frameInfo) {
+			pipeline->bind(frameInfo.commandBuffer);
+
+			vkCmdBindDescriptorSets(
+				frameInfo.commandBuffer,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				pipelineLayout,
+				0,
+				1,
+				&frameInfo.globalDescriptorSet,
+				0,
+				nullptr);
+			entt::registry& entities = frameInfo.scene->Reg();
+			auto group = entities.view<Transform, MeshRenderer>();
+			for (auto entity : group)
+			{
+				auto [transform, meshRenderer] = group.get<Transform, MeshRenderer>(entity);
+
+				if (!entities.valid(entity)) {
+					std::cerr << "Error, entity is not valid" << std::endl;
+					continue;
+				}
+				if (meshRenderer.getModel() == nullptr) continue;
+
+				Ref<Material> material = meshRenderer.getMaterial();
+				if (material != nullptr) continue;
+
+				if (isFirstFrame) {
+					std::cout << "Standard Rendering " << std::endl;
+				}
+
+				DefaultPushConstantData push{};
+				push.modelMatrix = transform.m_transform();
+				push.normalMatrix = transform.normalMatrix();
+
+				vkCmdPushConstants(
+					frameInfo.commandBuffer,
+					pipelineLayout,
+					VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+					0,
+					sizeof(DefaultPushConstantData),
+					&push);
+				meshRenderer.getModel()->bind(frameInfo.commandBuffer);
+				meshRenderer.getModel()->draw(frameInfo.commandBuffer);
+			}
+			isFirstFrame = false;
+		}
+		/*
 		------------------Master Render System------------------
 		*/
 
@@ -477,40 +572,46 @@ namespace Madam {
 			isRunning = false;
 		}
 
-		void RenderStack::initialize(std::unique_ptr<DescriptorSetLayout>& globalSetLayout) {
-
-			renderSystems.push_back(std::make_unique<TextureRenderLayer>
-				(
-					device,
-					jcvbRenderer.getSwapChainRenderPass(),
-					globalSetLayout->getDescriptorSetLayout(),
-					"Texture Render System"
-				));
-
-			renderSystems.push_back(std::make_unique<RenderLayer>
-				(
-					device,
-					jcvbRenderer.getSwapChainRenderPass(),
-					globalSetLayout->getDescriptorSetLayout(),
-					"Render System"
-				));
-
-			renderSystems.push_back(std::make_unique<GridRenderLayer>
-				(
-					device,
-					jcvbRenderer.getSwapChainRenderPass(),
-					globalSetLayout->getDescriptorSetLayout(),
-					"Grid Render System"
-				));
-
-			renderSystems.push_back(std::make_unique<PointLightRenderLayer>
-				(
-					device,
-					jcvbRenderer.getSwapChainRenderPass(),
-					globalSetLayout->getDescriptorSetLayout(),
-					"Point Light Render System"
-				));
-			
+		void RenderStack::initialize(Scope<DescriptorSetLayout>& globalSetLayout) {
+			MADAM_CORE_INFO("Pushing Render Systems in vector");
+			try {
+				renderSystems.push_back(std::make_unique<TextureRenderLayer>
+					(
+						device,
+						renderer.getMainRenderPass(),
+						globalSetLayout->getDescriptorSetLayout(),
+						"Texture Render System"
+					));
+				MADAM_CORE_INFO("Texture Render Layer Complete");
+				renderSystems.push_back(std::make_unique<RenderLayer>
+					(
+						device,
+						renderer.getMainRenderPass(),
+						globalSetLayout->getDescriptorSetLayout(),
+						"Render System"
+					));
+				MADAM_CORE_INFO("Default Render Layer Complete");
+				renderSystems.push_back(std::make_unique<GridRenderLayer>
+					(
+						device,
+						renderer.getMainRenderPass(),
+						globalSetLayout->getDescriptorSetLayout(),
+						"Grid Render System"
+					));
+				MADAM_CORE_INFO("Grid Render Layer Complete");
+				renderSystems.push_back(std::make_unique<PointLightRenderLayer>
+					(
+						device,
+						renderer.getMainRenderPass(),
+						globalSetLayout->getDescriptorSetLayout(),
+						"Point Light Render System"
+					));
+				MADAM_CORE_INFO("Point Light Render Layer Complete");
+			}
+			catch (const std::exception& e) {
+				MADAM_CORE_ERROR("Error: {0}", e.what());
+			}
+			MADAM_CORE_INFO("Pushing Render Systems in vector is completed");
 		}
 
 		void RenderStack::preRender(FrameInfo& frameInfo) {

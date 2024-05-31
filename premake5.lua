@@ -6,7 +6,9 @@ workspace "IronMaiden"
     configurations
     {
         "Debug",
+        "DebugDLL",
         "Release",
+        "ReleaseDLL",
         "Dist"
     }
     startproject "Editor"
@@ -18,6 +20,7 @@ include("dpc.lua")
 
 group("Dependencies")
     include("IronMaiden/vendors/yaml-cpp")
+    include("IronMaiden/vendors/imgui")
 
 group("")
 
@@ -41,7 +44,7 @@ project "IronMaiden"
         "%{prj.name}/**.h", 
         "%{prj.name}/**.hpp", 
         "%{prj.name}/**.c", 
-        "%{prj.name}/**.cpp" 
+        "%{prj.name}/**.cpp",
     }
 
     removefiles 
@@ -49,6 +52,12 @@ project "IronMaiden"
         "%{prj.name}/vendors/**"
     }
     
+    files 
+    {
+        "%{prj.name}/vendors/ImGuizmo/ImGuizmo.h",
+        "%{prj.name}/vendors/ImGuizmo/ImGuizmo.cpp"
+    }
+
     includedirs
     {
         "%{prj.name}",
@@ -56,26 +65,25 @@ project "IronMaiden"
         "%{IncludeDir.glfw}",
         "%{IncludeDir.glm}",
         "%{IncludeDir.spdlog}",
-        "%{IncludeDir.yaml_cpp}",
-        "%{IncludeDir.stb}",
+        "%{IncludeDir.imgui}",
         "%{IncludeDir.entt}",
+        "%{IncludeDir.yaml_cpp}",
         "%{IncludeDir.tinyobj}",
+        "%{IncludeDir.stb}",
         "%{IncludeDir.openfbx}",
+        "%{IncludeDir.imguizmo}"
     }
 
     libdirs 
     { 
         "%{LibDir.VulkanSDK}",
         "%{LibDir.glfw}",
-        "%{LibDir.yaml_cpp}"
+        "%{LibDir.yaml_cpp}",
+        "%{LibDir.imgui}",
     }
 
-    links
-    {
-        "%{Lib.Vulkan}",
-        "%{Lib.glfw}",
-        "%{Lib.yaml_cpp}"
-    }
+    filter "files:IronMaiden/vendors/ImGuizmo/**.cpp"
+    flags{ "NoPCH" }
 
     filter "system:windows"
         systemversion "latest"
@@ -87,65 +95,79 @@ project "IronMaiden"
             "MADAM_PLATFORM_WINDOWS";
             "MADAM_BUILD_DLL";
         }
-
+        
     filter "configurations:Debug"
         defines "MADAM_DEBUG"
         symbols "on"
         runtime "debug"
-
-    filter "configurations:Release"
-        defines "MADAM_RELEASE"
-        optimize "on"
-        runtime "release"
-
-    filter "configurations:Dist"
-        defines "MADAM_DIST"
-        optimize "on"
-        runtime "release"
-
-project "Editor-NoGUI"
-    location "Editor-NoGUI"
-    kind "ConsoleApp"
-    language "C++"
-
-    targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-
-    files
-    {
-        "%{prj.name}/**.h",
-        "%{prj.name}/**.hpp",
-        "%{prj.name}/**.c",
-        "%{prj.name}/**.cpp"
-    }
-
-    links
-    {
-        "kernel32"
-    }
-    
-    filter "system:windows"
-        cppdialect "C++17"
-        staticruntime "on"
-        systemversion "latest"
-
-        defines
+        links
         {
-            "_CRT_SECURE_NO_WARNINGS";
-            "MADAM_PLATFORM_WINDOWS";
+            "%{StaticLib.Vulkan}",
+            "%{StaticLib.glfw}",
+            "%{StaticLib.yaml_cpp}",
+            "%{StaticLib.imgui}",
         }
-
-    filter "configurations:Debug"
+    
+    filter "configurations:DebugDLL"
         defines "MADAM_DEBUG"
         symbols "on"
+        staticruntime "off"
+        runtime "debug"
+        kind "SharedLib"
+        links
+        {
+            "%{Lib.Vulkan}",
+            "%{Lib.glfw}",
+            "%{Lib.yaml_cpp}",
+            "%{Lib.imgui}",
+        }
+        defines "MADAM_DYNAMIC_LINK"
+
+        postbuildcommands {
+            "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
+        }
 
     filter "configurations:Release"
         defines "MADAM_RELEASE"
         optimize "on"
+        runtime "release"
+        links
+        {
+            "%{StaticLib.Vulkan}",
+            "%{StaticLib.glfw}",
+            "%{StaticLib.yaml_cpp}",
+            "%{StaticLib.imgui}",
+        }
+
+    filter "configurations:ReleaseDLL"
+        optimize "on"
+        staticruntime "off"
+        runtime "debug"
+        kind "SharedLib"
+        links
+        {
+            "%{Lib.Vulkan}",
+            "%{Lib.glfw}",
+            "%{Lib.yaml_cpp}",
+            "dwmapi.lib",
+        }
+
+        postbuildcommands {
+            "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
+        }
+        defines "MADAM_DYNAMIC_LINK"
+
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
-        optimize "on"    
+        optimize "on"
+        runtime "release"
+        links
+        {
+            "%{StaticLib.Vulkan}",
+            "%{StaticLib.glfw}",
+            "%{StaticLib.yaml_cpp}"
+        }  
 
 project "Editor"
     location "Editor"
@@ -178,13 +200,22 @@ project "Editor"
         "%{IncludeDir.entt}",
         --"IronMaiden/vendors/tinyobjloader",
         --"IronMaiden/vendors/OpenFBX/src",
+        "%{IncludeDir.imgui}",
+        "%{IncludeDir.imguizmo}",
         "IronMaiden/src",
         "IronMaiden"
     }
 
+    libdirs 
+    { 
+        "bin/" .. outputdir .. "/IronMaiden",
+        "%{LibDir.yaml_cpp}",
+    }
+
     links
     {
-        "IronMaiden"
+        "IronMaiden.lib",
+        "%{Lib.yaml_cpp}"
     }
 
     filter "system:windows"
@@ -194,7 +225,13 @@ project "Editor"
         {
             "_CRT_SECURE_NO_WARNINGS";
             "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
-            "MADAM_PLATFORM_WINDOWS";
+            "MADAM_PLATFORM_WINDOWS"; 
+        }
+
+        prebuildcommands
+        {
+            "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
+            "copy %{wks.location}IronMaiden\\vendors\\yaml-cpp\\bin\\" .. outputdir .. "\\yaml-cpp\\yaml-cpp.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
         }
 
         postbuildcommands
@@ -205,11 +242,32 @@ project "Editor"
     filter "configurations:Debug"
         defines "MADAM_DEBUG"
         symbols "on"
+        defines "YAML_CPP_STATIC_DEFINE"
+    
+    filter "configurations:DebugDLL"
+        defines "MADAM_DEBUG"
+        symbols "on"
+        staticruntime "off"
+        defines { 
+            "YAML_CPP_DLL";
+            "MADAM_DYNAMIC_LINK";
+        }
+
+    filter "configurations:ReleaseDLL"
+        optimize "on"
+        staticruntime "off"
+        defines { 
+            "YAML_CPP_DLL";
+            "MADAM_DYNAMIC_LINK";
+        }
 
     filter "configurations:Release"
         defines "MADAM_RELEASE"
         optimize "on"
+        defines "YAML_CPP_STATIC_DEFINE"
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
         optimize "on"
+        defines "YAML_CPP_STATIC_DEFINE"
+

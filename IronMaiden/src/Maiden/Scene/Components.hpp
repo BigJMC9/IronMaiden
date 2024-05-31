@@ -1,7 +1,7 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/Base.hpp"
+#include "../Core/H_Utils.hpp"
 #include "H_Model.hpp"
 #include "H_Texture.hpp"
 #include "ScriptableEntity.hpp"
@@ -11,6 +11,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/matrix_decompose.hpp>
 
 #ifdef far
 #undef far
@@ -25,7 +27,7 @@ namespace Madam {
 	struct Camera {
 		//Shared pointer to camera data?
 		//Rendering::CameraData cameraData = Rendering::CameraData();
-		std::shared_ptr<Rendering::CameraHandle> cameraHandle;
+		Ref<Rendering::CameraHandle> cameraHandle;
 
 		const glm::mat4& getProjection() const {
 			return cameraHandle->getProjection();
@@ -68,7 +70,10 @@ namespace Madam {
 			Rendering::CameraData cameraData;
 			cameraHandle = std::make_shared<Rendering::CameraHandle>(cameraData);
 		};
-		Camera(Camera&) = default;
+		//Camera(Camera&) = default;
+		Camera(const Camera& source) {
+			cameraHandle = std::make_shared<Rendering::CameraHandle>(source.cameraHandle->CameraData());
+		};
 	};
 
 	struct UniqueIdentifier {
@@ -80,19 +85,43 @@ namespace Madam {
 		};
 	};
 
-	struct Object {
+	struct Tag {
+		std::string tag = "Untagged";
+
+		Tag() = default;
+		Tag(const Tag& other) = default;
+		Tag(const std::string& _tag)
+			: tag(_tag) {}
+
+		operator std::string& () { return tag; }
+		operator const std::string& () const { return tag; }
+	};
+
+	struct GameObject {
 		std::string name = "Object";
+
+		GameObject() = default;
+		//Object(Object&) = default;
+		GameObject(const GameObject&) = default;
+		GameObject(std::string _name) {
+			name = _name;
+		}
 		//Parent
 		//Tag
 		//Layer
 		//Icon
 	};
 
+	struct MaidenInternal {
+		std::string name = "Object";
+	};
+
 	struct MeshFilter {
-		std::shared_ptr<Model> model;
+		Ref<Model> model;
 
 		MeshFilter() = default;
-		MeshFilter(MeshFilter&) = default;
+		//MeshFilter(MeshFilter&) = default;
+		MeshFilter(const MeshFilter&) = default;
 	};
 
 	//Not Component, needs to be moved
@@ -101,34 +130,37 @@ namespace Madam {
 		std::string fragShaderPath;
 
 		Shader() = default;
-		Shader(Shader&) = default;
+		//Shader(Shader&) = default;
+		Shader(const Shader&) = default;
 	};
 
 	struct Material {
-		std::shared_ptr<Shader> shader = nullptr;
+		Ref<Shader> shader = nullptr;
 
-		std::shared_ptr<Texture> diffuseMap = nullptr;
-		std::shared_ptr<Texture> normalMap = nullptr;
-		std::shared_ptr<Texture> ambientOcclusionMap = nullptr;
-		std::shared_ptr<Texture> glossMap = nullptr;
+		Ref<Texture> diffuseMap = nullptr;
+		Ref<Texture> normalMap = nullptr;
+		Ref<Texture> ambientOcclusionMap = nullptr;
+		Ref<Texture> glossMap = nullptr;
 
 		Material() = default;
-		Material(Material&) = default;
+		//Material(Material&) = default;
+		Material(const Material&) = default;
 	};
 
 	struct MeshRenderer {
 
 		MeshFilter mesh;
-		std::shared_ptr<Material> material = nullptr;
+		Ref<Material> material = nullptr;
 
 		MeshRenderer() = default;
-		MeshRenderer(MeshRenderer&) = default;
+		//MeshRenderer(MeshRenderer&) = default;
+		MeshRenderer(const MeshRenderer&) = default;
 
-		std::shared_ptr<Model> getModel() {
+		Ref<Model> getModel() {
 			return mesh.model;
 		}
 
-		std::shared_ptr<Material> getMaterial() {
+		Ref<Material> getMaterial() {
 			return material;
 		}
 	};
@@ -139,7 +171,8 @@ namespace Madam {
 		float intensity = 1.0f;
 
 		PointLight() = default;
-		PointLight(PointLight&) = default;
+		//PointLight(PointLight&) = default;
+		PointLight(const PointLight&) = default;
 	};
 
 	struct Transform {
@@ -208,8 +241,74 @@ namespace Madam {
 			};
 		}
 
+		bool UpdateTransform (const glm::mat4& transform) {
+
+			using namespace glm;
+			using T = float;
+
+			mat4 localMatrix(transform);
+
+			// Normalize the matrix.
+			if (epsilonEqual(localMatrix[3][3], static_cast<float>(0), epsilon<T>()))
+				return false;
+
+			MADAM_CORE_ASSERT(epsilonEqual(localMatrix[3][3], static_cast<T>(1), static_cast<T>(0.00001)), "");
+
+			MADAM_CORE_ASSERT(
+				epsilonEqual(localMatrix[0][3], static_cast<T>(0), epsilon<T>()) &&
+				epsilonEqual(localMatrix[1][3], static_cast<T>(0), epsilon<T>()) &&
+				epsilonEqual(localMatrix[2][3], static_cast<T>(0), epsilon<T>()), "");
+
+			// Next take care of translation (easy).
+			translation = vec3(localMatrix[3]);
+			localMatrix[3] = vec4(0, 0, 0, localMatrix[3].w);
+
+			vec3 row[3], Pdum3;
+
+			// Now get scale and shear.
+			for (length_t i = 0; i < 3; ++i)
+				for (length_t j = 0; j < 3; ++j)
+					row[i][j] = localMatrix[i][j];
+
+			// Compute X scale factor and normalize first row.
+			scale.x = length(row[0]);
+			row[0] = detail::scale(row[0], static_cast<T>(1));
+			scale.y = length(row[1]);
+			row[1] = detail::scale(row[1], static_cast<T>(1));
+			scale.z = length(row[2]);
+			row[2] = detail::scale(row[2], static_cast<T>(1));
+
+			// At this point, the matrix (in rows[]) is orthonormal.
+			// Check for a coordinate system flip.  If the determinant
+			// is -1, then negate the matrix and the scaling factors.
+#if 0
+			Pdum3 = cross(Row[1], Row[2]); // v3Cross(row[1], row[2], Pdum3);
+			if (dot(Row[0], Pdum3) < 0)
+			{
+				for (length_t i = 0; i < 3; i++)
+				{
+					scale[i] *= static_cast<T>(-1);
+					Row[i] *= static_cast<T>(-1);
+				}
+			}
+#endif
+
+			rotation.y = asin(-row[0][2]);
+			if (cos(rotation.y) != 0) {
+				rotation.x = atan2(row[1][2], row[2][2]);
+				rotation.z = atan2(row[0][1], row[0][0]);
+			}
+			else {
+				rotation.x = atan2(-row[2][0], row[1][1]);
+				rotation.z = 0;
+			}
+
+
+			return true;
+		}
 
 		Transform() = default;
+		//Transform(Transform&) = default;
 		Transform(const Transform&) = default;
 		//Transform(const glm::mat4& transform) : m_transform(transform) {}
 
@@ -246,12 +345,15 @@ namespace Madam {
 	};
 
 	//Maybe set default functions? virtual functions may need to be avoided
-	struct NativeScriptComponent {
+	struct NativeScriptComponent{
 
-		ScriptableEntity* instance = nullptr;
+		ScriptableEntity* Instance = nullptr;
 
-		std::function<void()> instantiate;
-		std::function<void()> destroyInstance;
+
+		//std::function<void()> InstantiateScript;
+		ScriptableEntity* (*InstantiateScript)();
+		void (*DestroyScript)(NativeScriptComponent*);
+		//std::function<void()> DestroyScript;
 
 		std::function<void(ScriptableEntity*)> onCreate;
 		std::function<void(ScriptableEntity*)> onStart;
@@ -262,21 +364,23 @@ namespace Madam {
 		
 
 		NativeScriptComponent() = default;
-		NativeScriptComponent(NativeScriptComponent&) = default;
+		NativeScriptComponent(const NativeScriptComponent&) = default;
+		//NativeScriptComponent(const NativeScriptComponent&) = default;
 
+		//Bind ?!?! How do we work this with dll?
+		//Pain （πーπ）
+		//At this point I wonder if C# monobehaviour would be better for this (╥﹏╥)
 		template<typename T>
 		void Bind() {
+			InstantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
+			DestroyScript = [](NativeScriptComponent* nsc) { delete (T*)nsc->Instance; nsc->Instance = nullptr; };
 
-			instantiate = [&]() { instance = new T(); };
-			destroyInstance = [&]() { delete (T*)instance; instance = nullptr; };
-
-			onCreate = [](ScriptableEntity* instance) { ((T*)instance)->Create(); };
-			onDestroy = [](ScriptableEntity* instance) { ((T*)instance)->Destroy(); };
-			onStart = [](ScriptableEntity* instance) { ((T*)instance)->Start(); };
-			onUpdate = [](ScriptableEntity* instance) { ((T*)instance)->Update(); };
-			onLateUpdate = [](ScriptableEntity* instance) { ((T*)instance)->LateUpdate(); };
-			onRender = [](ScriptableEntity* instance) { ((T*)instance)->Render(); };
-			
+			onCreate = [](ScriptableEntity* Instance) { ((T*)Instance)->Create(); };
+			onDestroy = [](ScriptableEntity* Instance) { ((T*)Instance)->Destroy(); };
+			onStart = [](ScriptableEntity* Instance) { ((T*)Instance)->Start(); };
+			onUpdate = [](ScriptableEntity* Instance) { ((T*)Instance)->Update(); };
+			onLateUpdate = [](ScriptableEntity* Instance) { ((T*)Instance)->LateUpdate(); };
+			onRender = [](ScriptableEntity* Instance) { ((T*)Instance)->Render(); };
 		}
 	};
 
@@ -287,5 +391,5 @@ namespace Madam {
 
 	using AllComponents =
 		ComponentGroup<Transform, MeshRenderer,
-		MeshFilter, Material, Camera, PointLight>;
+		MeshFilter, Camera, PointLight, NativeScriptComponent>;
 }
