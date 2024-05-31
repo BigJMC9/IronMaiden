@@ -339,7 +339,7 @@ namespace Madam::UI {
 	void GUI::OnRenderPassEvent(NextRenderPassEvent* e) {
 		if (e->renderpassIndex == 1) {
 			OnRender();
-	}
+		}
 	}
 
 	void GUI::OnResizeEvent(WindowResizeEvent* e) {
@@ -1217,10 +1217,6 @@ namespace Madam::UI {
 		if (opened) {
 			ImGui::TreePop();
 		}
-	}
-
-	void GUI::OnSceneLoad() {
-		selectedEntity = nullptr;
 	}
 
 	void GUI::CreateViewportPipeline() {

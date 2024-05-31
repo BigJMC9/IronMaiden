@@ -129,6 +129,7 @@ namespace Madam {
 			time.UpdateTime();
 			
 			pSurface->OnUpdate();
+			pGUI->OnUpdate();
 			scene->Update();
 
 			if (renderer.beginFrame()) {
@@ -161,12 +162,15 @@ namespace Madam {
 				renderer.endRenderPass(commandBuffer);
 				renderer.PipelineBarrier(commandBuffer, false, false, frameIndex, 0);
 				renderer.beginSwapChainRenderPass(commandBuffer);
-				pGUI->OnUpdate();
-				pGUI->Record(commandBuffer);
 				renderer.endSwapChainRenderPass(commandBuffer);
 				renderer.endFrame();
 				if (window.wasWindowResized()) {
-					pGUI->ReCreate();
+					WindowData windowData;
+					windowData.width = window.getWidth();
+					windowData.height = window.getHeight();
+					windowData.windowName = window.getName();
+					Events::WindowResizeEvent e(windowData);
+					eventSystem.PushEvent(&e, true);
 					window.resetWindowResizedFlag();
 				}
 				

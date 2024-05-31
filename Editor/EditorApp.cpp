@@ -12,7 +12,6 @@ namespace Madam{
 			std::unique_ptr<EditorLayer> editorSurface = std::make_unique<EditorLayer>(EditorLayer());
 			addSurface(std::move(editorSurface));
 			MADAM_CORE_INFO("Editor Created");
-
 		}
 
 		~Editor()
