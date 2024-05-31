@@ -3,7 +3,7 @@
 #include "maidenpch.hpp"
 //#include "H_JCVB_camera.hpp"
 #include "H_DescriptorSetLayout.hpp"
-#include "../Core/H_Device.hpp"
+#include "Vulkan/H_VulkanDevice.hpp"
 #include "FrameInfo.hpp"
 #include "../Scene/Components.hpp"
 #include "../Scene/H_Entity.hpp"

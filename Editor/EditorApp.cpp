@@ -1,5 +1,5 @@
 #include <Maiden.hpp>
-#include "src/H_Editor.hpp"
+#include "src/H_EditorInterface.hpp"
 // Entry Point
 #include "Maiden/Core/Main/EntryPoint.hpp"
 

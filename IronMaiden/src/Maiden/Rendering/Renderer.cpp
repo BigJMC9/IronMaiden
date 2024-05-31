@@ -495,68 +495,6 @@ namespace Madam {
 			}
 		}
 
-		void Renderer::setImageBuffer(int index) {
-			VkMemoryRequirements memRequirements;
-			vkGetImageMemoryRequirements(device.device(), frames[index].images[0].image, &memRequirements);
-
-			VkBufferCreateInfo bufferInfo{};
-			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-			bufferInfo.size = memRequirements.size; // Size of the image to be copied
-			bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-			bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-			vkCreateBuffer(device.device(), &bufferInfo, nullptr, &frames[index].images[0].debugBuffer);
-
-			vkGetBufferMemoryRequirements(device.device(), frames[index].images[0].debugBuffer, &memRequirements);
-			VkMemoryAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = device.findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-			vkAllocateMemory(device.device(), &allocInfo, nullptr, &frames[index].images[0].debugBufferMemory);
-			vkBindBufferMemory(device.device(), frames[index].images[0].debugBuffer, frames[index].images[0].debugBufferMemory, 0);
-		}
-
-		void Renderer::saveAsImage(VkCommandBuffer commandBuffer) {
-
-			VkImage image = frames[currentFrameIndex].images[0].image;
-			VkDeviceMemory imageMemory = frames[currentFrameIndex].images[0].imageMemory;
-			VkFormat format = swapChain->getSwapChainImageFormat();
-			VkExtent2D extent = swapChain->getSwapChainExtent();
-
-			
-			VkBufferImageCopy region = {};
-			region.bufferOffset = 0;
-			region.bufferRowLength = 0;
-			region.bufferImageHeight = 0;
-			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			region.imageSubresource.mipLevel = 0;
-			region.imageSubresource.baseArrayLayer = 0;
-			region.imageSubresource.layerCount = 1;
-			region.imageOffset = { 0, 0, 0 };
-			region.imageExtent = { swapChain->getSwapChainExtent().width, swapChain->getSwapChainExtent().height, 1};
-
-			vkCmdCopyImageToBuffer(commandBuffer, frames[currentFrameIndex].images[0].image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, frames[currentFrameIndex].images[0].debugBuffer, 1, &region);
-		}
-
-		void Renderer::mapImageBuffer(int index) {
-			void* data;
-			vkMapMemory(device.device(), frames[index].images[0].debugBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
-			std::string fileType = ".png";
-			std::string fileName = "output" + index + fileType;
-			stbi_write_png(fileName.c_str(), swapChain->getSwapChainExtent().width, swapChain->getSwapChainExtent().height, 4, data, swapChain->getSwapChainExtent().width * 4);
-			vkUnmapMemory(device.device(), frames[index].images[0].debugBufferMemory);
-		}
-
-		void Renderer::freeImageBuffers(int index) {
-			for (size_t i = 0; i < frames.size(); i++)
-			{
-				vkFreeMemory(device.device(), frames[i].images[index].debugBufferMemory, nullptr);
-				vkDestroyBuffer(device.device(), frames[i].images[index].debugBuffer, nullptr);
-			}
-			
-		}
-
 		void Renderer::PipelineBarrier(VkCommandBuffer commandBuffer, bool isSwapchain, bool isSwitch, int frameIndex, int renderIndex)
 		{
 			VkImageMemoryBarrier barrier{};

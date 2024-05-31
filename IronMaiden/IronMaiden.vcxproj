@@ -242,7 +242,7 @@
     <ClInclude Include="maidenpch.hpp" />
     <ClInclude Include="src\Maiden.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Application.hpp" />
-    <ClInclude Include="src\Maiden\Core\H_Device.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanDevice.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Time.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Utils.hpp" />
@@ -284,7 +284,7 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Application.cpp" />
-    <ClCompile Include="src\Maiden\Core\Device.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp" />
     <ClCompile Include="src\Maiden\Core\Logger.cpp" />
     <ClCompile Include="src\Maiden\Core\Time.cpp" />
     <ClCompile Include="src\Maiden\Core\Utils.cpp" />

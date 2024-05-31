@@ -46,7 +46,7 @@
     <ClInclude Include="src\Maiden\Core\H_Application.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_Device.hpp">
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanDevice.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp">
@@ -160,7 +160,7 @@
     <ClCompile Include="src\Maiden\Core\Application.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Core\Device.cpp">
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Logger.cpp">

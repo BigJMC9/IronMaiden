@@ -1,7 +1,7 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/H_Device.hpp"
+#include "../Rendering/Vulkan/H_VulkanDevice.hpp"
 #include "H_Model.hpp"
 #include "../Rendering/FrameInfo.hpp"
 #include "../Rendering/H_Camera.hpp"

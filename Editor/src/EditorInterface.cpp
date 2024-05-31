@@ -1,4 +1,4 @@
-#include "H_Editor.hpp"
+#include "H_EditorInterface.hpp"
 
 namespace Madam {
 

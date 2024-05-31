@@ -1,5 +1,5 @@
 #include "maidenpch.hpp"
-#include "H_Device.hpp"
+#include "H_VulkanDevice.hpp"
 
 //GDI Graphical Device Interface
 namespace Madam {

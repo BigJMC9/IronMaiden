@@ -16,8 +16,6 @@ namespace Madam {
 			VkImage image;
 			VkDeviceMemory imageMemory;
 			VkFramebuffer frameBuffer;
-			VkBuffer debugBuffer;
-			VkDeviceMemory debugBufferMemory;
 		};
 		struct Frame {
 			std::vector<ImageData> images;
@@ -124,11 +122,7 @@ namespace Madam {
 			void createCommandBuffers();
 			void createMainRenderImages();
 			void createMainRenderPass();
-			void saveAsImage(VkCommandBuffer commandBuffer);
-			void setImageBuffer(int index);
-			void mapImageBuffer(int index);
 			void freeCommandBuffers();
-			void freeImageBuffers(int index);
 			void recreateSwapChain();
 			//VkRenderPass createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies, bool isSwapChain);
 
