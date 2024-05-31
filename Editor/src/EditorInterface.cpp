@@ -1,4 +1,4 @@
-#include "H_Editor.hpp"
+#include "H_EditorInterface.hpp"
 
 namespace Madam {
 
@@ -58,7 +58,7 @@ namespace Madam {
 		}
 	};
 
-	EditorLayer::EditorLayer() : Layer("Editor") 
+	EditorLayer::EditorLayer() : EngineInterface("Editor") 
 	{
 
 	}
@@ -87,10 +87,14 @@ namespace Madam {
 		entt::entity& entityID = obj.GetHandleAsRef();
 		MADAM_CORE_INFO("Entity ID: {0} at: {1}", (uint32_t)entityID, obj.GetHandleMemoryLocation());
 
-		
+		SetUpEvents();
+
 		//Pain（πーπ）
 		viewerObject.AddComponent<NativeScriptComponent>().Bind<CameraController>();
+	}
 
+	void EditorLayer::SetUpEvents() {
+		Events::EventSystem::Get().AddListener(this, &EditorLayer::OnSceneChangeEvent);
 	}
 
 	void EditorLayer::OnUpdate()
@@ -167,7 +171,7 @@ namespace Madam {
 
 	//Tag component could fix camera issue?
 	//Should be handled as an event
-	void EditorLayer::OnSceneLoad() {
+	void EditorLayer::OnSceneChangeEvent(SceneChangeEvent* e) {
 		MADAM_INFO("Scene Loaded");
 		Application::Get().getScene().Reg().view<entt::entity>().each([&](auto entityID) {
 			Entity entity = { entityID, &Application::Get().getScene() };

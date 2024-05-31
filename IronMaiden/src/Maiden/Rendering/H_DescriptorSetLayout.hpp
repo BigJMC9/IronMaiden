@@ -3,7 +3,7 @@
 #include "maidenpch.hpp"
 #include "../Core/H_Utils.hpp"
 #include "../Core/Main/Core.hpp"
-#include "../Core/H_Device.hpp"
+#include "Vulkan/H_VulkanDevice.hpp"
 #include "../GUI/H_GUI.hpp"
 
 // std

@@ -1,0 +1,101 @@
+Scene: Untitled
+Entities:
+  - Entity: 8ae67fb7d73531bc-1113bf9ca678daeb
+    Transform:
+      Translation: [-0.606570899, -1.07776058, -3.58966184]
+      Rotation: [-0.172628716, 0, 0]
+      Scale: [1, 1, 1]
+    Camera:
+      Perspective: {Fov: 0.87266463, Aspect: 1.77777779, Near: 0.100000001, Far: 1000}
+      ViewPosition: [-0.606570899, -1.07776058, -3.58966184]
+      ViewDirection: [0, 0, 0]
+      Main: true
+    ? Entity: 7e0a2709576c1819-99c7417707988c3c
+      Transform:
+        Translation: [0.0627190918, -1, 1.41224647]
+        Rotation: [0, 0, 0]
+        Scale: [1, 1, 1]
+      PointLight:
+        Color: [1, 1, 1]
+        Intensity: 0.200000003
+        Radius: 0.100000001
+    : Entity: 5e5487e5ce2e5f9f-f8dfd9ac7e12088c
+      Transform:
+        Translation: [1.25436985, -1, 0.651774824]
+        Rotation: [0, 0, 0]
+        Scale: [1, 1, 1]
+      PointLight:
+        Color: [0.100000001, 1, 1]
+        Intensity: 0.200000003
+        Radius: 0.100000001
+    ? Entity: 0e3f37190ad8edc4-cea36fb91d6adb8e
+      Transform:
+        Translation: [1.19167602, -1, -0.760409057]
+        Rotation: [0, 0, 0]
+        Scale: [1, 1, 1]
+      PointLight:
+        Color: [1, 1, 0.100000001]
+        Intensity: 0.200000003
+        Radius: 0.100000001
+    : Entity: 7cecc70d0c9a65f7-ea486a955194e276
+      Transform:
+        Translation: [-0.0627196804, -0.99999994, -1.41224658]
+        Rotation: [0, 0, 0]
+        Scale: [1, 1, 1]
+      PointLight:
+        Color: [0.100000001, 1, 0.100000001]
+        Intensity: 0.200000003
+        Radius: 0.100000001
+    ? Entity: 88544b9b52663883-d3d17b977bd1f179
+      Transform:
+        Translation: [-1.25436974, -0.683885098, -0.651774585]
+        Rotation: [0, -0, 0]
+        Scale: [1, 1, 1]
+      PointLight:
+        Color: [0.100000001, 0.100000001, 1]
+        Intensity: 0.200000003
+        Radius: 0.100000001
+    : Entity: 6db17073e612fd93-c326a4e2a1ce9ccc
+      Transform:
+        Translation: [-1.19167542, -1, 0.760409176]
+        Rotation: [0, 0, 0]
+        Scale: [1, 1, 1]
+      PointLight:
+        Color: [1, 0.100000001, 0.100000001]
+        Intensity: 0.200000003
+        Radius: 0.100000001
+    ? Entity: fb8a9db6ec3566b1-ba4a7a62cae0764c
+      Transform:
+        Translation: [0, 0.5, 0]
+        Rotation: [0, 0, 0]
+        Scale: [3, 1, 3]
+      MeshFilter:
+        Model: Internal/models/quad.obj
+      Material:
+        Shader: [shaders/texture_shader.vert.spv, shaders/texture_shader.frag.spv]
+        Diffuse: C:/Users/xbox/Desktop/Development/IronMaiden Projects/Sandbox/Sandbox/Internal/textures/GroundSand005_COL_2K.jpg
+        Normal: C:/Users/xbox/Desktop/Development/IronMaiden Projects/Sandbox/Sandbox/Internal/textures/GroundSand005_NRM_2K.jpg
+        AO: C:/Users/xbox/Desktop/Development/IronMaiden Projects/Sandbox/Sandbox/Internal/textures/GroundSand005_AO_2K.jpg
+        Gloss: C:/Users/xbox/Desktop/Development/IronMaiden Projects/Sandbox/Sandbox/Internal/textures/GroundSand005_GLOSS_2K.jpg
+      MeshRenderer: true
+    : Entity: af3ce479e5c0dfec-3704eb85014fe213
+      Transform:
+        Translation: [1, -1.9692843, 2.45731326e-06]
+        Rotation: [3.14159012, -0, 0]
+        Scale: [0.5, 0.5, 0.5]
+      MeshFilter:
+        Model: Internal/models/Monkey.obj
+      MeshRenderer: true
+    ? Entity: f88b2f08c6a4db39-62992e88003a939a
+      Transform:
+        Translation: [-1, -1, 0]
+        Rotation: [3.14159012, 0, 0]
+        Scale: [0.5, 0.5, 0.5]
+      MeshFilter:
+        Model: Internal/models/Monkey_Smooth.obj
+      MeshRenderer: true
+    : Entity: 46e0aa68c831a190-189a434ae57d0b42
+      Transform:
+        Translation: [0, 0, -2.5]
+        Rotation: [0, 0, 0]
+        Scale: [1, 1, 1]

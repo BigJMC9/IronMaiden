@@ -3,6 +3,8 @@
 #include "maidenpch.hpp"
 //#include "../Core/H_Device.hpp"
 #include "H_SwapChain.hpp"
+#include "../Interfaces/H_Interface.h"
+#include "../Events/H_EventSystem.h"
 
 //Low level rendering should be completely agnostic. see (pg 47)
 namespace Madam {
@@ -14,8 +16,6 @@ namespace Madam {
 			VkImage image;
 			VkDeviceMemory imageMemory;
 			VkFramebuffer frameBuffer;
-			VkBuffer debugBuffer;
-			VkDeviceMemory debugBufferMemory;
 		};
 		struct Frame {
 			std::vector<ImageData> images;
@@ -40,6 +40,7 @@ namespace Madam {
 
 			VkRenderPass getSwapChainRenderPass() const { return swapChain->getRenderPass(); }
 			VkRenderPass getMainRenderPass() const { return renderPasses[0]; }
+
 			float getAspectRatio() const {
 				return swapChain->extentAspectRatio();
 			}
@@ -100,6 +101,11 @@ namespace Madam {
 				return *Get().swapChain;
 			}
 
+			//Needs to be updated to abstract away from the VkRenderPass, we don't want to accidentally change renderpass settings while the engine is running
+			const std::vector<VkRenderPass> getRenderPasses() {
+				return renderPasses;
+			}
+
 			bool beginFrame();
 			void endFrame();
 			VkCommandBuffer beginCommandBuffer();
@@ -116,11 +122,7 @@ namespace Madam {
 			void createCommandBuffers();
 			void createMainRenderImages();
 			void createMainRenderPass();
-			void saveAsImage(VkCommandBuffer commandBuffer);
-			void setImageBuffer(int index);
-			void mapImageBuffer(int index);
 			void freeCommandBuffers();
-			void freeImageBuffers(int index);
 			void recreateSwapChain();
 			//VkRenderPass createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies, bool isSwapChain);
 
@@ -135,11 +137,13 @@ namespace Madam {
 			uint32_t currentImageIndex;
 			int currentFrameIndex = 0;
 			uint32_t currentCommandBufferIndex = 0;
+			int renderpassIndex = -1;
 			bool isFrameStarted = false;
 			bool isRunning = false;
 			std::vector<VkRenderPass> renderPasses;
 			std::vector<Frame> frames;
 			std::vector<CommandBufferGroup> commandBufferGroups;
+			
 			//std::vector<ImageView> imageViews;
 
 			uint32_t viewportWidth = 800, viewportHeight = 450;

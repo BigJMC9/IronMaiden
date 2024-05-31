@@ -1,5 +1,5 @@
 #include <Maiden.hpp>
-#include "src/H_Editor.hpp"
+#include "src/H_EditorInterface.hpp"
 // Entry Point
 #include "Maiden/Core/Main/EntryPoint.hpp"
 
@@ -12,7 +12,6 @@ namespace Madam{
 			std::unique_ptr<EditorLayer> editorSurface = std::make_unique<EditorLayer>(EditorLayer());
 			addSurface(std::move(editorSurface));
 			MADAM_CORE_INFO("Editor Created");
-
 		}
 
 		~Editor()

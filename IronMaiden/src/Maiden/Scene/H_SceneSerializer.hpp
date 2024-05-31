@@ -2,7 +2,7 @@
 
 #include "maidenpch.hpp"
 #include "../Core/H_Utils.hpp"
-#include "../Core/H_Device.hpp"
+#include "../Rendering/Vulkan/H_VulkanDevice.hpp"
 
 namespace Madam {
 	class Scene;
