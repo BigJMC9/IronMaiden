@@ -242,7 +242,7 @@ namespace Madam::UI {
 
 	GUI::GUI() : EngineInterface("GUI")
 	{
-
+		pendingEntityDeletion = CreateRef<Entity>(Entity());
 	}
 
 	GUI::~GUI() {
@@ -394,10 +394,11 @@ namespace Madam::UI {
 	}
 
 	void GUI::OnUpdate() {
-		
-	}
+		if (*pendingEntityDeletion) {
+			Application::Get().getScene().DestroyEntity(*pendingEntityDeletion);
+			pendingEntityDeletion = CreateRef<Entity>(Entity());
+		}
 
-	void GUI::OnRender() {
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2((float)Application::Get().getWindow().getWidth(), (float)Application::Get().getWindow().getHeight());
 
@@ -407,6 +408,9 @@ namespace Madam::UI {
 		ImGuizmo::BeginFrame();
 
 		EditorUI();
+	}
+
+	void GUI::OnRender() {
 
 		ImGui::Render();
 
@@ -449,7 +453,7 @@ namespace Madam::UI {
 				if (ImGui::MenuItem("New Scene")) {}
 				if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
 				{
-					//Window Specific
+					//Window Specific, need to move to platform namespace
 					HWND hWnd = GetConsoleWindow(); // Get the window handle of the console window
 					WCHAR fileName[MAX_PATH]; // Buffer to store the selected file name
 
@@ -475,19 +479,17 @@ namespace Madam::UI {
 					Application::GetSceneSerializer()->Serialize("temp.scene");
 				}
 				if (ImGui::MenuItem("Save As..")) {
-					//Window Specific
+					//Window Specific, Need to move to platform namespace
 					HWND hWnd = GetConsoleWindow(); // Get the window handle of the console window
 					WCHAR fileName[MAX_PATH]; // Buffer to store the selected file name
 
 					std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
 
 					if (SaveFileDialog(hWnd, fileName, MAX_PATH)) {
-						// File selected, do something with the file
 						std::wstring ws(fileName);
 
 						std::string fileNameStr = converter.to_bytes(ws);
 						Application::GetSceneSerializer()->Serialize(fileNameStr, true);
-						//MessageBox(hWnd, fileName, L"Selected File", MB_OK | MB_ICONINFORMATION);
 					}
 					else {
 						// User canceled or error occurred
@@ -857,7 +859,7 @@ namespace Madam::UI {
 			if (selectedEntity && *selectedEntity == entity) {
 				selectedEntity = nullptr;
 			}
-			Application::Get().getScene().DestroyEntity(entity);
+			pendingEntityDeletion = CreateRef<Entity>(entity);
 		}
 	}
 

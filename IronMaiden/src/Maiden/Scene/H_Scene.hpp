@@ -5,6 +5,7 @@
 #include "H_Model.hpp"
 #include "../Rendering/FrameInfo.hpp"
 #include "../Rendering/H_Camera.hpp"
+#include "../Events/H_EventSystem.h"
 
 //When we add animation, we will have to compress the data when loaded into the GPU or it will be very memory intensive. see (pg 63)
 

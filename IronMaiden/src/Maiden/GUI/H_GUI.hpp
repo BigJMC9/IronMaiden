@@ -121,5 +121,7 @@ namespace Madam::UI {
 		//constexpr float RGBGammaCorrection(float rgb) { return 1/(constPow((rgb/255), (1.0/2.2f))); }
 
 		int ImGuizmoType = -1;
+
+		Ref<Entity> pendingEntityDeletion;
 	};
 }
