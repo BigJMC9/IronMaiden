@@ -1,16 +1,27 @@
 #include "maidenpch.hpp"
 #include "H_SceneSerializer.hpp"
+#include "H_Scene.hpp"
 #include "H_Entity.hpp"
 #include "../Core/H_Application.hpp"
 //#include "H_components.hpp"
 
 //libs
-#ifndef YAML_CPP_STATIC_DEFINE
-	#define YAML_CPP_STATIC_DEFINE
+#ifndef MADAM_DYNAMIC_LINK
+	#ifndef YAML_CPP_STATIC_DEFINE
+		#define YAML_CPP_STATIC_DEFINE
+	#endif
 #endif
 #include <yaml-cpp/yaml.h>
 
 namespace YAML {
+
+	template<typename T>
+	using Ref = std::shared_ptr<T>;
+	template<typename T, typename ... Args>
+	constexpr Ref<T> CreateRef(Args&& ... args)
+	{
+		return std::make_shared<T>(std::forward<Args>(args)...);
+	}
 
 	template<>
 	struct convert<glm::vec2>
@@ -105,9 +116,9 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<std::shared_ptr<Madam::Shader>>
+	struct convert<Ref<Madam::Shader>>
 	{
-		static Node encode(const std::shared_ptr<Madam::Shader>& shader)
+		static Node encode(const Ref<Madam::Shader>& shader)
 		{
 			Node node;
 			node.push_back(shader->vertShaderPath);
@@ -115,7 +126,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, std::shared_ptr<Madam::Shader>& shader)
+		static bool decode(const Node& node, Ref<Madam::Shader>& shader)
 		{
 			shader->vertShaderPath = node[0].as<std::string>();
 			shader->fragShaderPath = node[1].as<std::string>();
@@ -219,7 +230,7 @@ namespace Madam {
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const std::shared_ptr<Shader> s)
+	YAML::Emitter& operator<<(YAML::Emitter& out, const Ref<Shader> s)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << s->vertShaderPath << s->fragShaderPath << YAML::EndSeq;
@@ -307,7 +318,6 @@ namespace Madam {
 			out << YAML::EndMap;
 		}
 
-		//Add after component Camera is updated
 		if (entity.HasComponent<Camera>()) {
 			out << YAML::Key << "Camera";
 			out << YAML::BeginMap;
@@ -327,11 +337,11 @@ namespace Madam {
 		out << YAML::EndMap;
 	}
 
-	SceneSerializer::SceneSerializer(std::unique_ptr<Scene>& scene, Device& _device) : m_Scene(scene), device(_device) {
+	SceneSerializer::SceneSerializer(Ref<Scene> scene, Device& _device) : m_Scene(scene), device(_device) {
 
 	}
 	
-	void SceneSerializer::Serialize(const std::string& rawfilePath) {
+	void SceneSerializer::Serialize(const std::string& rawfilePath, bool isFullPath) {
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -351,7 +361,13 @@ namespace Madam {
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 
-		std::string filePath = Application::Get().getConfig().internals + rawfilePath;
+		std::string filePath = "";
+		if (!isFullPath) {
+			filePath = Application::Get().getConfig().projectFolder + Application::Get().getConfig().internals + rawfilePath;
+		}
+		else {
+			filePath = rawfilePath;
+		}
 
 		std::ofstream fout(filePath);
 		fout << out.c_str();
@@ -361,7 +377,7 @@ namespace Madam {
 		//Not Implemented
 	}
 
-	bool SceneSerializer::Deserialize(const std::string& rawFilePath) {
+	bool SceneSerializer::Deserialize(const std::string& rawFilePath, bool isFullPath) {
 		std::string defaultFileType = ".scene";
 		std::string fileType = rawFilePath.substr(rawFilePath.size() - defaultFileType.size());
 
@@ -370,7 +386,13 @@ namespace Madam {
 			return false;
 		}
 
-		std::string filePath = Application::Get().getConfig().internals + rawFilePath;
+		std::string filePath = "";
+		if (!isFullPath) {
+			filePath = Application::Get().getConfig().internals + rawFilePath;
+		}
+		else {
+			filePath = rawFilePath;
+		}
 
 		std::ifstream file(filePath);
 
@@ -427,13 +449,14 @@ namespace Madam {
 					Material& material = deserializedEntity.AddComponent<Material>();
 					Shader shader = materialNode["Shader"].as<Shader>();
 					material.shader = std::make_shared<Shader>(shader);
-					std::string path = materialNode["Diffuse"].as<std::string>();
+					std::string prefix = Application::Get().getConfig().projectFolder + Application::Get().getConfig().internals;
+					std::string path = prefix + materialNode["Diffuse"].as<std::string>();
 					material.diffuseMap = Texture::createTextureFromFile(device, path);
-					path = materialNode["Normal"].as<std::string>();
+					path = prefix + materialNode["Normal"].as<std::string>();
 					material.normalMap = Texture::createTextureFromFile(device, path);
-					path = materialNode["AO"].as<std::string>();
+					path = prefix + materialNode["AO"].as<std::string>();
 					material.ambientOcclusionMap = Texture::createTextureFromFile(device, path);
-					path = materialNode["Gloss"].as<std::string>();
+					path = prefix + materialNode["Gloss"].as<std::string>();
 					material.glossMap = Texture::createTextureFromFile(device, path);
 				}
 
@@ -478,8 +501,12 @@ namespace Madam {
 					
 					camera.cameraHandle->setViewDirection(cameraNode["ViewPosition"].as<glm::vec3>(), cameraNode["ViewDirection"].as<glm::vec3>());
 					if (cameraNode["Main"].as<bool>()) {
+						MADAM_CORE_INFO("Is Main Camera");
 						camera.cameraHandle->setMain();
 						isMain = true;
+					}
+					else {
+						MADAM_CORE_INFO("Is Not Main Camera");
 					}
 				}
 			}
@@ -488,7 +515,7 @@ namespace Madam {
 		//Will need to be updated for runtime
 		if (!isMain) {
 			Entity camera = newScene.CreateEntity();
-			camera.GetComponent<Object>().name = "Editor Camera";
+			camera.GetComponent<GameObject>().name = "Editor Camera";
 			camera.GetComponent<Transform>().translation.z = -2.5f;
 			Rendering::CameraData cameraData;
 			cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
@@ -498,7 +525,10 @@ namespace Madam {
 			camera.GetComponent<Camera>().cameraHandle->setMain();
 		}
 
-		m_Scene = std::make_unique<Scene>(std::move(newScene));
+		m_Scene = std::make_shared<Scene>(std::move(newScene));
+		Application::Get().PrimeReserve(m_Scene);
+		Application::Get().SwitchScenes(true);
+
 		return true;
 	}
 

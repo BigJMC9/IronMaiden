@@ -1,12 +1,13 @@
 #pragma once
 
 #include <Maiden.hpp>
+#include "Scripting/H_ScriptEngine.hpp"
 
 namespace Madam {
-	class EditorSurface : public Surface {
+	class EditorLayer : public Layer {
 	public:
-		EditorSurface();
-		virtual ~EditorSurface() = default;
+		EditorLayer();
+		virtual ~EditorLayer() = default;
 
 		virtual void OnAttach() override;
 		//virtual void OnDetach() override;
@@ -16,7 +17,9 @@ namespace Madam {
 		void OnSceneLoad() override;
 
 	private:
-		std::shared_ptr<Entity> viewerObject = nullptr;
+		Entity viewerObject;
 		bool isFirst = true;
+		std::shared_ptr<Scripting::ScriptEngine> scriptEngine = nullptr;
+		std::shared_ptr<Scene> scene = nullptr;
 	};
 }

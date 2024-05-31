@@ -1,9 +1,11 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/Base.hpp"
+#include "../Core/H_Utils.hpp"
 #include "H_Scene.hpp"
 //#include "Components.hpp"
+
+#define MADAM_ENTT_HEADER_FLAG
 
 // std
 #include <cassert>
@@ -11,7 +13,7 @@
 namespace Madam {
 
 	//Wrapper class of entt::entity
-	class Entity
+	class MADAM_API Entity
 	{
 	public:
 		Entity() = default;
@@ -26,9 +28,9 @@ namespace Madam {
 		{
 			MADAM_CORE_ASSERT(!HasComponent<T>(), "GameObject already has component!");
 			//assert(!HasComponent<T>(), "GameObject already has component!");
-			T& component = scene->registry.emplace<T>(entityHandle, std::forward<Args>(args)...);
-			scene->OnComponentAdded<T>(*this, component);
-			return component; //forwards args
+			return scene->registry.emplace<T>(entityHandle, std::forward<Args>(args)...);
+			//scene->OnComponentAdded<T>(*this, component);
+			//return component; //forwards args
 		}
 
 		template<typename T>
@@ -82,7 +84,5 @@ namespace Madam {
 	private:
 		entt::entity entityHandle{ entt::null };
 		Scene* scene = nullptr;
-		//UUID id;
-		//std::string name = "NULL";
 	};
 }

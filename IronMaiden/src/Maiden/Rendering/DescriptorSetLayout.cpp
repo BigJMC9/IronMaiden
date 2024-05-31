@@ -1,5 +1,5 @@
 #include "maidenpch.hpp"
-#include "H_Descriptors.hpp"
+#include "H_DescriptorSetLayout.hpp"
 
 
 namespace Madam {
@@ -11,7 +11,7 @@ namespace Madam {
         VkDescriptorType descriptorType,
         VkShaderStageFlags stageFlags,
         uint32_t count) {
-        assert(bindings.count(binding) == 0 && "Binding already in use");
+        MADAM_CORE_ASSERT(bindings.count(binding) == 0,  "Binding already in use");
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
         layoutBinding.descriptorType = descriptorType;
@@ -21,8 +21,12 @@ namespace Madam {
         return *this;
     }
 
-    std::unique_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::build() const {
+    Scope<DescriptorSetLayout> DescriptorSetLayout::Builder::build() const {
         return std::make_unique<DescriptorSetLayout>(device, bindings);
+    }
+
+    Ref<DescriptorSetLayout> DescriptorSetLayout::Builder::buildRef() const {
+        return CreateRef<DescriptorSetLayout>(device, bindings);
     }
 
     // *************** Descriptor Set Layout *********************
@@ -30,6 +34,7 @@ namespace Madam {
     DescriptorSetLayout::DescriptorSetLayout(
         Device& device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
         : device{ device }, bindings{ bindings } {
+
         std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
         for (auto kv : bindings) {
             setLayoutBindings.push_back(kv.second);
@@ -71,7 +76,7 @@ namespace Madam {
         return *this;
     }
 
-    std::unique_ptr<DescriptorPool> DescriptorPool::Builder::build() const {
+    Scope<DescriptorPool> DescriptorPool::Builder::build() const {
         return std::make_unique<DescriptorPool>(device, maxSets, poolFlags, poolSizes);
     }
 
@@ -130,18 +135,16 @@ namespace Madam {
 
     // *************** Descriptor Writer *********************
 
-    JcvbDescriptorWriter::JcvbDescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool)
+    DescriptorWriter::DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool)
         : setLayout{ setLayout }, pool{ pool } {}
 
-    JcvbDescriptorWriter& JcvbDescriptorWriter::writeBuffer(
+    DescriptorWriter& DescriptorWriter::writeBuffer(
         uint32_t binding, VkDescriptorBufferInfo* bufferInfo) {
-        assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
+        MADAM_CORE_ASSERT(setLayout.bindings.count(binding) == 1, "Layout does not contain specified binding");
 
         auto& bindingDescription = setLayout.bindings[binding];
 
-        assert(
-            bindingDescription.descriptorCount == 1 &&
-            "Binding single descriptor info, but binding expects multiple");
+        MADAM_CORE_ASSERT(bindingDescription.descriptorCount == 1, "Binding single descriptor info, but binding expects multiple");
 
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -154,15 +157,13 @@ namespace Madam {
         return *this;
     }
 
-    JcvbDescriptorWriter& JcvbDescriptorWriter::writeImage(
+    DescriptorWriter& DescriptorWriter::writeImage(
         uint32_t binding, VkDescriptorImageInfo* imageInfo) {
-        assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
+        MADAM_CORE_ASSERT(setLayout.bindings.count(binding) == 1, "Layout does not contain specified binding");
 
         auto& bindingDescription = setLayout.bindings[binding];
 
-        assert(
-            bindingDescription.descriptorCount == 1 &&
-            "Binding single descriptor info, but binding expects multiple");
+        MADAM_CORE_ASSERT(bindingDescription.descriptorCount == 1, "Binding single descriptor info, but binding expects multiple");
 
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -175,7 +176,7 @@ namespace Madam {
         return *this;
     }
 
-    bool JcvbDescriptorWriter::build(VkDescriptorSet& set) {
+    bool DescriptorWriter::build(VkDescriptorSet& set) {
         bool success = pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), set);
         if (!success) {
             return false;
@@ -184,7 +185,7 @@ namespace Madam {
         return true;
     }
 
-    void JcvbDescriptorWriter::overwrite(VkDescriptorSet& set) {
+    void DescriptorWriter::overwrite(VkDescriptorSet& set) {
         for (auto& write : writes) {
             write.dstSet = set;
         }

@@ -1,8 +1,10 @@
 #pragma once
 
 #include "maidenpch.hpp"
+#include "../Core/H_Utils.hpp"
 #include "../Core/Main/Core.hpp"
 #include "../Core/H_Device.hpp"
+#include "../GUI/H_GUI.hpp"
 
 // std
 #include <memory>
@@ -10,7 +12,6 @@
 #include <vector>
 
 namespace Madam {
-
     class DescriptorSetLayout {
     public:
         class Builder {
@@ -22,7 +23,8 @@ namespace Madam {
                 VkDescriptorType descriptorType,
                 VkShaderStageFlags stageFlags,
                 uint32_t count = 1);
-            std::unique_ptr<DescriptorSetLayout> build() const;
+            Scope<DescriptorSetLayout> build() const;
+            Ref<DescriptorSetLayout> buildRef() const;
 
         private:
             Device& device;
@@ -32,8 +34,8 @@ namespace Madam {
         DescriptorSetLayout(
             Device& device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
         ~DescriptorSetLayout();
-        DescriptorSetLayout(const DescriptorSetLayout&) = delete;
-        DescriptorSetLayout& operator=(const DescriptorSetLayout&) = delete;
+        //DescriptorSetLayout(const DescriptorSetLayout&) = delete;
+        //DescriptorSetLayout& operator=(const DescriptorSetLayout&) = delete;
 
         VkDescriptorSetLayout getDescriptorSetLayout() const { return descriptorSetLayout; }
 
@@ -42,7 +44,7 @@ namespace Madam {
         VkDescriptorSetLayout descriptorSetLayout;
         std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
 
-        friend class JcvbDescriptorWriter;
+        friend class DescriptorWriter;
     };
 
     class MADAM_API DescriptorPool {
@@ -54,7 +56,7 @@ namespace Madam {
             Builder& addPoolSize(VkDescriptorType descriptorType, uint32_t count);
             Builder& setPoolFlags(VkDescriptorPoolCreateFlags flags);
             Builder& setMaxSets(uint32_t count);
-            std::unique_ptr<DescriptorPool> build() const;
+            Scope<DescriptorPool> build() const;
 
         private:
             Device& device;
@@ -83,15 +85,16 @@ namespace Madam {
         Device& device;
         VkDescriptorPool descriptorPool;
 
-        friend class JcvbDescriptorWriter;
+        friend class DescriptorWriter;
+        friend class Madam::UI::GUI;
     };
 
-    class JcvbDescriptorWriter {
+    class DescriptorWriter {
     public:
-        JcvbDescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool);
+        DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool);
 
-        JcvbDescriptorWriter& writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo);
-        JcvbDescriptorWriter& writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo);
+        DescriptorWriter& writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo);
+        DescriptorWriter& writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo);
 
         bool build(VkDescriptorSet& set);
         void overwrite(VkDescriptorSet& set);

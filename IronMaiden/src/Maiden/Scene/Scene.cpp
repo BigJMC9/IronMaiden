@@ -18,40 +18,90 @@ namespace Madam {
 		registry.clear();
 	}
 
+	template<typename... Component>
+	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap)
+	{
+		([&]()
+			{
+				auto view = src.view<Component>();
+				for (auto srcEntity : view)
+				{
+					entt::entity dstEntity = enttMap.at(src.get<UniqueIdentifier>(srcEntity).uuid);	
+
+					auto& srcComponent = src.get<Component>(srcEntity);
+					dst.emplace_or_replace<Component>(dstEntity, srcComponent);
+				}
+			}(), ...);
+	}
+
+	template<typename... Component>
+	static void CopyComponent(ComponentGroup<Component...>, entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap)
+	{
+		CopyComponent<Component...>(dst, src, enttMap);
+	}
+
+	Ref<Scene> Scene::Copy()
+	{
+		Ref<Scene> newScene = std::make_shared<Scene>();
+		std::unordered_map<UUID, entt::entity> enttMap;
+		//Copy all entities
+		auto IdView = registry.view<UniqueIdentifier>();
+		for (entt::entity entity : IdView) {
+			UUID& uuid = registry.get<UniqueIdentifier>(entity).uuid;
+			const auto& name = registry.get<GameObject>(entity).name;
+			Entity newEntity = newScene->CreateEntity(uuid, name);
+			enttMap[uuid] = (entt::entity)newEntity;
+		}
+
+
+
+		//Copy all components
+		CopyComponent(AllComponents{}, newScene->Reg(), registry, enttMap);
+
+		return newScene;
+	}
+
 	Entity Scene::CreateEntity() {
 		Entity entity = { registry.create(), this };
 		entity.AddComponent<UniqueIdentifier>();
-		entity.AddComponent<Object>();
+		entity.AddComponent<GameObject>();
 		entity.AddComponent<Transform>();
-		//entity.transform = entity.GetComponent<Transform>();
-		//m_EntityMap.emplace(entity.GetUUID(), entity);
 		return entity;
 	}
 
+	//Dangerous?!? Maybe remove?
 	Entity Scene::CreateEntity(entt::entity _entity) {
 		Entity entity = { registry.create(_entity), this };
 		entity.AddComponent<UniqueIdentifier>();
-		entity.AddComponent<Object>();
+		entity.AddComponent<GameObject>();
 		entity.AddComponent<Transform>();
-		//entity.transform = entity.GetComponent<Transform>();
-		//m_EntityMap.emplace(entity.GetUUID(), entity);
 		return entity;
 	}
 
 	Entity Scene::CreateEntity(UUID uuid) {
 		Entity entity = { registry.create(), this};
 		entity.AddComponent<UniqueIdentifier>(uuid);
-		entity.AddComponent<Object>();
+		entity.AddComponent<GameObject>();
 		entity.AddComponent<Transform>();
-		//entity.transform = entity.GetComponent<Transform>();
-		//m_EntityMap.emplace(entity.GetUUID(), entity);
 		return entity;
 	}
 
-	Entity Scene::LoadGameObject(std::shared_ptr<Model> model) {
+	Entity Scene::CreateEntity(UUID uuid, const std::string& name) {
+		Entity entity = { registry.create(), this };
+		entity.AddComponent<UniqueIdentifier>(uuid);
+		entity.AddComponent<GameObject>(name);
+		entity.AddComponent<Transform>();
+		return entity;
+	}
+
+	void Scene::DestroyEntity(Entity entity) {
+		registry.destroy(entity);
+	}
+
+	Entity Scene::LoadGameObject(Ref<Model> model) {
 		Entity entity = { registry.create(), this};
 		entity.AddComponent<UniqueIdentifier>();
-		entity.AddComponent<Object>();
+		entity.AddComponent<GameObject>();
 		entity.AddComponent<MeshRenderer>();
 		entity.AddComponent<MeshFilter>();
 		entity.GetComponent<MeshFilter>().model = model;
@@ -61,10 +111,10 @@ namespace Madam {
 		return entity;
 	}
 
-	Entity Scene::LoadGameObject(std::shared_ptr<Model> model, Material mat) {
+	Entity Scene::LoadGameObject(Ref<Model> model, Material mat) {
 		Entity entity = { registry.create(), this};
 		entity.AddComponent<UniqueIdentifier>();
-		entity.AddComponent<Object>();
+		entity.AddComponent<GameObject>();
 		entity.AddComponent<MeshRenderer>();
 		entity.AddComponent<MeshFilter>();
 		entity.GetComponent<MeshFilter>().model = model;
@@ -77,7 +127,6 @@ namespace Madam {
 		entity.GetComponent<Material>().ambientOcclusionMap = mat.ambientOcclusionMap;
 		entity.GetComponent<Material>().glossMap = mat.glossMap;
 		entity.AddComponent<Transform>();
-		//gameObject.transform = gameObject.GetComponent<Transform>();
 		return entity;
 	}
 
@@ -85,27 +134,32 @@ namespace Madam {
 
 	}
 
+	void Scene::RunTimeStart() {
+
+	}
+
 	void Scene::Update() {
 		{
 			registry.view <NativeScriptComponent>().each([=](auto entity, auto& nsc) {
-				if (!nsc.instance) {
-					nsc.instantiate();
-					nsc.instance->entity = Entity{ entity, this };
-					nsc.onCreate(nsc.instance);
-					nsc.onStart(nsc.instance);
+				//Move to on scene play
+				if (!nsc.Instance) {
+					nsc.Instance = nsc.InstantiateScript();
+					nsc.Instance->entity = Entity{ entity, this };
+					nsc.onCreate(nsc.Instance);
+					nsc.onStart(nsc.Instance);
 					//nsc.instance->entity = Entity{ entity, this };
 					//nsc.instance->onCreate(nsc.instance);
 					//nsc.instance->onStart(nsc.instance);
 				}
-				nsc.onUpdate(nsc.instance);
-				nsc.onLateUpdate(nsc.instance);
+				nsc.onUpdate(nsc.Instance);
+				nsc.onLateUpdate(nsc.Instance);
 			});
 		}
 	}
 
 	void Scene::Render() {
 		registry.view <NativeScriptComponent>().each([=](auto entity, auto& nsc) {
-			nsc.onRender(nsc.instance);
+			nsc.onRender(nsc.Instance);
 		});
 	}
 
@@ -116,56 +170,55 @@ namespace Madam {
 	}
 
 	template<>
-	void Scene::OnComponentAdded<UniqueIdentifier>(Entity entity, UniqueIdentifier& component)
+	void MADAM_API Scene::OnComponentAdded<UniqueIdentifier>(Entity entity, UniqueIdentifier& component)
 	{
 
 	}
 
 	template<>
-	void Scene::OnComponentAdded<Object>(Entity entity, Object& component)
+	void MADAM_API Scene::OnComponentAdded<GameObject>(Entity entity, GameObject& component)
 	{
 
 	}
 
 	template<>
-	void Scene::OnComponentAdded<Transform>(Entity entity, Transform& component)
+	void MADAM_API Scene::OnComponentAdded<Transform>(Entity entity, Transform& component)
 	{
 
 	}
 
 	template<>
-	void Scene::OnComponentAdded<MeshFilter>(Entity entity, MeshFilter& component)
+	void MADAM_API Scene::OnComponentAdded<MeshFilter>(Entity entity, MeshFilter& component)
 	{
 
 	}
 
 	template<>
-	void Scene::OnComponentAdded<MeshRenderer>(Entity entity, MeshRenderer& component)
+	void MADAM_API Scene::OnComponentAdded<MeshRenderer>(Entity entity, MeshRenderer& component)
 	{
 
 	}
 
 	template<>
-	void Scene::OnComponentAdded<PointLight>(Entity entity, PointLight& component) 
+	void MADAM_API Scene::OnComponentAdded<PointLight>(Entity entity, PointLight& component) 
 	{
 
 	}
 
 	template<>
-	void Scene::OnComponentAdded<Material>(Entity entity, Material& component)
+	void MADAM_API Scene::OnComponentAdded<Material>(Entity entity, Material& component)
 	{
 
 	}
 
 	template<>
-	void Scene::OnComponentAdded<NativeScriptComponent>(Entity entity, NativeScriptComponent& component)
+	void MADAM_API Scene::OnComponentAdded<NativeScriptComponent>(Entity entity, NativeScriptComponent& component)
 	{
 
 	}
 
-	//Error on Entity Destruction?
 	template<>
-	void Scene::OnComponentAdded<Camera>(Entity entity, Camera& component)
+	void MADAM_API Scene::OnComponentAdded<Camera>(Entity entity, Camera& component)
 	{
 		cameras.push_back(component.cameraHandle);
 		MADAM_CORE_INFO("Camera added to entity");

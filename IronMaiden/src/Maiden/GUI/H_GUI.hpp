@@ -14,7 +14,12 @@
 #include <imgui_internal.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <glm/gtc/type_ptr.hpp>
+//#define USE_IMGUI_API
 #include "ImGuizmo.h"
+
+//Windows
+#include <windows.h>
+#include <commdlg.h>
 
 //Changes made to ImGui
 //All Backend ImGui_Impl_Vulkan formats now take R8G8B8A8_SRGB
@@ -34,7 +39,27 @@ namespace Madam {
 using namespace Madam::Events;
 
 namespace Madam::UI {
-	
+
+static bool saveFileDialog(HWND hWnd, LPWSTR fileName, DWORD fileNameSize) {
+	OPENFILENAME ofn;
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFilter = L"All Files\0*.*\0";
+	ofn.lpstrFile = fileName;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = fileNameSize;
+	ofn.Flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT;
+
+	if (GetSaveFileName(&ofn)) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+namespace Madam::UI {
 	struct PipelineInfo {
 		Ref<Pipeline> pipeline;
 		VkPipelineLayout layout;
@@ -121,5 +146,6 @@ namespace Madam::UI {
 		//constexpr float RGBGammaCorrection(float rgb) { return 1/(constPow((rgb/255), (1.0/2.2f))); }
 
 		int ImGuizmoType = -1;
+		
 	};
 }

@@ -91,6 +91,9 @@
     <ClInclude Include="src\Maiden\Rendering\H_Image.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Image.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_Pipeline.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
