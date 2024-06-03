@@ -42,6 +42,7 @@ namespace Madam {
 
 		int getWidth() const { return data.width; }
 		int getHeight() const { return data.height; }
+		std::string getName() const { return data.windowName; }
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 

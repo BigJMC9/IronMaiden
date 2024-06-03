@@ -1,7 +1,7 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/H_Device.hpp"
+#include "Vulkan/H_VulkanDevice.hpp"
 #include "../Core/H_Utils.hpp"
 
 // vulkan headers

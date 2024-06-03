@@ -129,6 +129,7 @@ namespace Madam {
 			time.UpdateTime();
 			
 			pSurface->OnUpdate();
+			pGUI->OnUpdate();
 			scene->Update();
 
 			if (renderer.beginFrame()) {
@@ -150,7 +151,22 @@ namespace Madam {
 				frameInfo.ubo.projection = camera.getProjection();
 				frameInfo.ubo.view = camera.getView();
 				frameInfo.ubo.inverseView = camera.getInverseView();
-				renderStack.preRender(frameInfo);
+				
+				//This Specific Behaviour should be done by a proper render system obj (after renderstack and layers are refactored)
+				auto group = scene->Reg().view<Transform, PointLight>();
+				int lightIndex = 0;
+				for (auto entity : group)
+				{
+					MADAM_CORE_INFO("Light Index: {0}", lightIndex);
+					auto [transform, pointLight] = group.get<Transform, PointLight>(entity);
+
+					//copy light to ubo
+					frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(transform.translation, 1.f);
+					frameInfo.ubo.pointLights[lightIndex].color = glm::vec4(pointLight.color, pointLight.intensity);
+
+					lightIndex ++;
+				}
+				frameInfo.ubo.numLights = lightIndex;
 				uboBuffers[frameIndex]->writeToBuffer(&frameInfo.ubo);
 				uboBuffers[frameIndex]->flush();
 
@@ -161,12 +177,15 @@ namespace Madam {
 				renderer.endRenderPass(commandBuffer);
 				renderer.PipelineBarrier(commandBuffer, false, false, frameIndex, 0);
 				renderer.beginSwapChainRenderPass(commandBuffer);
-				pGUI->OnUpdate();
-				pGUI->Record(commandBuffer);
 				renderer.endSwapChainRenderPass(commandBuffer);
 				renderer.endFrame();
 				if (window.wasWindowResized()) {
-					pGUI->ReCreate();
+					WindowData windowData;
+					windowData.width = window.getWidth();
+					windowData.height = window.getHeight();
+					windowData.windowName = window.getName();
+					Events::WindowResizeEvent e(windowData);
+					eventSystem.PushEvent(&e, true);
 					window.resetWindowResizedFlag();
 				}
 				

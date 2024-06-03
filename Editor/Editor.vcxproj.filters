@@ -9,7 +9,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\H_Editor.hpp">
+    <ClInclude Include="src\H_EditorInterface.hpp">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Scripting\H_ScriptEngine.hpp">
@@ -18,7 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EditorApp.cpp" />
-    <ClCompile Include="src\Editor.cpp">
+    <ClCompile Include="src\EditorInterface.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Scripting\ScriptEngine.cpp">

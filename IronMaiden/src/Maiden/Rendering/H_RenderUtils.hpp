@@ -1,6 +1,6 @@
 #pragma once
 #include "maidenpch.hpp"
-#include "../Core/H_Device.hpp"
+#include "Vulkan/H_VulkanDevice.hpp"
 
 namespace Madam {
 	namespace Rendering {

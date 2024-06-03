@@ -69,7 +69,7 @@ namespace Madam {
             throw std::runtime_error("failed to create texture image view!");
         }
 
-        // Sampler should be seperated out
+        // Sampler should be separated out
         if (usage & VK_IMAGE_USAGE_SAMPLED_BIT) {
             // Create sampler to sample from the attachment in the fragment shader
             VkSamplerCreateInfo samplerInfo{};

@@ -2,7 +2,7 @@
 
 #include "maidenpch.hpp"
 #include "../Rendering/H_Buffer.hpp"
-#include "../Core/H_Device.hpp"
+#include "../Rendering/Vulkan/H_VulkanDevice.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS

@@ -6,9 +6,7 @@
 #include "../Scene/H_SceneSerializer.hpp"
 #include "../Rendering/H_Pipeline.hpp"
 
-//windows includes
-#include <locale>
-#include <codecvt>
+using namespace Madam::Platform;
 
 static std::vector<uint32_t> vertCode = {
 	0x07230203,0x00010000,0x00080001,0x0000002e,0x00000000,0x00020011,0x00000001,0x0006000b,
@@ -242,9 +240,9 @@ namespace Madam::UI {
 	}
 
 
-	GUI::GUI() : Layer("GUI")
+	GUI::GUI() : EngineInterface("GUI")
 	{
-
+		pendingEntityDeletion = CreateRef<Entity>(Entity());
 	}
 
 	GUI::~GUI() {
@@ -312,6 +310,12 @@ namespace Madam::UI {
 		if (vkCreateSampler(Rendering::Renderer::GetDevice().device(), &samplerInfo, nullptr, &viewportSampler) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create texture sampler!");
 		}
+		/*if (vkCreateSampler(Rendering::Renderer::GetDevice().device(), &samplerInfo, nullptr, &playButtonSampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler!");
+		}
+		if (vkCreateSampler(Rendering::Renderer::GetDevice().device(), &samplerInfo, nullptr, &stopButtonSampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler!");
+		}*/
 
 		ImGui_ImplGlfw_InitForVulkan(Application::Get().getWindow().getGLFWwindow(), true);
 		ImGui_ImplVulkan_Init(init_info);
@@ -324,9 +328,27 @@ namespace Madam::UI {
 		viewportCallback = ImDrawCallback(DrawViewport);
 		CreateViewportPipeline();
 		gizmoButtonStates = { false, false, false};
+
+		SetUpEvents();
 	}
 
-	void GUI::ReCreate() {
+	void GUI::SetUpEvents() {
+		EventSystem::Get().AddListener(this, &GUI::OnResizeEvent);
+		EventSystem::Get().AddListener(this, &GUI::OnRenderPassEvent);
+		EventSystem::Get().AddListener(this, &GUI::OnSceneChangeEvent);
+	}
+
+	void GUI::OnSceneChangeEvent(SceneChangeEvent* e) {
+		selectedEntity = nullptr;
+	}
+
+	void GUI::OnRenderPassEvent(NextRenderPassEvent* e) {
+		if (e->renderpassIndex == 1) {
+			OnRender();
+		}
+	}
+
+	void GUI::OnResizeEvent(WindowResizeEvent* e) {
 	
 		ImGui_ImplGlfw_Shutdown();
 		ImGui_ImplVulkan_Shutdown();
@@ -378,6 +400,11 @@ namespace Madam::UI {
 	}
 
 	void GUI::OnUpdate() {
+		if (*pendingEntityDeletion) {
+			Application::Get().getScene().DestroyEntity(*pendingEntityDeletion);
+			pendingEntityDeletion = CreateRef<Entity>(Entity());
+		}
+
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2((float)Application::Get().getWindow().getWidth(), (float)Application::Get().getWindow().getHeight());
 
@@ -387,8 +414,14 @@ namespace Madam::UI {
 		ImGuizmo::BeginFrame();
 
 		EditorUI();
+	}
+
+	void GUI::OnRender() {
 
 		ImGui::Render();
+
+		VkCommandBuffer commandBuffer = Rendering::Renderer::Get().getCurrentCommandBuffer();
+		Record(commandBuffer);
 	}
 
 	void GUI::Record(VkCommandBuffer commandBuffer) {
@@ -426,20 +459,19 @@ namespace Madam::UI {
 				if (ImGui::MenuItem("New Scene")) {}
 				if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
 				{
-					//Window Specific
+					//Window Specific, need to move to platform namespace
 					HWND hWnd = GetConsoleWindow(); // Get the window handle of the console window
 					WCHAR fileName[MAX_PATH]; // Buffer to store the selected file name
 
 					std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
 
-					if (openFileDialog(hWnd, fileName, MAX_PATH)) {
-						// File selected, do something with the file
+					if (OpenFileDialog(hWnd, fileName, MAX_PATH)) {
 						std::wstring ws(fileName);
 
 						std::string fileNameStr = converter.to_bytes(ws);
 						Application::GetSceneSerializer()->Deserialize(fileNameStr, true);
-						Application::Get().pSurface->OnSceneLoad();
-						//MessageBox(hWnd, fileName, L"Selected File", MB_OK | MB_ICONINFORMATION);
+						SceneChangeEvent e;
+						EventSystem::Get().PushEvent(&e, true);
 					}
 					else {
 						// User canceled or error occurred
@@ -451,19 +483,17 @@ namespace Madam::UI {
 					Application::GetSceneSerializer()->Serialize("temp.scene");
 				}
 				if (ImGui::MenuItem("Save As..")) {
-					//Window Specific
+					//Window Specific, Need to move to platform namespace
 					HWND hWnd = GetConsoleWindow(); // Get the window handle of the console window
 					WCHAR fileName[MAX_PATH]; // Buffer to store the selected file name
 
 					std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
 
-					if (saveFileDialog(hWnd, fileName, MAX_PATH)) {
-						// File selected, do something with the file
+					if (SaveFileDialog(hWnd, fileName, MAX_PATH)) {
 						std::wstring ws(fileName);
 
 						std::string fileNameStr = converter.to_bytes(ws);
 						Application::GetSceneSerializer()->Serialize(fileNameStr, true);
-						//MessageBox(hWnd, fileName, L"Selected File", MB_OK | MB_ICONINFORMATION);
 					}
 					else {
 						// User canceled or error occurred
@@ -501,7 +531,7 @@ namespace Madam::UI {
 		static bool opt_padding = false;
 		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 		if (opt_fullscreen)
 		{
 			const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -524,6 +554,9 @@ namespace Madam::UI {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("DockSpace", &dockspace_open, window_flags);
 		ImGui::PopStyleVar();
+		if (ImGui::BeginMenuBar) {
+
+		}
 
 		if (opt_fullscreen)
 			ImGui::PopStyleVar(2);
@@ -833,7 +866,7 @@ namespace Madam::UI {
 			if (selectedEntity && *selectedEntity == entity) {
 				selectedEntity = nullptr;
 			}
-			Application::Get().getScene().DestroyEntity(entity);
+			pendingEntityDeletion = CreateRef<Entity>(entity);
 		}
 	}
 
@@ -1193,10 +1226,6 @@ namespace Madam::UI {
 		if (opened) {
 			ImGui::TreePop();
 		}
-	}
-
-	void GUI::OnSceneLoad() {
-		selectedEntity = nullptr;
 	}
 
 	void GUI::CreateViewportPipeline() {

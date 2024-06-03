@@ -10,8 +10,6 @@
 	#else
 		#define MADAM_API
 	#endif
-#else
-	#error Iron Maiden only supports Windows
 #endif
 
 #define BIT(x) (1 << x)

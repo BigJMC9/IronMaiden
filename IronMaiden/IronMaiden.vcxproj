@@ -242,17 +242,23 @@
     <ClInclude Include="maidenpch.hpp" />
     <ClInclude Include="src\Maiden.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Application.hpp" />
-    <ClInclude Include="src\Maiden\Core\H_Device.hpp" />
-    <ClInclude Include="src\Maiden\Core\H_Layer.h" />
-    <ClInclude Include="src\Maiden\Core\H_LayerStack.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanDevice.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Time.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Utils.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Window.hpp" />
     <ClInclude Include="src\Maiden\Core\Main\Core.hpp" />
     <ClInclude Include="src\Maiden\Core\Main\EntryPoint.hpp" />
+    <ClInclude Include="src\Maiden\Events\H_EventSystem.h" />
+    <ClInclude Include="src\Maiden\Events\H_Events.hpp" />
     <ClInclude Include="src\Maiden\Events\H_Input.hpp" />
     <ClInclude Include="src\Maiden\GUI\H_GUI.hpp" />
+    <ClInclude Include="src\Maiden\Interfaces\H_Interface.h" />
+    <ClInclude Include="src\Maiden\Interfaces\H_InterfaceManager.h" />
+    <ClInclude Include="src\Maiden\Platform\Linux.hpp" />
+    <ClInclude Include="src\Maiden\Platform\MacOS.hpp" />
+    <ClInclude Include="src\Maiden\Platform\Platforms.hpp" />
+    <ClInclude Include="src\Maiden\Platform\Windows.hpp" />
     <ClInclude Include="src\Maiden\Rendering\FrameInfo.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Buffer.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Camera.hpp" />
@@ -278,15 +284,17 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Application.cpp" />
-    <ClCompile Include="src\Maiden\Core\Device.cpp" />
-    <ClCompile Include="src\Maiden\Core\Layer.cpp" />
-    <ClCompile Include="src\Maiden\Core\LayerStack.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp" />
     <ClCompile Include="src\Maiden\Core\Logger.cpp" />
     <ClCompile Include="src\Maiden\Core\Time.cpp" />
     <ClCompile Include="src\Maiden\Core\Utils.cpp" />
     <ClCompile Include="src\Maiden\Core\Window.cpp" />
+    <ClCompile Include="src\Maiden\Events\EventSystem.cpp" />
+    <ClCompile Include="src\Maiden\Events\Events.cpp" />
     <ClCompile Include="src\Maiden\Events\Input.cpp" />
     <ClCompile Include="src\Maiden\GUI\GUI.cpp" />
+    <ClCompile Include="src\Maiden\Interfaces\Interface.cpp" />
+    <ClCompile Include="src\Maiden\Interfaces\InterfaceManager.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Buffer.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Camera.cpp" />
     <ClCompile Include="src\Maiden\Rendering\DescriptorAllocator.cpp" />

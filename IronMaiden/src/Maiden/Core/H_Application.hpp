@@ -10,7 +10,8 @@
 #include "../Rendering/H_RenderSystems.hpp"
 #include "../Scene/H_Scene.hpp"
 #include "H_Time.hpp"
-#include "H_Layer.h"
+#include "../Interfaces/H_Interface.h"
+#include "../Events/H_EventSystem.h"
 
 //int main();
 
@@ -48,9 +49,9 @@ namespace Madam {
 			return renderer.getAspectRatio();
 		}
 
-		void addSurface(Scope<Layer> _surface) {
+		void addSurface(Scope<EngineInterface> _surface) {
 			pSurface = std::move(_surface);
-			MADAM_CORE_INFO("Layer added");
+			MADAM_CORE_INFO("EngineInterface added");
 		}
 
 		static Application& Get() {
@@ -226,10 +227,9 @@ namespace Madam {
 
 		void quit();
 
-		Scope<Layer> pSurface = nullptr;
+		Scope<EngineInterface> pSurface = nullptr;
 
 	private:
-
 		static Application* instance;
 		static bool instanceFlag;
 		ApplicationConfig config;
@@ -239,12 +239,11 @@ namespace Madam {
 		Rendering::Renderer renderer = Rendering::Renderer{window, device};
 		Rendering::RenderStack renderStack = Rendering::RenderStack{ device, renderer };
 		Time time = Time{};
+		EventSystem eventSystem = EventSystem{};
 
 		//Move this somewhere
 		Scope<DescriptorPool> globalPool{};
 		std::vector<Scope<DescriptorPool>> framePools;
-		
-		bool windowResized = false;
 
 		bool isRunning = false;
 		bool firstFrame = true;

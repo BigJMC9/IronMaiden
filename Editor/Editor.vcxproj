@@ -257,12 +257,12 @@ copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Dist-windows-x86_64\yaml-cpp\
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\H_Editor.hpp" />
+    <ClInclude Include="src\H_EditorInterface.hpp" />
     <ClInclude Include="src\Scripting\H_ScriptEngine.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EditorApp.cpp" />
-    <ClCompile Include="src\Editor.cpp" />
+    <ClCompile Include="src\EditorInterface.cpp" />
     <ClCompile Include="src\Scripting\ScriptEngine.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
