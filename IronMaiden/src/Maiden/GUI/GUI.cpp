@@ -310,6 +310,12 @@ namespace Madam::UI {
 		if (vkCreateSampler(Rendering::Renderer::GetDevice().device(), &samplerInfo, nullptr, &viewportSampler) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create texture sampler!");
 		}
+		/*if (vkCreateSampler(Rendering::Renderer::GetDevice().device(), &samplerInfo, nullptr, &playButtonSampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler!");
+		}
+		if (vkCreateSampler(Rendering::Renderer::GetDevice().device(), &samplerInfo, nullptr, &stopButtonSampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler!");
+		}*/
 
 		ImGui_ImplGlfw_InitForVulkan(Application::Get().getWindow().getGLFWwindow(), true);
 		ImGui_ImplVulkan_Init(init_info);
@@ -460,14 +466,12 @@ namespace Madam::UI {
 					std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
 
 					if (OpenFileDialog(hWnd, fileName, MAX_PATH)) {
-						// File selected, do something with the file
 						std::wstring ws(fileName);
 
 						std::string fileNameStr = converter.to_bytes(ws);
 						Application::GetSceneSerializer()->Deserialize(fileNameStr, true);
 						SceneChangeEvent e;
 						EventSystem::Get().PushEvent(&e, true);
-						//MessageBox(hWnd, fileName, L"Selected File", MB_OK | MB_ICONINFORMATION);
 					}
 					else {
 						// User canceled or error occurred
@@ -527,7 +531,7 @@ namespace Madam::UI {
 		static bool opt_padding = false;
 		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 		if (opt_fullscreen)
 		{
 			const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -550,6 +554,9 @@ namespace Madam::UI {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("DockSpace", &dockspace_open, window_flags);
 		ImGui::PopStyleVar();
+		if (ImGui::BeginMenuBar) {
+
+		}
 
 		if (opt_fullscreen)
 			ImGui::PopStyleVar(2);
