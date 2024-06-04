@@ -459,15 +459,15 @@ namespace Madam {
 			//renderSystems.clear(); 
 			if (isRunning) {
 				MADAM_CORE_WARN("RenderStack prematurally shutdown");
-				ShutDown();
+				deinit();
 			}
 		}
 
-		void RenderStack::StartUp() {
+		void RenderStack::init() {
 			isRunning = true;
 		}
 
-		void RenderStack::ShutDown() {
+		void RenderStack::deinit() {
 			renderSystems.clear();
 			isRunning = false;
 		}

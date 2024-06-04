@@ -35,35 +35,54 @@ namespace Madam {
 			Renderer& operator=(const Renderer&) = delete;
 			Renderer& operator=(Renderer&&) = delete;
 
-			void StartUp();
-			void ShutDown();
+			void init();
+			void deinit();
 
-			VkRenderPass getSwapChainRenderPass() const { return swapChain->getRenderPass(); }
-			VkRenderPass getMainRenderPass() const { return renderPasses[0]; }
-
-			float getAspectRatio() const {
+			VkRenderPass getSwapChainRenderPass() const 
+			{ 
+				return swapChain->getRenderPass(); 
+			}
+			VkRenderPass getMainRenderPass() const 
+			{ 
+				return renderPasses[0]; 
+			}
+			float getAspectRatio() const 
+			{
 				return swapChain->extentAspectRatio();
 			}
-			bool isFrameInProgress() const { return isFrameStarted; }
+			bool isFrameInProgress() const 
+			{ 
+				return isFrameStarted; 
+			}
 
-			VkCommandBuffer getCurrentCommandBuffer() const {
+			VkCommandBuffer getCurrentCommandBuffer() const 
+			{
 				MADAM_CORE_ASSERT(isFrameStarted, "Cannot get command buffer when frame not in progress");
 				return commandBuffers[currentFrameIndex];
 			}
 
-			int getFrameIndex() const {
+			int getFrameIndex() const 
+			{
 				MADAM_CORE_ASSERT(isFrameStarted, "Cannot get command buffer when frame not in progress");
 				return currentFrameIndex;
 			}
 
-			VkImageView getImageView(int index) const {
+			VkImageView getImageView(int index) const 
+			{
 				return frames[currentFrameIndex].images[index].imageView;
 			}
 
-			uint32_t getViewportWidth() const { return viewportWidth; }
-			uint32_t getViewportHeight() const { return viewportHeight; }
+			uint32_t getViewportWidth() const 
+			{ 
+				return viewportWidth; 
+			}
+			uint32_t getViewportHeight() const 
+			{ 
+				return viewportHeight; 
+			}
 
-			ImGui_ImplVulkan_InitInfo getImGuiInitInfo() {
+			ImGui_ImplVulkan_InitInfo getImGuiInitInfo() 
+			{
 				ImGui_ImplVulkan_InitInfo init_info = ImGui_ImplVulkan_InitInfo();
 				init_info.Device = device.device();
 				init_info.PipelineCache = VK_NULL_HANDLE;
@@ -75,7 +94,8 @@ namespace Madam {
 				return init_info;
 			};
 
-			static Renderer& Get() {
+			static Renderer& Get() 
+			{
 				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
 				if (instance == nullptr) {
 					MADAM_CORE_ERROR("Renderer instance is null pointer");
@@ -102,7 +122,8 @@ namespace Madam {
 			}
 
 			//Needs to be updated to abstract away from the VkRenderPass, we don't want to accidentally change renderpass settings while the engine is running
-			const std::vector<VkRenderPass> getRenderPasses() {
+			const std::vector<VkRenderPass> getRenderPasses() 
+			{
 				return renderPasses;
 			}
 

@@ -24,7 +24,7 @@ namespace Madam {
 
 	Application::Application() {
 		
-		StartUp();
+		init();
 		//Data to be shared among all objects (UBO)
 		globalPool = 
 			DescriptorPool::Builder(device)
@@ -34,6 +34,7 @@ namespace Madam {
 
 		// build frame descriptor pools
 		// ???
+		// Should be in descriptor Manager
 		framePools.resize(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT); //Maximun number of frames being rendered
 		auto framePoolBuilder = DescriptorPool::Builder(device)
 			.setMaxSets(1000) //Storage allocation
@@ -55,24 +56,24 @@ namespace Madam {
 	Application::~Application() {
 		if (isRunning) {
 			MADAM_CORE_WARN("Application prematurally shutdown");
-			ShutDown();
+			deinit();
 		}
 	}
 
-	void Application::StartUp() {
-		window.StartUp(config.windowWidth, config.windowHeight, config.windowName);
-		device.StartUp();
-		renderer.StartUp();
+	void Application::init() {
+		window.init(config.windowWidth, config.windowHeight, config.windowName);
+		device.init();
+		renderer.init();
 		isRunning = true;
 		instance = this;
 		instanceFlag = true;
 	}
 
-	void Application::ShutDown() {
-		renderStack.ShutDown();
-		renderer.ShutDown();
-		//device.ShutDown(); //For proper shutdown, make singleton
-		window.ShutDown();
+	void Application::deinit() {
+		renderStack.deinit();
+		renderer.deinit();
+		//device.deinit(); //For proper shutdown, make singleton
+		window.deinit();
 		isRunning = false;
 	}
 
@@ -199,7 +200,7 @@ namespace Madam {
 		framePools.clear();
 		globalPool.reset();
 		vkDeviceWaitIdle(device.device());
-		ShutDown();
+		deinit();
 	}
 
 	void Application::quit() {

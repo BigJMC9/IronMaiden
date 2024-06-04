@@ -100,8 +100,8 @@ namespace Madam {
             RenderStack(Device& device, Renderer& renderer) : device{ device }, renderer{ renderer } {}
             ~RenderStack();
 
-            void StartUp();
-            void ShutDown();
+            void init();
+            void deinit();
 
             void initialize(Scope<DescriptorSetLayout>& globalSetLayout);
             void render(FrameInfo& frameInfo);

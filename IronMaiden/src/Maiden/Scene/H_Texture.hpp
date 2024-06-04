@@ -33,9 +33,7 @@ namespace Madam {
 		std::string getFile() const { return file; }
 
 		void updateDescriptor();
-		void transitionLayout(
-			VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout
-		);
+		void transitionLayout(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 		static Scope<Texture> createTextureFromFile(
 			Device& device,

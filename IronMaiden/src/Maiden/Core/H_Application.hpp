@@ -42,8 +42,11 @@ namespace Madam {
 	public:
 		virtual ~Application();
 		
-		void StartUp();
-		void ShutDown();
+		Application(const Application&) = delete;
+		Application& operator=(const Application&) = delete;
+
+		void init();
+		void deinit();
 
 		float getAspectRatio() {
 			return renderer.getAspectRatio();
@@ -200,28 +203,29 @@ namespace Madam {
 			isTesting = true;
 		}*/
 
-		bool isUpdate() {
+		bool isUpdate() 
+		{
 			bool temp = isUpdating;
 			isUpdating = false;
 			return temp;
 		}
 
-		void setUpdate() {
+		void setUpdate() 
+		{
 			isUpdating = true;
 		}
 
-		bool getScripts() {
+		bool getScripts() 
+		{
 			bool temp = isGettingScripts;
 			isGettingScripts = false;
 			return temp;
 		}
 
-		void setScripts() {
+		void setScripts() 
+		{
 			isGettingScripts = true;
 		}
-
-		Application(const Application&) = delete;
-		Application& operator=(const Application&) = delete;
 
 		void run();
 
