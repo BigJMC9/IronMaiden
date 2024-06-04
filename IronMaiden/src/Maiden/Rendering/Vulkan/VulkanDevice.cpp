@@ -1,5 +1,5 @@
 #include "maidenpch.hpp"
-#include "H_Device.hpp"
+#include "H_VulkanDevice.hpp"
 
 //GDI Graphical Device Interface
 namespace Madam {
@@ -70,11 +70,11 @@ namespace Madam {
 	Device::~Device() {
 		if (isRunning) {
 			MADAM_CORE_WARN("Device shutdown prematurally");
-			ShutDown();
+			deinit();
 		}
 	}
 
-	void Device::StartUp() {
+	void Device::init() {
 		createInstance(); // Intializes Vulkan library, is the connection between our app and vulkan library
 		setupDebugMessenger(); // Sets up validation layer to check for vulkan errors
 		createSurface(); // Sets the connection between window and vulkan display results
@@ -84,7 +84,7 @@ namespace Madam {
 		isRunning = true;
 	}
 
-	void Device::ShutDown() {
+	void Device::deinit() {
 		vkDestroyCommandPool(device_, commandPool, nullptr);
 		vkDestroyDevice(device_, nullptr);
 

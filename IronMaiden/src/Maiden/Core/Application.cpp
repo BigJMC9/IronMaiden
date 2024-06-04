@@ -2,7 +2,6 @@
 #define MADAM_APP_IMPL_FLAG
 #include "H_Application.hpp"
 #include "../Scene/H_SceneSerializer.hpp"
-#include "H_CmdHandler.hpp"
 #include "../Events/H_Input.hpp"
 #include "../Rendering/H_Buffer.hpp"
 #include "../GUI/H_GUI.hpp"
@@ -20,14 +19,12 @@
 
 namespace Madam {
 
-#define BIND_EVENT_FN(x) std::bind(&x, this, std::placeholders::_1)
-
 	Application* Application::instance = nullptr;
 	bool Application::instanceFlag = false;
 
 	Application::Application() {
 		
-		StartUp();
+		init();
 		//Data to be shared among all objects (UBO)
 		globalPool = 
 			DescriptorPool::Builder(device)
@@ -37,6 +34,7 @@ namespace Madam {
 
 		// build frame descriptor pools
 		// ???
+		// Should be in descriptor Manager
 		framePools.resize(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT); //Maximun number of frames being rendered
 		auto framePoolBuilder = DescriptorPool::Builder(device)
 			.setMaxSets(1000) //Storage allocation
@@ -58,33 +56,25 @@ namespace Madam {
 	Application::~Application() {
 		if (isRunning) {
 			MADAM_CORE_WARN("Application prematurally shutdown");
-			ShutDown();
+			deinit();
 		}
 	}
 
-	void Application::StartUp() {
-		window.StartUp(config.windowWidth, config.windowHeight, config.windowName);
-		device.StartUp();
-		renderer.StartUp();
+	void Application::init() {
+		window.init(config.windowWidth, config.windowHeight, config.windowName);
+		device.init();
+		renderer.init();
 		isRunning = true;
 		instance = this;
 		instanceFlag = true;
 	}
 
-	void Application::ShutDown() {
-		pipeHandler.Shutdown();
-		renderStack.ShutDown();
-		renderer.ShutDown();
-		//device.ShutDown(); //For proper shutdown, make singleton
-		window.ShutDown();
+	void Application::deinit() {
+		renderStack.deinit();
+		renderer.deinit();
+		//device.deinit(); //For proper shutdown, make singleton
+		window.deinit();
 		isRunning = false;
-	}
-
-	void Application::onEvent(Event& e) {
-		//EventDispatcher dispatcher(e);
-		//dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(Application::onWindowClose));
-		//dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT_FN(Application::onWindowResize));
-		MADAM_CORE_INFO("{0}", e);
 	}
 
 	const std::vector<Ref<Rendering::RenderLayer>>& Application::getRenderLayers() const {
@@ -92,25 +82,8 @@ namespace Madam {
 	}
 
 	void Application::run() {
-		//PipeLogic
-		if (!pipeHandler.CreatePipe()) {
-			std::cerr << "Failed to create pipe" << std::endl;
-			pipeHandler.isCreated = false;
-			pipeHandler.isConnected = false;
-		}
-		else {
-			pipeHandler.isCreated = true;
-			pipeHandler.isConnected = true;
-		}
-
-		if (pipeHandler.isConnected) {
-			std::cout << "Is connected, starting read!" << std::endl;
-			MADAM_CORE_INFO("Is connected, starting read!");
-			pipeHandler.StartAsyncRead();
-		}
 
 		Scope<UI::GUI> pGUI = std::make_unique<UI::GUI>();
-		MADAM_CORE_INFO("GUI Created");
 		std::vector < Scope<Buffer>> uboBuffers(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
 		MADAM_CORE_INFO("uboBuffers Created");
 		for (int i = 0; i < uboBuffers.size(); i++)
@@ -127,7 +100,7 @@ namespace Madam {
 		Scope<DescriptorSetLayout> globalSetLayout = DescriptorSetLayout::Builder(device)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 			.build();
-		//MADAM_CORE_INFO("globalSetLayout Assigned");
+
 		std::vector<VkDescriptorSet> globalDescriptorSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
 		MADAM_CORE_INFO("globalSetLayout vector populated");
 		for (int i = 0; i < globalDescriptorSets.size(); i++) {
@@ -155,14 +128,9 @@ namespace Madam {
 		while (!window.shouldClose()) {
 			glfwPollEvents();
 			time.UpdateTime();
-
-			std::string command = pipeHandler.Read();
-			if (!command.empty()) {
-				MADAM_INFO("command: {0}", command);
-				App::CommandHandler::HandleCommand(command, pipeHandler, pSceneSerializer);
-			}
 			
 			pSurface->OnUpdate();
+			pGUI->OnUpdate();
 			scene->Update();
 
 			if (renderer.beginFrame()) {
@@ -184,7 +152,22 @@ namespace Madam {
 				frameInfo.ubo.projection = camera.getProjection();
 				frameInfo.ubo.view = camera.getView();
 				frameInfo.ubo.inverseView = camera.getInverseView();
-				renderStack.preRender(frameInfo);
+				
+				//This Specific Behaviour should be done by a proper render system obj (after renderstack and layers are refactored)
+				auto group = scene->Reg().view<Transform, PointLight>();
+				int lightIndex = 0;
+				for (auto entity : group)
+				{
+					MADAM_CORE_INFO("Light Index: {0}", lightIndex);
+					auto [transform, pointLight] = group.get<Transform, PointLight>(entity);
+
+					//copy light to ubo
+					frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(transform.translation, 1.f);
+					frameInfo.ubo.pointLights[lightIndex].color = glm::vec4(pointLight.color, pointLight.intensity);
+
+					lightIndex ++;
+				}
+				frameInfo.ubo.numLights = lightIndex;
 				uboBuffers[frameIndex]->writeToBuffer(&frameInfo.ubo);
 				uboBuffers[frameIndex]->flush();
 
@@ -195,12 +178,15 @@ namespace Madam {
 				renderer.endRenderPass(commandBuffer);
 				renderer.PipelineBarrier(commandBuffer, false, false, frameIndex, 0);
 				renderer.beginSwapChainRenderPass(commandBuffer);
-				pGUI->OnUpdate();
-				pGUI->Record(commandBuffer);
 				renderer.endSwapChainRenderPass(commandBuffer);
 				renderer.endFrame();
 				if (window.wasWindowResized()) {
-					pGUI->ReCreate();
+					WindowData windowData;
+					windowData.width = window.getWidth();
+					windowData.height = window.getHeight();
+					windowData.windowName = window.getName();
+					Events::WindowResizeEvent e(windowData);
+					eventSystem.PushEvent(&e, true);
 					window.resetWindowResizedFlag();
 				}
 				
@@ -214,7 +200,7 @@ namespace Madam {
 		framePools.clear();
 		globalPool.reset();
 		vkDeviceWaitIdle(device.device());
-		ShutDown();
+		deinit();
 	}
 
 	void Application::quit() {

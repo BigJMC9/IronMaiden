@@ -1,11 +1,10 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/H_Device.hpp"
+#include "../Rendering/Vulkan/H_VulkanDevice.hpp"
 
 //libs
 #include <vulkan/vulkan.h>
-
 
 //We might need to move Texture to a struct or have a TextureData struct and Texture builder class??
 namespace Madam {
@@ -34,9 +33,7 @@ namespace Madam {
 		std::string getFile() const { return file; }
 
 		void updateDescriptor();
-		void transitionLayout(
-			VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout
-		);
+		void transitionLayout(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 		static Scope<Texture> createTextureFromFile(
 			Device& device,

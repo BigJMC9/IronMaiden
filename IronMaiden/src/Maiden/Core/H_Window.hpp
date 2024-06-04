@@ -28,8 +28,8 @@ namespace Madam {
 		Window(const Window&) = delete;
 		Window& operator=(const Window&) = delete;
 
-		void StartUp(uint32_t w, uint32_t h, std::string name);
-		void ShutDown();
+		void init(uint32_t w, uint32_t h, std::string name);
+		void deinit();
 
 		bool shouldClose() { return glfwWindowShouldClose(window); }
 		void quit() { glfwSetWindowShouldClose(window, GLFW_TRUE); }
@@ -42,6 +42,7 @@ namespace Madam {
 
 		int getWidth() const { return data.width; }
 		int getHeight() const { return data.height; }
+		std::string getName() const { return data.windowName; }
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 

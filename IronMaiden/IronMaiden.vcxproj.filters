@@ -19,6 +19,12 @@
     <Filter Include="src\Maiden\GUI">
       <UniqueIdentifier>{FE8D43B3-EA5B-37B9-D3EF-A7DFBF5C131E}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Maiden\Interfaces">
+      <UniqueIdentifier>{FDC7D13C-6934-8D37-3228-25959E53AF9F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Maiden\Platform">
+      <UniqueIdentifier>{7EAD36E6-EA0E-14F4-737C-5AA6DFDC4AB3}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\Maiden\Rendering">
       <UniqueIdentifier>{B75F8AE3-A3EE-13AD-4C0D-28A8387B2453}</UniqueIdentifier>
     </Filter>
@@ -40,22 +46,10 @@
     <ClInclude Include="src\Maiden\Core\H_Application.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_CmdHandler.hpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_Device.hpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_Layer.h">
-      <Filter>src\Maiden\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_LayerStack.h">
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanDevice.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_ProcessHandler.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Core\H_Time.hpp">
@@ -73,20 +67,35 @@
     <ClInclude Include="src\Maiden\Core\Main\EntryPoint.hpp">
       <Filter>src\Maiden\Core\Main</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Events\Event.hpp">
+    <ClInclude Include="src\Maiden\Events\H_EventSystem.h">
+      <Filter>src\Maiden\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Events\H_Events.hpp">
       <Filter>src\Maiden\Events</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Events\H_Input.hpp">
       <Filter>src\Maiden\Events</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Events\InputEvent.hpp">
-      <Filter>src\Maiden\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Events\WindowEvent.hpp">
-      <Filter>src\Maiden\Events</Filter>
-    </ClInclude>
     <ClInclude Include="src\Maiden\GUI\H_GUI.hpp">
       <Filter>src\Maiden\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Interfaces\H_Interface.h">
+      <Filter>src\Maiden\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Interfaces\H_InterfaceManager.h">
+      <Filter>src\Maiden\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Platform\Linux.hpp">
+      <Filter>src\Maiden\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Platform\MacOS.hpp">
+      <Filter>src\Maiden\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Platform\Platforms.hpp">
+      <Filter>src\Maiden\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Platform\Windows.hpp">
+      <Filter>src\Maiden\Platform</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\FrameInfo.hpp">
       <Filter>src\Maiden\Rendering</Filter>
@@ -142,28 +151,19 @@
     <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h">
+      <Filter>vendors\ImGuizmo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
     <ClCompile Include="src\Maiden\Core\Application.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Core\CmdHandler.cpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Core\Device.cpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Core\Layer.cpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Core\LayerStack.cpp">
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Logger.cpp">
-      <Filter>src\Maiden\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Maiden\Core\ProcessHandler.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Time.cpp">
@@ -175,11 +175,23 @@
     <ClCompile Include="src\Maiden\Core\Window.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Events\EventSystem.cpp">
+      <Filter>src\Maiden\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Events\Events.cpp">
+      <Filter>src\Maiden\Events</Filter>
+    </ClCompile>
     <ClCompile Include="src\Maiden\Events\Input.cpp">
       <Filter>src\Maiden\Events</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\GUI\GUI.cpp">
       <Filter>src\Maiden\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Interfaces\Interface.cpp">
+      <Filter>src\Maiden\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Interfaces\InterfaceManager.cpp">
+      <Filter>src\Maiden\Interfaces</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\Buffer.cpp">
       <Filter>src\Maiden\Rendering</Filter>

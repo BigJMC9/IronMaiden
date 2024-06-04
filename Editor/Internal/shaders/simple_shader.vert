@@ -16,8 +16,8 @@ struct PointLight {
 	vec4 color; // w is intensity
 };
 
-//Has to be same order as GlobalUno struct or data will be in the wrong position or some weird stuff
-layout(set = 0, binding = 0) uniform GlobalUno {
+//Has to be same order as GlobalUbo struct or data will be in the wrong position or some weird stuff
+layout(set = 0, binding = 0) uniform GlobalUbo {
 	mat4 projection;
 	mat4 view;
 	mat4 invView;

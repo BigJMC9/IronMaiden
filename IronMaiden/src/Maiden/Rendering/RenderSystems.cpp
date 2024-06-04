@@ -56,10 +56,6 @@ namespace Madam {
 			pipeline = std::make_unique<Pipeline>(device, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
         }
 
-		void RenderLayer::preRender(FrameInfo& frameInfo) {
-			//std::cout << "PreRendering \n";
-		}
-
 		void RenderLayer::render(FrameInfo& frameInfo) {
 			pipeline->bind(frameInfo.commandBuffer);
 
@@ -211,7 +207,7 @@ namespace Madam {
 			VkPushConstantRange pushConstantRange{};
 			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 			pushConstantRange.offset = 0;
-			pushConstantRange.size = sizeof(TexturePushConstantData);
+			pushConstantRange.size = sizeof(DefaultPushConstantData);
 
 			renderSystemLayout =
 				DescriptorSetLayout::Builder(device)
@@ -311,7 +307,7 @@ namespace Madam {
 					0,
 					nullptr);
 
-				TexturePushConstantData push{};
+				DefaultPushConstantData push{};
 				push.modelMatrix = transform.m_transform();
 				push.normalMatrix = transform.normalMatrix();
 
@@ -320,7 +316,7 @@ namespace Madam {
 					pipelineLayout,
 					VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 					0,
-					sizeof(TexturePushConstantData),
+					sizeof(DefaultPushConstantData),
 					&push);
 
 				meshRenderer.getModel()->bind(frameInfo.commandBuffer);
@@ -383,7 +379,7 @@ namespace Madam {
 			pipeline = std::make_unique<Pipeline>(device, "shaders/point_light.vert.spv", "shaders/point_light.frag.spv", pipelineConfig);
 		}
 
-		void PointLightRenderLayer::preRender(FrameInfo& frameInfo) {
+		/*void PointLightRenderLayer::preRender(FrameInfo& frameInfo) {
 			auto rotateLight = glm::rotate(glm::mat4(1.f), frameInfo.frameTime/ 5.0f, { 0.f, -1.f, 0.f });
 			int lightIndex = 0;
 
@@ -406,7 +402,7 @@ namespace Madam {
 				lightIndex += 1;
 			}
 			frameInfo.ubo.numLights = lightIndex;
-		}
+		}*/
 
 		void PointLightRenderLayer::render(FrameInfo& frameInfo) {
 
@@ -455,102 +451,6 @@ namespace Madam {
 			}
 			isFirstFrame = false;
 		}
-
-		/*
-		------------------GUI Render System------------------
-		*/
-
-		GUILayer::GUILayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout guiSetLayout, std::string _name)
-			: device{ device }, name{ std::move(_name) } {
-
-			createPipelineLayout(guiSetLayout);
-			createPipeline(renderPass);
-		}
-
-		GUILayer::~GUILayer() {
-			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
-		}
-
-		void GUILayer::createPipelineLayout(VkDescriptorSetLayout guiSetLayout) {
-			VkPushConstantRange pushConstantRange{};
-			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-			pushConstantRange.offset = 0;
-			pushConstantRange.size = sizeof(DefaultPushConstantData);
-
-			std::vector<VkDescriptorSetLayout> descriptorSetLayout{ guiSetLayout };
-
-			VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayout.size());
-			pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
-			pipelineLayoutInfo.pushConstantRangeCount = 1;
-			pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-			if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-				throw std::runtime_error("Failed to create pipeline layout!");
-			}
-		}
-
-		void GUILayer::createPipeline(VkRenderPass renderPass) {
-			assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
-
-			PipelineConfigInfo pipelineConfig{};
-			Pipeline::setDescriptions(pipelineConfig);
-			pipelineConfig.renderPass = renderPass;
-			pipelineConfig.pipelineLayout = pipelineLayout;
-			pipeline = std::make_unique<Pipeline>(device, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
-		}
-
-		void GUILayer::preRender(FrameInfo& frameInfo) {
-			//std::cout << "PreRendering \n";
-		}
-
-		void GUILayer::render(FrameInfo& frameInfo) {
-			pipeline->bind(frameInfo.commandBuffer);
-
-			vkCmdBindDescriptorSets(
-				frameInfo.commandBuffer,
-				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				pipelineLayout,
-				0,
-				1,
-				&frameInfo.globalDescriptorSet,
-				0,
-				nullptr);
-			entt::registry& entities = frameInfo.scene->Reg();
-			auto group = entities.view<Transform, MeshRenderer>();
-			for (auto entity : group)
-			{
-				auto [transform, meshRenderer] = group.get<Transform, MeshRenderer>(entity);
-
-				if (!entities.valid(entity)) {
-					std::cerr << "Error, entity is not valid" << std::endl;
-					continue;
-				}
-				if (meshRenderer.getModel() == nullptr) continue;
-
-				Ref<Material> material = meshRenderer.getMaterial();
-				if (material != nullptr) continue;
-
-				if (isFirstFrame) {
-					std::cout << "Standard Rendering " << std::endl;
-				}
-
-				DefaultPushConstantData push{};
-				push.modelMatrix = transform.m_transform();
-				push.normalMatrix = transform.normalMatrix();
-
-				vkCmdPushConstants(
-					frameInfo.commandBuffer,
-					pipelineLayout,
-					VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-					0,
-					sizeof(DefaultPushConstantData),
-					&push);
-				meshRenderer.getModel()->bind(frameInfo.commandBuffer);
-				meshRenderer.getModel()->draw(frameInfo.commandBuffer);
-			}
-			isFirstFrame = false;
-		}
 		/*
 		------------------Master Render System------------------
 		*/
@@ -559,15 +459,15 @@ namespace Madam {
 			//renderSystems.clear(); 
 			if (isRunning) {
 				MADAM_CORE_WARN("RenderStack prematurally shutdown");
-				ShutDown();
+				deinit();
 			}
 		}
 
-		void RenderStack::StartUp() {
+		void RenderStack::init() {
 			isRunning = true;
 		}
 
-		void RenderStack::ShutDown() {
+		void RenderStack::deinit() {
 			renderSystems.clear();
 			isRunning = false;
 		}
@@ -612,12 +512,6 @@ namespace Madam {
 				MADAM_CORE_ERROR("Error: {0}", e.what());
 			}
 			MADAM_CORE_INFO("Pushing Render Systems in vector is completed");
-		}
-
-		void RenderStack::preRender(FrameInfo& frameInfo) {
-			for (auto& system : renderSystems) {
-				system->preRender(frameInfo);
-			}
 		}
 
 		void RenderStack::render(FrameInfo& frameInfo) {

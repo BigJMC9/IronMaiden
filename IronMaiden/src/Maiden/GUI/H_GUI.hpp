@@ -1,6 +1,10 @@
 #pragma once
 #include "maidenpch.hpp"
-#include "../Core/H_Layer.h"
+#include "../Interfaces/H_Interface.h"
+#include "../Platform/Platforms.hpp"
+#include "../Events/H_EventSystem.h"
+
+
 #define IMGUI_ENABLE_DOCKING
 #define IMGUI_ENABLE_VIEWPORTS
 #include <imgui.h>
@@ -10,12 +14,7 @@
 #include <imgui_internal.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <glm/gtc/type_ptr.hpp>
-//#define USE_IMGUI_API
 #include "ImGuizmo.h"
-
-//Windows
-#include <windows.h>
-#include <commdlg.h>
 
 //Changes made to ImGui
 //All Backend ImGui_Impl_Vulkan formats now take R8G8B8A8_SRGB
@@ -27,111 +26,115 @@ namespace Madam {
 	class DescriptorSetLayout;
 	class Entity;
 	class Pipeline;
-}
-
-//Windows specific
-static bool openFileDialog(HWND hWnd, LPWSTR fileName, DWORD fileNameSize) {
-	OPENFILENAME ofn;
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = hWnd;
-	ofn.lpstrFilter = L"All Files\0*.*\0";
-	ofn.lpstrFile = fileName;
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = fileNameSize;
-	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-
-	if (GetOpenFileName(&ofn)) {
-		return true;
-	}
-	else {
-		return false;
+	namespace Rendering{
+		class RenderStack;
+		class RenderLayer;
 	}
 }
-
-static bool saveFileDialog(HWND hWnd, LPWSTR fileName, DWORD fileNameSize) {
-	OPENFILENAME ofn;
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = hWnd;
-	ofn.lpstrFilter = L"All Files\0*.*\0";
-	ofn.lpstrFile = fileName;
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = fileNameSize;
-	ofn.Flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT;
-
-	if (GetSaveFileName(&ofn)) {
-		return true;
-	}
-	else {
-		return false;
-	}
-}
+using namespace Madam::Events;
 
 namespace Madam::UI {
+	
 	struct PipelineInfo {
 		Ref<Pipeline> pipeline;
 		VkPipelineLayout layout;
 	};
-	class GUI : public Layer {
+
+	class GUI : public EngineInterface {
 	public:
 		GUI();
 		virtual ~GUI() override;
 		virtual void OnAttach() override;
 		virtual void OnDetach() override;
 		virtual void OnUpdate() override;
-		virtual void OnSceneLoad() override;
-		void ReCreate();
+		virtual void OnRender() override;
+
+		void OnRenderPassEvent(NextRenderPassEvent* e);
+		void OnResizeEvent(WindowResizeEvent* e);
+		void OnSceneChangeEvent(SceneChangeEvent* e);
+
+		void SetUpEvents();
 		void Record(VkCommandBuffer commandBuffer);
 
 		void Style(ImGuiIO& io);
 
 		void EditorUI();
+
+		//MenuBars
+		void MenuBar();
+
+		//Windows
 		void DockingSpace();
 		void Viewport();
 		void Hierarchy();
 		void Inspector();
 		void Project();
 		void Console();
-		void DrawVec3(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
+		void RenderingSettings();
+		
 
 		static void DrawViewport(const ImDrawList* parentList, const ImDrawCmd* pcmd);
 	private:
 
+		enum WindowStates {
+			RENDER_SETTINGS_WINDOW = 1 << 0
+		};
+
+		int windowStates = 0;
+		void DrawVec3(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
+		void DrawViewportGizmoButtons();
 		void CreateViewportPipeline();
 		void DrawEntityNode(Entity entity);
 		void DrawEntityComponents(Entity entity);
-		//void DrawViewport(const ImDrawList* parentList, const ImDrawCmd* cmd);
+		void DrawPipelineSettings(const Ref<Rendering::RenderLayer> pipeline, int index);
 
 		ImGui_ImplVulkan_InitInfo* init_info;
 		Ref<DescriptorPool> guiPool;
-		VkDescriptorSet viewportSet;
-		VkDescriptorSetLayout viewportSetLayout;
-		VkSampler viewportSampler;
-		std::unique_ptr<DescriptorSetLayout> viewportLayout;
+		
 		float uiTime = 0.0f;
+		int ImGuizmoType = -1;
+
 		Ref<Entity> selectedEntity = nullptr;
+		Ref<Entity> pendingEntityDeletion;
+		std::pair<Ref<Rendering::RenderLayer>, int> selectedPipeline = { nullptr, -1 };
+		std::array<bool, 3> gizmoButtonStates;
 
 		std::vector<ImFont*> fonts;
 		ImGuiStyle style;
 
-		//ImDrawCallback viewportCallback;
-		//Ref<Pipeline> viewportPipeline;
 		PipelineInfo viewportPipelineInfo;
 		ImDrawCallback viewportCallback;
+
+		//Descriptors
+		VkDescriptorSet viewportSet;
+		VkDescriptorSetLayout viewportSetLayout;
+		VkSampler viewportSampler;
+		std::unique_ptr<DescriptorSetLayout> viewportLayout;
+
+		VkDescriptorSet playButtonSet;
+		VkDescriptorSetLayout playButtonSetLayout;
+		VkSampler playButtonSampler;
+		std::unique_ptr<DescriptorSetLayout> playButtonLayout;
+
+		VkDescriptorSet pauseButtonSet;
+		VkDescriptorSetLayout pauseButtonSetLayout;
+		VkSampler pauseButtonSampler;
+		std::unique_ptr<DescriptorSetLayout> pauseButtonLayout;
+
+		VkDescriptorSet stopButtonSet;
+		VkDescriptorSetLayout stopButtonSetLayout;
+		VkSampler stopButtonSampler;
+		std::unique_ptr<DescriptorSetLayout> stopButtonLayout;
 
 		template<typename T, typename U>
 		auto constexpr constPow(T base, U exponent) {
 			return std::exp(exponent * std::log(base));
 		}
 
-
 		constexpr float ColToFloat(float rgb) { return rgb / 255.0f; }
 		constexpr ImVec4 RGBCon(float r, float g, float b) { return ImVec4(ColToFloat(r), ColToFloat(g), ColToFloat(b), 1.0f); }
-		//constexpr ImVec4 RGBConWithGammaCorrection(float r, float g, float b) { return ImVec4(RGBGammaCorrection(r), RGBGammaCorrection(g), RGBGammaCorrection(b), 1.0f); }
-		//constexpr float RGBGammaCorrection(float rgb) { return 1/(constPow((rgb/255), (1.0/2.2f))); }
 
-
+		
 		
 	};
 }

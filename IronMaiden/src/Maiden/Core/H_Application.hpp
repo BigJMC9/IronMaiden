@@ -9,10 +9,9 @@
 #include "../Rendering/H_Renderer.hpp"
 #include "../Rendering/H_RenderSystems.hpp"
 #include "../Scene/H_Scene.hpp"
-#include "H_ProcessHandler.hpp"
-#include "../Events/Event.hpp"
 #include "H_Time.hpp"
-#include "H_Layer.h"
+#include "../Interfaces/H_Interface.h"
+#include "../Events/H_EventSystem.h"
 
 //int main();
 
@@ -43,18 +42,19 @@ namespace Madam {
 	public:
 		virtual ~Application();
 		
-		void StartUp();
-		void ShutDown();
+		Application(const Application&) = delete;
+		Application& operator=(const Application&) = delete;
 
-		void onEvent(Event& e);
+		void init();
+		void deinit();
 
 		float getAspectRatio() {
 			return renderer.getAspectRatio();
 		}
 
-		void addSurface(Scope<Layer> _surface) {
+		void addSurface(Scope<EngineInterface> _surface) {
 			pSurface = std::move(_surface);
-			MADAM_CORE_INFO("Layer added");
+			MADAM_CORE_INFO("EngineInterface added");
 		}
 
 		static Application& Get() {
@@ -77,7 +77,10 @@ namespace Madam {
 
 		Window& getWindow() { return window;  }
 		Rendering::RenderStack& getMasterRenderSystem() { return renderStack; }
+
+		//Depreciated
 		const std::vector<Ref<Rendering::RenderLayer>>& getRenderLayers() const;
+
 		Scene& getScene() { return *scene; }
 		const Time& getTime() const { return time; }
 		ApplicationConfig getConfig() {
@@ -86,8 +89,6 @@ namespace Madam {
 		
 		//Put in engine config header
 		const float MAX_FRAME_TIME = 0.1f;
-
-		App::PipeHandler pipeHandler;
 
 		bool debug = false;
 
@@ -202,37 +203,37 @@ namespace Madam {
 			isTesting = true;
 		}*/
 
-		bool isUpdate() {
+		bool isUpdate() 
+		{
 			bool temp = isUpdating;
 			isUpdating = false;
 			return temp;
 		}
 
-		void setUpdate() {
+		void setUpdate() 
+		{
 			isUpdating = true;
 		}
 
-		bool getScripts() {
+		bool getScripts() 
+		{
 			bool temp = isGettingScripts;
 			isGettingScripts = false;
 			return temp;
 		}
 
-		void setScripts() {
+		void setScripts() 
+		{
 			isGettingScripts = true;
 		}
-
-		Application(const Application&) = delete;
-		Application& operator=(const Application&) = delete;
 
 		void run();
 
 		void quit();
 
-		Scope<Layer> pSurface = nullptr;
+		Scope<EngineInterface> pSurface = nullptr;
 
 	private:
-
 		static Application* instance;
 		static bool instanceFlag;
 		ApplicationConfig config;
@@ -242,12 +243,11 @@ namespace Madam {
 		Rendering::Renderer renderer = Rendering::Renderer{window, device};
 		Rendering::RenderStack renderStack = Rendering::RenderStack{ device, renderer };
 		Time time = Time{};
+		EventSystem eventSystem = EventSystem{};
 
 		//Move this somewhere
 		Scope<DescriptorPool> globalPool{};
 		std::vector<Scope<DescriptorPool>> framePools;
-		
-		bool windowResized = false;
 
 		bool isRunning = false;
 		bool firstFrame = true;

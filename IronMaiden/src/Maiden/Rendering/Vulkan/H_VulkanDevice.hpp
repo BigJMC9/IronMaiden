@@ -1,7 +1,7 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "H_Window.hpp"
+#include "../../Core/H_Window.hpp"
 #define IMGUI_ENABLE_VIEWPORTS
 #define IMGUI_ENABLE_DOCKING
 #define IMGUI_IMPL_API
@@ -43,8 +43,8 @@ namespace Madam {
 		Device(Window& window);
 		~Device();
 
-		void StartUp();
-		void ShutDown();
+		void init();
+		void deinit();
 		// Not copyable or movable
 		Device(const Device&) = delete;
 		Device& operator=(const Device&) = delete;

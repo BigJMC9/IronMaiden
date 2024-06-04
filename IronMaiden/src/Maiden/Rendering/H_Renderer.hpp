@@ -3,6 +3,8 @@
 #include "maidenpch.hpp"
 //#include "../Core/H_Device.hpp"
 #include "H_SwapChain.hpp"
+#include "../Interfaces/H_Interface.h"
+#include "../Events/H_EventSystem.h"
 
 //Low level rendering should be completely agnostic. see (pg 47)
 namespace Madam {
@@ -14,8 +16,6 @@ namespace Madam {
 			VkImage image;
 			VkDeviceMemory imageMemory;
 			VkFramebuffer frameBuffer;
-			VkBuffer debugBuffer;
-			VkDeviceMemory debugBufferMemory;
 		};
 		struct Frame {
 			std::vector<ImageData> images;
@@ -35,34 +35,54 @@ namespace Madam {
 			Renderer& operator=(const Renderer&) = delete;
 			Renderer& operator=(Renderer&&) = delete;
 
-			void StartUp();
-			void ShutDown();
+			void init();
+			void deinit();
 
-			VkRenderPass getSwapChainRenderPass() const { return swapChain->getRenderPass(); }
-			VkRenderPass getMainRenderPass() const { return renderPasses[0]; }
-			float getAspectRatio() const {
+			VkRenderPass getSwapChainRenderPass() const 
+			{ 
+				return swapChain->getRenderPass(); 
+			}
+			VkRenderPass getMainRenderPass() const 
+			{ 
+				return renderPasses[0]; 
+			}
+			float getAspectRatio() const 
+			{
 				return swapChain->extentAspectRatio();
 			}
-			bool isFrameInProgress() const { return isFrameStarted; }
+			bool isFrameInProgress() const 
+			{ 
+				return isFrameStarted; 
+			}
 
-			VkCommandBuffer getCurrentCommandBuffer() const {
+			VkCommandBuffer getCurrentCommandBuffer() const 
+			{
 				MADAM_CORE_ASSERT(isFrameStarted, "Cannot get command buffer when frame not in progress");
 				return commandBuffers[currentFrameIndex];
 			}
 
-			int getFrameIndex() const {
+			int getFrameIndex() const 
+			{
 				MADAM_CORE_ASSERT(isFrameStarted, "Cannot get command buffer when frame not in progress");
 				return currentFrameIndex;
 			}
 
-			VkImageView getImageView(int index) const {
+			VkImageView getImageView(int index) const 
+			{
 				return frames[currentFrameIndex].images[index].imageView;
 			}
 
-			uint32_t getViewportWidth() const { return viewportWidth; }
-			uint32_t getViewportHeight() const { return viewportHeight; }
+			uint32_t getViewportWidth() const 
+			{ 
+				return viewportWidth; 
+			}
+			uint32_t getViewportHeight() const 
+			{ 
+				return viewportHeight; 
+			}
 
-			ImGui_ImplVulkan_InitInfo getImGuiInitInfo() {
+			ImGui_ImplVulkan_InitInfo getImGuiInitInfo() 
+			{
 				ImGui_ImplVulkan_InitInfo init_info = ImGui_ImplVulkan_InitInfo();
 				init_info.Device = device.device();
 				init_info.PipelineCache = VK_NULL_HANDLE;
@@ -74,7 +94,8 @@ namespace Madam {
 				return init_info;
 			};
 
-			static Renderer& Get() {
+			static Renderer& Get() 
+			{
 				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
 				if (instance == nullptr) {
 					MADAM_CORE_ERROR("Renderer instance is null pointer");
@@ -100,6 +121,12 @@ namespace Madam {
 				return *Get().swapChain;
 			}
 
+			//Needs to be updated to abstract away from the VkRenderPass, we don't want to accidentally change renderpass settings while the engine is running
+			const std::vector<VkRenderPass> getRenderPasses() 
+			{
+				return renderPasses;
+			}
+
 			bool beginFrame();
 			void endFrame();
 			VkCommandBuffer beginCommandBuffer();
@@ -116,11 +143,7 @@ namespace Madam {
 			void createCommandBuffers();
 			void createMainRenderImages();
 			void createMainRenderPass();
-			void saveAsImage(VkCommandBuffer commandBuffer);
-			void setImageBuffer(int index);
-			void mapImageBuffer(int index);
 			void freeCommandBuffers();
-			void freeImageBuffers(int index);
 			void recreateSwapChain();
 			//VkRenderPass createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies, bool isSwapChain);
 
@@ -135,11 +158,13 @@ namespace Madam {
 			uint32_t currentImageIndex;
 			int currentFrameIndex = 0;
 			uint32_t currentCommandBufferIndex = 0;
+			int renderpassIndex = -1;
 			bool isFrameStarted = false;
 			bool isRunning = false;
 			std::vector<VkRenderPass> renderPasses;
 			std::vector<Frame> frames;
 			std::vector<CommandBufferGroup> commandBufferGroups;
+			
 			//std::vector<ImageView> imageViews;
 
 			uint32_t viewportWidth = 800, viewportHeight = 450;

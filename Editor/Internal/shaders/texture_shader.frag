@@ -30,8 +30,8 @@ layout (set = 1, binding = 2) uniform sampler2D ambientOcclusionMap;
 layout (set = 1, binding = 3) uniform sampler2D glossMap;
 
 layout(push_constant) uniform Push {
-	mat4 modelMatrix;
-	mat4 normalMatrix;
+	mat4 modelMatrix; //transform
+	mat4 normalMatrix; //normal
 } push;
 
 void main() {

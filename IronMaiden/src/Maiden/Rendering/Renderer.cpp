@@ -10,7 +10,6 @@
 #include "stb_image_write.h"
 namespace Madam {
 	namespace Rendering {
-
 		Renderer* Renderer::instance = nullptr;
 		bool Renderer::instanceFlag = false;
 
@@ -18,14 +17,17 @@ namespace Madam {
 
 		}
 
-		Renderer::~Renderer() {
-			if (isRunning) {
+		Renderer::~Renderer() 
+		{
+			if (isRunning) 
+			{
 				MADAM_CORE_WARN("Renderer prematurally shutdown");
-				ShutDown();
+				deinit();
 			}
 		}
 
-		void Renderer::StartUp() {
+		void Renderer::init() 
+		{
 			isRunning = true;
 			instance = this;
 			instanceFlag = true;
@@ -35,7 +37,8 @@ namespace Madam {
 			createMainRenderPass();
 		}
 
-		void Renderer::ShutDown() {
+		void Renderer::deinit() 
+		{
 			freeCommandBuffers();
 			//freeImageBuffers(0);
 			isRunning = false;
@@ -44,23 +47,28 @@ namespace Madam {
 		}
 
 		//Recreate swapchain if window is resized
-		void Renderer::recreateSwapChain() {
+		void Renderer::recreateSwapChain() 
+		{
 			MADAM_CORE_INFO("Recreating SwapChain");
 			auto extent = window.getExtent();
-			while (extent.width == 0 || extent.height == 0) {
+			while (extent.width == 0 || extent.height == 0) 
+			{
 				extent = window.getExtent();
 				glfwWaitEvents();
 			}
 			vkDeviceWaitIdle(device.device());
 
-			if (swapChain == nullptr) {
+			if (swapChain == nullptr) 
+			{
 				swapChain = std::make_unique<SwapChain>(device, extent);
 			}
-			else {
+			else 
+			{
 				Ref<SwapChain> oldSwapChain = std::move(swapChain);
 				swapChain = std::make_unique<SwapChain>(device, extent, oldSwapChain);
 
-				if (!oldSwapChain->compareSwapFormats(*swapChain.get())) {
+				if (!oldSwapChain->compareSwapFormats(*swapChain.get())) 
+				{
 					MADAM_CORE_ERROR("Swap chain image(or depth) format has changed!");
 				}
 
@@ -68,12 +76,14 @@ namespace Madam {
 				bool isRecreate = false;
 				for (size_t i = 0; i < frames.size(); i++)
 				{
-					if (frames[i].width < swapChain->getSwapChainExtent().width || frames[i].height < swapChain->getSwapChainExtent().height) {
+					if (frames[i].width < swapChain->getSwapChainExtent().width || frames[i].height < swapChain->getSwapChainExtent().height) 
+					{
 						isRecreate = true;
 						break;
 					}
 				}
-				if (isRecreate) {
+				if (isRecreate) 
+				{
 					for (size_t i = 0; i < frames.size(); i++)
 					{ 
 						vkDestroyFramebuffer(device.device(), frames[i].images[0].frameBuffer, nullptr);
@@ -93,7 +103,8 @@ namespace Madam {
 
 		//Create command buffers from command pool for each frame and render pass
 		//??
-		void Renderer::createCommandBuffers() {
+		void Renderer::createCommandBuffers() 
+		{
 			commandBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
 			VkCommandBufferAllocateInfo allocInfo{};
@@ -102,28 +113,33 @@ namespace Madam {
 			allocInfo.commandPool = device.getCommandPool();
 			allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-			if (vkAllocateCommandBuffers(device.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+			if (vkAllocateCommandBuffers(device.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) 
+			{
 				MADAM_CORE_ERROR("Failed to allocate command buffers!");
 			}
 
 		}
 
-		void Renderer::freeCommandBuffers() {
+		void Renderer::freeCommandBuffers() 
+		{
 			vkFreeCommandBuffers(device.device(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 			commandBuffers.clear();
 		}
 
-		bool Renderer::beginFrame() {
+		bool Renderer::beginFrame() 
+		{
 			MADAM_CORE_ASSERT(!isFrameStarted, "Can't call beginFrame while already in progress");
 
 			auto result = swapChain->acquireNextImage(&currentImageIndex);
-			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+			if (result == VK_ERROR_OUT_OF_DATE_KHR) 
+			{
 				MADAM_CORE_INFO("Recreating Swapchain on begin frame");
 				recreateSwapChain();
 				return false;
 			}
 
-			if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+			if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) 
+			{
 				throw std::runtime_error("Failed to acquire swap chain image!");
 			}
 
@@ -131,22 +147,26 @@ namespace Madam {
 			return true;
 		}
 
-		void Renderer::endFrame() {
+		void Renderer::endFrame() 
+		{
 			MADAM_CORE_ASSERT(isFrameStarted, "Can't call endFrame while frame is not in progress");
 			//MADAM_CORE_INFO("Ending Frame");
 			auto commandBuffer = getCurrentCommandBuffer();
 
-			if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+			if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) 
+			{
 				MADAM_CORE_ERROR("Failed to record command buffer!");
 			}
 
 			auto result = swapChain->submitCommandBuffers(&commandBuffer, &currentCommandBufferIndex);
 			//mapImageBuffer(currentFrameIndex);
-			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized()) {
+			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized()) 
+			{
 				MADAM_CORE_INFO("Recreating Swapchain on end frame");
 				recreateSwapChain();
 			}
-			else if (result != VK_SUCCESS) {
+			else if (result != VK_SUCCESS) 
+			{
 				MADAM_CORE_ERROR("Failed to present swap chain image!");
 			}
 
@@ -154,7 +174,8 @@ namespace Madam {
 			currentFrameIndex = (currentFrameIndex + 1) % SwapChain::MAX_FRAMES_IN_FLIGHT;
 		}
 
-		VkCommandBuffer Renderer::beginCommandBuffer() {
+		VkCommandBuffer Renderer::beginCommandBuffer() 
+		{
 			MADAM_CORE_ASSERT(isFrameStarted, "Can't call beginCommandBuffer if frame is not in progress");
 
 			auto commandBuffer = getCurrentCommandBuffer();
@@ -162,11 +183,10 @@ namespace Madam {
 			VkCommandBufferBeginInfo beginInfo{};
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-			if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+			if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) 
+			{
 				throw std::runtime_error("Failed to begin recording command buffer!");
 			}
-
-			//MADAM_CORE_INFO("Frame Ended");
 			return commandBuffer;
 		}
 
@@ -198,8 +218,16 @@ namespace Madam {
 			VkRect2D scissor{ {0, 0}, swapChain->getSwapChainExtent()};
 			vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+			renderpassIndex++;
+			
+			Events::NextRenderPassEvent e(renderpassIndex);
+			Events::EventSystem::Get().PushEvent(&e, true);
+
 		}
-		void Renderer::endRenderPass(VkCommandBuffer commandBuffer) {
+
+		void Renderer::endRenderPass(VkCommandBuffer commandBuffer) 
+		{
 			//saveAsImage(commandBuffer);
 			MADAM_CORE_ASSERT(isFrameStarted, "Can't call endSwapChainRenderPass if frame is not in progress");
 			MADAM_CORE_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't end render pass on command buffer from a different frame");
@@ -207,7 +235,8 @@ namespace Madam {
 		}
 
 		//Update this
-		void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
+		void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) 
+		{
 			MADAM_CORE_ASSERT(isFrameStarted, "Can't call beginSwapChainRenderPass if frame is not in progress");
 			MADAM_CORE_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't begin render pass on command buffer from a different frame");
 
@@ -237,11 +266,18 @@ namespace Madam {
 			VkRect2D scissor{ {0, 0}, swapChain->getSwapChainExtent() };
 			vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+			renderpassIndex++;
+
+			Events::NextRenderPassEvent e(renderpassIndex);
+			Events::EventSystem::Get().PushEvent(&e, true);
 		}
-		void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer) {
+		void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer) 
+		{
 			MADAM_CORE_ASSERT(isFrameStarted, "Can't call endSwapChainRenderPass if frame is not in progress");
 			MADAM_CORE_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't end render pass on command buffer from a different frame");
 			vkCmdEndRenderPass(commandBuffer);
+			renderpassIndex = -1;
 		}
 
 		VkRenderPass Renderer::createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies)
@@ -256,7 +292,8 @@ namespace Madam {
 			renderPassInfo.dependencyCount = dependencies.size();
 			renderPassInfo.pDependencies = dependencies.data();
 
-			if (vkCreateRenderPass(device.device(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+			if (vkCreateRenderPass(device.device(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) 
+			{
 				MADAM_CORE_ERROR("Failed to create render pass!");
 			}
 			renderPasses.push_back(renderPass);
@@ -264,7 +301,8 @@ namespace Madam {
 		}
 
 
-		void Renderer::createMainRenderImages() {
+		void Renderer::createMainRenderImages() 
+		{
 			for (size_t i = 0; i < frames.size(); i++)
 			{
 				VkImage image;
@@ -284,7 +322,8 @@ namespace Madam {
 				imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 				imageInfo.flags = 0;
 
-				if (vkCreateImage(device.device(), &imageInfo, nullptr, &image) != VK_SUCCESS) {
+				if (vkCreateImage(device.device(), &imageInfo, nullptr, &image) != VK_SUCCESS) 
+				{
 					throw std::runtime_error("Failed to create image!");
 				}
 
@@ -310,8 +349,8 @@ namespace Madam {
 				imageData.image = image;
 				imageData.imageMemory = imageMemory;
 
-				if (vkCreateImageView(device.device(), &viewInfo, nullptr, &imageData.imageView) !=
-					VK_SUCCESS) {
+				if (vkCreateImageView(device.device(), &viewInfo, nullptr, &imageData.imageView) != VK_SUCCESS) 
+				{
 					throw std::runtime_error("failed to create texture image view!");
 				}
 
@@ -356,8 +395,8 @@ namespace Madam {
 				depthImageData.image = depthImage;
 				depthImageData.imageMemory = depthImageMemory;
 
-				if (vkCreateImageView(device.device(), &depthViewInfo, nullptr, &depthImageData.imageView) !=
-					VK_SUCCESS) {
+				if (vkCreateImageView(device.device(), &depthViewInfo, nullptr, &depthImageData.imageView) != VK_SUCCESS) 
+				{
 					throw std::runtime_error("failed to create texture image view!");
 				}
 
@@ -405,7 +444,8 @@ namespace Madam {
 
 		}
 
-		void Renderer::createMainRenderPass() {
+		void Renderer::createMainRenderPass() 
+		{
 
 			MADAM_CORE_INFO("Creating Main Render Pass");
 			createMainRenderImages();
@@ -472,96 +512,41 @@ namespace Madam {
 				framebufferInfo.height = frames[i].height;
 				framebufferInfo.layers = 1;
 
-				if (vkCreateFramebuffer(
+				if (vkCreateFramebuffer
+				(
 					device.device(),
 					&framebufferInfo,
 					nullptr,
-					&frames[i].images[0].frameBuffer) != VK_SUCCESS) {
+					&frames[i].images[0].frameBuffer
+				) != VK_SUCCESS)
+				{
 					throw std::runtime_error("failed to create framebuffer!");
 				}
 			}
-		}
-
-		void Renderer::setImageBuffer(int index) {
-			VkMemoryRequirements memRequirements;
-			vkGetImageMemoryRequirements(device.device(), frames[index].images[0].image, &memRequirements);
-
-			VkBufferCreateInfo bufferInfo{};
-			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-			bufferInfo.size = memRequirements.size; // Size of the image to be copied
-			bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-			bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-			vkCreateBuffer(device.device(), &bufferInfo, nullptr, &frames[index].images[0].debugBuffer);
-
-			vkGetBufferMemoryRequirements(device.device(), frames[index].images[0].debugBuffer, &memRequirements);
-			VkMemoryAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = device.findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-			vkAllocateMemory(device.device(), &allocInfo, nullptr, &frames[index].images[0].debugBufferMemory);
-			vkBindBufferMemory(device.device(), frames[index].images[0].debugBuffer, frames[index].images[0].debugBufferMemory, 0);
-		}
-
-		void Renderer::saveAsImage(VkCommandBuffer commandBuffer) {
-
-			VkImage image = frames[currentFrameIndex].images[0].image;
-			VkDeviceMemory imageMemory = frames[currentFrameIndex].images[0].imageMemory;
-			VkFormat format = swapChain->getSwapChainImageFormat();
-			VkExtent2D extent = swapChain->getSwapChainExtent();
-
-			
-			VkBufferImageCopy region = {};
-			region.bufferOffset = 0;
-			region.bufferRowLength = 0;
-			region.bufferImageHeight = 0;
-			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			region.imageSubresource.mipLevel = 0;
-			region.imageSubresource.baseArrayLayer = 0;
-			region.imageSubresource.layerCount = 1;
-			region.imageOffset = { 0, 0, 0 };
-			region.imageExtent = { swapChain->getSwapChainExtent().width, swapChain->getSwapChainExtent().height, 1};
-
-			vkCmdCopyImageToBuffer(commandBuffer, frames[currentFrameIndex].images[0].image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, frames[currentFrameIndex].images[0].debugBuffer, 1, &region);
-		}
-
-		void Renderer::mapImageBuffer(int index) {
-			void* data;
-			vkMapMemory(device.device(), frames[index].images[0].debugBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
-			std::string fileType = ".png";
-			std::string fileName = "output" + index + fileType;
-			stbi_write_png(fileName.c_str(), swapChain->getSwapChainExtent().width, swapChain->getSwapChainExtent().height, 4, data, swapChain->getSwapChainExtent().width * 4);
-			vkUnmapMemory(device.device(), frames[index].images[0].debugBufferMemory);
-		}
-
-		void Renderer::freeImageBuffers(int index) {
-			for (size_t i = 0; i < frames.size(); i++)
-			{
-				vkFreeMemory(device.device(), frames[i].images[index].debugBufferMemory, nullptr);
-				vkDestroyBuffer(device.device(), frames[i].images[index].debugBuffer, nullptr);
-			}
-			
 		}
 
 		void Renderer::PipelineBarrier(VkCommandBuffer commandBuffer, bool isSwapchain, bool isSwitch, int frameIndex, int renderIndex)
 		{
 			VkImageMemoryBarrier barrier{};
 			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			if (isSwitch) {
+			if (isSwitch) 
+			{
 				barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
 			}
-			else {
+			else 
+			{
 				barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 				barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			}
 			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			if (isSwapchain) {
+			if (isSwapchain) 
+			{
 				barrier.image = swapChain->getSwapChainImage(frameIndex);
 			}
-			else {
+			else 
+			{
 				barrier.image = frames[frameIndex].images[renderIndex].image;
 			}
 			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -570,11 +555,13 @@ namespace Madam {
 			barrier.subresourceRange.baseArrayLayer = 0;
 			barrier.subresourceRange.layerCount = 1;
 
-			if (isSwitch) {
+			if (isSwitch) 
+			{
 				barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT; //Error here
 				barrier.dstAccessMask = 0;
 
-				vkCmdPipelineBarrier(
+				vkCmdPipelineBarrier
+				(
 					commandBuffer,
 					VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // The pipeline stage at which the transition begins
 					VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, // The pipeline stage at which the transition ends
@@ -584,11 +571,13 @@ namespace Madam {
 					1, &barrier
 				);
 			}
-			else {
+			else 
+			{
 				barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-				vkCmdPipelineBarrier(
+				vkCmdPipelineBarrier
+				(
 					commandBuffer,
 					VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // The pipeline stage at which the transition begins
 					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, // The pipeline stage at which the transition ends

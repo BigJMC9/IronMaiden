@@ -16,11 +16,11 @@ namespace Madam {
 		//glfwTerminate();
 		if (isRunning) {
 			MADAM_CORE_WARN("Window prematurally shutdown");
-			ShutDown();
+			deinit();
 		}
 	}
 
-	void Window::StartUp(uint32_t w, uint32_t h, std::string name) {
+	void Window::init(uint32_t w, uint32_t h, std::string name) {
 		data.width = w;
 		data.height = h;
 		data.windowName = name;
@@ -28,7 +28,7 @@ namespace Madam {
 		isRunning = true;
 	}
 
-	void Window::ShutDown() {
+	void Window::deinit() {
 		glfwDestroyWindow(window);
 		glfwTerminate();
 		isRunning = false;
