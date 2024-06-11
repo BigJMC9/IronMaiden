@@ -5,35 +5,30 @@
 #include "Main/core.hpp"
 #include "H_Utils.hpp"
 #include "H_Logger.hpp"
-#include "../Rendering/H_DescriptorSetLayout.hpp"
 #include "../Rendering/H_Renderer.hpp"
 #include "../Rendering/H_RenderSystems.hpp"
+#include "../Rendering/H_DescriptorSetLayout.hpp"
 #include "../Scene/H_Scene.hpp"
 #include "H_Time.hpp"
 #include "../Interfaces/H_Interface.h"
 #include "../Events/H_EventSystem.h"
 
-//int main();
+#include <filesystem>
 
 namespace Madam {
-
+	
 	class SceneSerializer;
+	class Project;
 
 	//Should be passed in when App is created
-	struct ApplicationConfig
+	struct ApplicationInfo
 	{
 		std::string name = "IronMaidenEngine";
+		std::string version = "0.08";
 		std::string windowName = "Iron Maiden Engine";
-		std::string version = "0.05";
 		uint32_t windowWidth = 1600, windowHeight = 900;
-		std::string workingDirectory;
-		std::string projectFolder = "C:/Users/xbox/Desktop/Development/IronMaiden Projects/Sandbox/Sandbox/"; //This should be the folder to the project is stored
-		std::string projectWorkingDirectory = "C:/Users/xbox/Desktop/Development/IronMaiden Projects/Sandbox/"; //This should be the folder where the project folder is stored
-		std::string internals = "Internal/";
-		std::string assets = "Assets/";
-		bool is2D = false;
+		std::filesystem::path projectsDirectory = "Projects";
 	};
-
 
 	// With madam api macro, the compiler will throw a warning, may need change in future, look at microsoft C4251 warn page for more details
 	class MADAM_API Application {
@@ -83,7 +78,7 @@ namespace Madam {
 
 		Scene& getScene() { return *scene; }
 		const Time& getTime() const { return time; }
-		ApplicationConfig getConfig() {
+		ApplicationInfo getConfig() {
 			return config;
 		}
 		
@@ -114,16 +109,6 @@ namespace Madam {
 		void setScan() {
 			isScanning = true;
 		}
-
-		/*bool isCompile() {
-			bool temp = isCompiling;
-			isCompiling = false;
-			return temp;
-		}
-
-		void setCompile() {
-			isCompiling = true;
-		}*/
 
 		bool isPlay() const {
 			return runtime;
@@ -160,7 +145,6 @@ namespace Madam {
 			}
 		}
 
-
 		//Temp solution. Need to move to Scene Management class and needs to be safer
 		void PrimeReserve(Ref<Scene> _scene) {
 			reservedScene = _scene;
@@ -193,16 +177,6 @@ namespace Madam {
 			}
 		}
 
-		/*bool isTest() {
-			bool temp = isTesting;
-			isTesting = false;
-			return temp;
-		}
-
-		void setTest() {
-			isTesting = true;
-		}*/
-
 		bool isUpdate() 
 		{
 			bool temp = isUpdating;
@@ -227,8 +201,9 @@ namespace Madam {
 			isGettingScripts = true;
 		}
 
+		void configureApp();
+		void saveSession();
 		void run();
-
 		void quit();
 
 		Scope<EngineInterface> pSurface = nullptr;
@@ -236,7 +211,7 @@ namespace Madam {
 	private:
 		static Application* instance;
 		static bool instanceFlag;
-		ApplicationConfig config;
+		ApplicationInfo config;
 
 		Window window = Window{};
 		Device device = Device{ window };
@@ -261,11 +236,11 @@ namespace Madam {
 		bool isGettingScripts = false;
 		//bool isTesting = false;
 		bool isUpdating = false;
-
+		
 		//Need Scene Management class
-		Ref<Scene> scene;
+		Ref<Scene> scene = nullptr;
 		Ref<Scene> reservedScene = nullptr;
-		SceneSerializer* pSceneSerializer;
+		SceneSerializer* pSceneSerializer = nullptr;
 	protected:
 		
 	};

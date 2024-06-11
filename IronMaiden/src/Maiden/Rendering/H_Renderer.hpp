@@ -139,6 +139,7 @@ namespace Madam {
 			VkRenderPass createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies);
 
 			void PipelineBarrier(VkCommandBuffer commandBuffer, bool isSwapchain, bool isSwitch, int frameIndex, int renderIndex);
+
 		private:
 			void createCommandBuffers();
 			void createMainRenderImages();
@@ -164,7 +165,7 @@ namespace Madam {
 			std::vector<VkRenderPass> renderPasses;
 			std::vector<Frame> frames;
 			std::vector<CommandBufferGroup> commandBufferGroups;
-			
+			bool hasSwapChainRecreated = false;
 			//std::vector<ImageView> imageViews;
 
 			uint32_t viewportWidth = 800, viewportHeight = 450;

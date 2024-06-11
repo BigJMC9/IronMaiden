@@ -142,7 +142,7 @@ project "IronMaiden"
     filter "configurations:ReleaseDLL"
         optimize "on"
         staticruntime "off"
-        runtime "debug"
+        runtime "release"
         kind "SharedLib"
         links
         {
@@ -236,7 +236,9 @@ project "Editor"
 
         postbuildcommands
         {
-            "call \"compile.bat\""
+            "call \"compile.bat\"",
+            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\resources\\" "%{wks.location}bin\\" .. outputdir .. "\\Editor\\resources\\\" /E /I /Y"
+            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\logs\\" "%{wks.location}bin\\" .. outputdir .. "\\Editor\\logs\\\" /E /I /Y"
         }
 
     filter "configurations:Debug"

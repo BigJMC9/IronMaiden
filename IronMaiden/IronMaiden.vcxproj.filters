@@ -106,9 +106,6 @@
     <ClInclude Include="src\Maiden\Rendering\H_Camera.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\H_DescriptorAllocator.hpp">
-      <Filter>src\Maiden\Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_DescriptorSetLayout.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
@@ -154,6 +151,11 @@
     <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h">
       <Filter>vendors\ImGuizmo</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Project\H_Project.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetSystem.h" />
+    <ClInclude Include="src\Maiden\Asset\AssetUtils.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetRegistry.h" />
+    <ClInclude Include="src\Maiden\Asset\H_Metadata.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
@@ -199,9 +201,6 @@
     <ClCompile Include="src\Maiden\Rendering\Camera.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\DescriptorAllocator.cpp">
-      <Filter>src\Maiden\Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\DescriptorSetLayout.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
@@ -241,5 +240,8 @@
     <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">
       <Filter>vendors\ImGuizmo</Filter>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Project\Project.cpp" />
+    <ClCompile Include="src\Maiden\Asset\AssetRegistry.cpp" />
+    <ClCompile Include="src\Maiden\Asset\AssetSystem.cpp" />
   </ItemGroup>
 </Project>

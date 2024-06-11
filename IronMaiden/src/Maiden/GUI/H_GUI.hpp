@@ -133,8 +133,6 @@ namespace Madam::UI {
 
 		constexpr float ColToFloat(float rgb) { return rgb / 255.0f; }
 		constexpr ImVec4 RGBCon(float r, float g, float b) { return ImVec4(ColToFloat(r), ColToFloat(g), ColToFloat(b), 1.0f); }
-
-		
 		
 	};
 }

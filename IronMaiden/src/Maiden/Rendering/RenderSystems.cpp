@@ -53,7 +53,7 @@ namespace Madam {
 			Pipeline::setDescriptions(pipelineConfig);
 			pipelineConfig.renderPass = renderPass;
 			pipelineConfig.pipelineLayout = pipelineLayout;
-			pipeline = std::make_unique<Pipeline>(device, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
+			pipeline = std::make_unique<Pipeline>(device, "shaders\\simple_shader.vert.spv", "shaders\\simple_shader.frag.spv", pipelineConfig);
         }
 
 		void RenderLayer::render(FrameInfo& frameInfo) {
@@ -82,10 +82,6 @@ namespace Madam {
 
 				Ref<Material> material = meshRenderer.getMaterial();
 				if (material != nullptr) continue;
-
-				if (isFirstFrame) {
-					std::cout << "Standard Rendering " << std::endl;
-				}
 
 				DefaultPushConstantData push{};
 				push.modelMatrix = transform.m_transform();
@@ -164,10 +160,6 @@ namespace Madam {
 		void GridRenderLayer::render(FrameInfo& frameInfo) {
 			pipeline->bind(frameInfo.commandBuffer);
 
-			if (isFirstFrame) {
-				std::cout << "Rendering Grid" << std::endl;
-			}
-
 			vkCmdBindDescriptorSets(
 				frameInfo.commandBuffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -242,8 +234,8 @@ namespace Madam {
 			pipelineConfig.pipelineLayout = pipelineLayout;
 			pipeline = std::make_unique<Pipeline>(
 				device,
-				"shaders/texture_shader.vert.spv",
-				"shaders/texture_shader.frag.spv",
+				"shaders\\texture_shader.vert.spv",
+				"shaders\\texture_shader.frag.spv",
 				pipelineConfig);
 		}
 
@@ -277,10 +269,6 @@ namespace Madam {
 				Ref<Material> material = meshRenderer.getMaterial();
 				if (material == nullptr) continue;
 				if (material->diffuseMap == nullptr) continue;
-
-				if (isFirstFrame) {
-					std::cout << "Texture Rendering: " << std::endl;
-				}
 
 				// writing descriptor set each frame can slow performance
 				// would be more efficient to implement some sort of caching

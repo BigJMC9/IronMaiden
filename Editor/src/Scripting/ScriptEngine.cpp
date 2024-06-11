@@ -1,5 +1,6 @@
 #include "H_ScriptEngine.hpp"
 #include <algorithm>
+#include <windows.h>
 
 namespace Madam
 {
@@ -32,7 +33,7 @@ namespace Madam
 
 		bool ScriptEngine::Import(Entity entity)
 		{
-			std::string dllDir = Application::Get().getConfig().projectFolder + "Library/grt.dll";
+			std::string dllDir = Project::Get().getProjectDirectory().string() + "Library\\grt.dll";
 			MADAM_INFO("Importing DLL: {0}", dllDir);
 			hGetProcIDDLL = LoadLibrary(stringToWSTR(dllDir).c_str());
 			if (!hGetProcIDDLL) {
@@ -72,12 +73,12 @@ namespace Madam
 		//Creates a new script
 		void ScriptEngine::OnCreateScript(std::string filePath)
 		{
-			std::ifstream samplefile(Application::Get().getConfig().internals + "sample.ims", std::ios::binary);
-			if (std::ifstream(Application::Get().getConfig().projectFolder + Application::Get().getConfig().assets + filePath)) {
+			std::ifstream samplefile(Project::Get().getResourcesDirectory().string() + "sample.ims", std::ios::binary);
+			if (std::ifstream(Project::Get().getProjectDirectory().string() + "\\Assets\\" + filePath)) {
 				MADAM_ERROR("File already Exists");
 				return;
 			}
-			std::ofstream newfile(Application::Get().getConfig().projectFolder + Application::Get().getConfig().assets + filePath, std::ios::binary);
+			std::ofstream newfile(Project::Get().getProjectDirectory().string() + "\\Assets\\" + filePath, std::ios::binary);
 
 			if (!samplefile) {
 				MADAM_ERROR("Cannot Open Sample File for Native Scripts");
@@ -127,7 +128,9 @@ namespace Madam
 			newfile.close();
 
 			scripts[fileName] = filePath;
-			std::string batFile = "\"" + Application::Get().getConfig().projectWorkingDirectory + "CompileProject.bat\"";
+			char cwd[MAX_PATH];
+			GetCurrentDirectoryA(MAX_PATH, cwd);
+			std::string batFile = "\"" + std::string(cwd) + "CompileProject.bat\"";
 			MADAM_CORE_INFO("Bat File: {0}", batFile);
 			std::replace(batFile.begin(), batFile.end(), '/', '\\');
 			CreateCMDProcess(batFile);
@@ -142,7 +145,7 @@ namespace Madam
 				return;
 			}
 
-			std::string path = Application::Get().getConfig().internals + "NativeBehaviour.cpp";
+			std::string path = Project::Get().getResourcesDirectory().string() + "NativeBehaviour.cpp";
 			std::ifstream behaviour(path);
 			std::vector<std::string> lines;
 			if (behaviour) {
@@ -194,20 +197,20 @@ namespace Madam
 				}
 			}
 
-			std::ofstream newBehaviour(Application::Get().getConfig().projectFolder + "Library/NativeBehaviour.cpp");
+			std::ofstream newBehaviour(Project::Get().getProjectDirectory().string() + "Library\\NativeBehaviour.cpp");
 			if (newBehaviour.is_open()) {
 				for (const auto& newline : lines) {
 					newBehaviour << newline << "\n";
 				}
 			}
 			else {
-				std::string libLoc = Application::Get().getConfig().projectFolder + "Library/NativeBehaviour.cpp";
+				std::string libLoc = Project::Get().getProjectDirectory().string() + "Library/NativeBehaviour.cpp";
 				MADAM_ERROR("Unable to open file: {0}", libLoc);
 			}
 			newBehaviour.close();
 
-			std::string srcpath = Application::Get().getConfig().projectFolder + Application::Get().getConfig().internals + "H_NativeBehaviour.hpp";
-			std::string dstpath = Application::Get().getConfig().projectFolder + "Library/H_NativeBehaviour.hpp";
+			std::string srcpath = Project::Get().getResourcesDirectory().string() + "H_NativeBehaviour.hpp";
+			std::string dstpath = Project::Get().getProjectDirectory().string() + "Library/H_NativeBehaviour.hpp";
 			if (!CopyScript(srcpath, dstpath)) {
 				return;
 			}
@@ -293,8 +296,8 @@ namespace Madam
 		void ScriptEngine::RescanScripts() 
 		{
 			scripts.clear();
-			std::string projectFolder = Application::Get().getConfig().projectFolder;
-			std::string path = projectFolder + Application::Get().getConfig().assets;
+			std::string projectFolder = Project::Get().getProjectDirectory().string();
+			std::string path = projectFolder + "\\Assets\\";
 			MADAM_INFO("Scanning for scripts in: {0}", path);
 
 			for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
@@ -314,7 +317,7 @@ namespace Madam
 
 		std::string ScriptEngine::ReadClassName(std::string _path)
 		{
-			std::string path = Application::Get().getConfig().projectFolder + _path;
+			std::string path = Project::Get().getProjectDirectory().string() + _path;
 			std::ifstream script(path);
 			std::vector<std::string> lines;
 			if (script.is_open()) {

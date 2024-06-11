@@ -163,7 +163,9 @@ copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Debug-windows-x86_64\yaml-cpp
 copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\DebugDLL-windows-x86_64\yaml-cpp\yaml-cpp.dll $(SolutionDir)bin\DebugDLL-windows-x86_64\Editor\</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>call "compile.bat"</Command>
+      <Command>call "compile.bat"
+C:\Windows\System32\xcopy "$(SolutionDir)Editor\resources\" "$(SolutionDir)bin\DebugDLL-windows-x86_64\Editor\resources\" /E /I /Y
+C:\Windows\System32\xcopy "$(SolutionDir)Editor\logs\" "$(SolutionDir)bin\DebugDLL-windows-x86_64\Editor\logs\" /E /I /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -223,7 +225,9 @@ copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Release-windows-x86_64\yaml-c
 copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\ReleaseDLL-windows-x86_64\yaml-cpp\yaml-cpp.dll $(SolutionDir)bin\ReleaseDLL-windows-x86_64\Editor\</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>call "compile.bat"</Command>
+      <Command>call "compile.bat"
+C:\Windows\System32\xcopy "$(SolutionDir)Editor\resources\" "$(SolutionDir)bin\ReleaseDLL-windows-x86_64\Editor\resources\" /E /I /Y
+C:\Windows\System32\xcopy "$(SolutionDir)Editor\logs\" "$(SolutionDir)bin\ReleaseDLL-windows-x86_64\Editor\logs\" /E /I /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">

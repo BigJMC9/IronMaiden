@@ -5,6 +5,8 @@
 #include "../Core/H_Application.hpp"
 #include "../Scene/H_SceneSerializer.hpp"
 #include "../Rendering/H_Pipeline.hpp"
+#include "../Project/H_Project.h"
+#include <cstring>
 
 using namespace Madam::Platform;
 
@@ -310,16 +312,9 @@ namespace Madam::UI {
 		if (vkCreateSampler(Rendering::Renderer::GetDevice().device(), &samplerInfo, nullptr, &viewportSampler) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create texture sampler!");
 		}
-		/*if (vkCreateSampler(Rendering::Renderer::GetDevice().device(), &samplerInfo, nullptr, &playButtonSampler) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create texture sampler!");
-		}
-		if (vkCreateSampler(Rendering::Renderer::GetDevice().device(), &samplerInfo, nullptr, &stopButtonSampler) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create texture sampler!");
-		}*/
 
 		ImGui_ImplGlfw_InitForVulkan(Application::Get().getWindow().getGLFWwindow(), true);
 		ImGui_ImplVulkan_Init(init_info);
-		//ImGui_ImplVulkan_Data* bd = ImGui::GetCurrentContext() ? (ImGui_ImplVulkan_Data*)ImGui::GetIO().BackendRendererUserData : nullptr;
 
 		//viewport descriptors
 		viewportSet = ImGui_ImplVulkan_AddTexture(viewportSampler, Rendering::Renderer::Get().getImageView(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -349,12 +344,16 @@ namespace Madam::UI {
 	}
 
 	void GUI::OnResizeEvent(WindowResizeEvent* e) {
-	
 		ImGui_ImplGlfw_Shutdown();
 		ImGui_ImplVulkan_Shutdown();
-		ImGui::DestroyContext();
-		fonts.clear();
-		OnAttach();
+		init_info = &Rendering::Renderer::Get().getImGuiInitInfo();
+		init_info->DescriptorPool = guiPool.get()->descriptorPool;
+		init_info->MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+		init_info->RenderPass = Rendering::Renderer::Get().getSwapChainRenderPass();
+		ImGui_ImplGlfw_InitForVulkan(Application::Get().getWindow().getGLFWwindow(), true);
+		ImGui_ImplVulkan_Init(init_info);
+		viewportSet = ImGui_ImplVulkan_AddTexture(viewportSampler, Rendering::Renderer::Get().getImageView(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		CreateViewportPipeline();
 	}
 
 	void GUI::OnDetach() {
@@ -362,14 +361,26 @@ namespace Madam::UI {
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
 		fonts.clear();
+		EventSystem::Get().RemoveListener(this, &GUI::OnResizeEvent);
+		EventSystem::Get().RemoveListener(this, &GUI::OnRenderPassEvent);
+		EventSystem::Get().RemoveListener(this, &GUI::OnSceneChangeEvent);
 	}
 
 	void GUI::Style(ImGuiIO& io) {
 		//Fonts
-		ImFont* font = io.Fonts->AddFontFromFileTTF("Internal/fonts/Roboto-Medium.ttf", 16.0f);
-		fonts.push_back(font);
-		font = io.Fonts->AddFontFromFileTTF("Internal/fonts/Roboto-Bold.ttf", 16.0f);
-		fonts.push_back(font);
+		std::vector<std::string> fontPaths =
+		{
+			"resources\\fonts\\Roboto-Medium.ttf",
+			"resources\\fonts\\Roboto-Bold.ttf"
+		};
+		ImFont* font;
+		for each (std::string fontPath in fontPaths)
+		{
+			MADAM_CORE_INFO("Loading Font: {0}", fontPath);
+			font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
+			fonts.push_back(font);
+		}
+
 		style = ImGui::GetStyle();
 		//Windows
 		style.Colors[ImGuiCol_WindowBg] = RGBCon(17, 17, 21);

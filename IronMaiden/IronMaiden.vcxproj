@@ -50,7 +50,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
+    <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
@@ -116,7 +116,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>maidenpch.hpp</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;MADAM_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -196,7 +196,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -204,7 +204,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;yaml-cpp.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;yaml-cpp.lib;ImGui.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;vendors\glfw-3.3.8.bin.WIN64\lib-vc2022;vendors\yaml-cpp\bin\ReleaseDLL-windows-x86_64\yaml-cpp;vendors\imgui\bin\ReleaseDLL-windows-x86_64\ImGui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>..\bin\ReleaseDLL-windows-x86_64\IronMaiden\IronMaiden.lib</ImportLibrary>
     </Link>
@@ -239,7 +239,11 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_DescriptorManager.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetRegistry.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetSystem.h" />
+    <ClInclude Include="src\Maiden\Asset\AssetUtils.h" />
+    <ClInclude Include="src\Maiden\Asset\H_Metadata.h" />
+    <ClInclude Include="src\Maiden\Project\H_Project.h" />
     <ClInclude Include="maidenpch.hpp" />
     <ClInclude Include="src\Maiden.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Application.hpp" />
@@ -263,7 +267,6 @@
     <ClInclude Include="src\Maiden\Rendering\FrameInfo.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Buffer.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Camera.hpp" />
-    <ClInclude Include="src\Maiden\Rendering\H_DescriptorAllocator.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_DescriptorSetLayout.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Image.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Pipeline.hpp" />
@@ -281,7 +284,9 @@
     <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Maiden\Rendering\Vulkan\DescriptorManager.cpp" />
+    <ClCompile Include="src\Maiden\Asset\AssetRegistry.cpp" />
+    <ClCompile Include="src\Maiden\Asset\AssetSystem.cpp" />
+    <ClCompile Include="src\Maiden\Project\Project.cpp" />
     <ClCompile Include="maidenpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -299,7 +304,6 @@
     <ClCompile Include="src\Maiden\Interfaces\InterfaceManager.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Buffer.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Camera.cpp" />
-    <ClCompile Include="src\Maiden\Rendering\DescriptorAllocator.cpp" />
     <ClCompile Include="src\Maiden\Rendering\DescriptorSetLayout.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Image.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Pipeline.cpp" />

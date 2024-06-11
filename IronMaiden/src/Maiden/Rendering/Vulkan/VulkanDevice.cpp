@@ -12,16 +12,16 @@ namespace Madam {
 		void* pUserData) {
 		switch (messageSeverity) {
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-				MADAM_CORE_TRACE("validation layer: {0}", pCallbackData->pMessage);
+				MADAM_CORE_VALID_VERBOSE("{0}", pCallbackData->pMessage);
 				break;
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-				MADAM_CORE_INFO("validation layer: {0}", pCallbackData->pMessage);
+				MADAM_CORE_VALID_INFO("{0}", pCallbackData->pMessage);
 				break;
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-				MADAM_CORE_WARN("validation layer: {0}", pCallbackData->pMessage);
+				MADAM_CORE_VALID_WARN("{0}", pCallbackData->pMessage);
 				break;
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-				MADAM_CORE_WARN("validation layer: {0}", pCallbackData->pMessage);
+				MADAM_CORE_VALID_ERROR("{0}", pCallbackData->pMessage);
 				break;
 			default:
 				break;
@@ -57,14 +57,8 @@ namespace Madam {
 		}
 	}
 
-	// class member functions
 	Device::Device(Window& window) : window{window} {
-		//createInstance(); // Intializes Vulkan library, is the connection between our app and vulkan library
-		//setupDebugMessenger(); // Sets up validation layer to check for vulkan errors
-		//createSurface(); // Sets the connection between window and vulkan display results
-		//pickPhysicalDevice(); // Picks GPU which the application will be using
-		//createLogicalDevice(); // Describe what features of our physical device we want to use
-		//createCommandPool(); // Sets up command buffer pool
+
 	}
 
 	Device::~Device() {
@@ -104,9 +98,9 @@ namespace Madam {
 
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pApplicationName = "VulkinBasedEditor";
+		appInfo.pApplicationName = "IronMaidenEditor";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 1, 0);
-		appInfo.pEngineName = "Vulkin Based Engine";
+		appInfo.pEngineName = "Iron Maiden Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 1, 0);
 		appInfo.apiVersion = VK_API_VERSION_1_0;
 
@@ -144,7 +138,7 @@ namespace Madam {
 		if (deviceCount == 0) {
 			throw std::runtime_error("failed to find GPUs with Vulkan support!");
 		}
-		std::cout << "Device count: " << deviceCount << std::endl;
+		MADAM_CORE_INFO(" Device count: " + deviceCount);
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
@@ -160,7 +154,7 @@ namespace Madam {
 		}
 
 		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-		std::cout << "physical device: " << properties.deviceName << std::endl;
+		MADAM_CORE_INFO("Physical device: " + std::string(properties.deviceName));
 	}
 
 	void Device::createLogicalDevice() {
@@ -310,21 +304,24 @@ namespace Madam {
 		std::vector<VkExtensionProperties> extensions(extensionCount);
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-		std::cout << "available extensions:" << std::endl;
+		std::stringstream msg;
+		msg << "available extensions:\n";
 		std::unordered_set<std::string> available;
 		for (const auto& extension : extensions) {
-			std::cout << "\t" << extension.extensionName << std::endl;
+			msg << "\t" << extension.extensionName << "\n";
 			available.insert(extension.extensionName);
 		}
-
-		std::cout << "required extensions:" << std::endl;
+		MADAM_CORE_INFO("{0}", msg.str());
+		msg = std::stringstream();
+		msg << "required extensions:" << "\n";
 		auto requiredExtensions = getRequiredExtensions();
 		for (const auto& required : requiredExtensions) {
-			std::cout << "\t" << required << std::endl;
+			msg << "\t" << required << "\n";
 			if (available.find(required) == available.end()) {
 				throw std::runtime_error("Missing required glfw extension");
 			}
 		}
+		MADAM_CORE_INFO("{0}", msg.str());
 	}
 
 	bool Device::checkDeviceExtensionSupport(VkPhysicalDevice device) {

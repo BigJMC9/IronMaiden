@@ -34,7 +34,7 @@ namespace Madam {
 
 	class Device {
 	public:
-#ifdef NDEBUG
+#ifndef MADAM_DEBUG
 		const bool enableValidationLayers = false;
 #else
 		const bool enableValidationLayers = true;

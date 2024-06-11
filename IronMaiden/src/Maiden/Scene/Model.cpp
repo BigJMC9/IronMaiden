@@ -1,6 +1,7 @@
 #include "maidenpch.hpp"
 #include "../Core/H_Application.hpp"
 #include "H_Model.hpp"
+#include "../Project/H_Project.h"
 
 #include "../Core/H_Utils.hpp"
 
@@ -34,7 +35,7 @@ namespace Madam {
 
 	Scope<Model> Model::createModelFromFile(Device& device, const std::string& rawFilePath) {
 		Builder builder{};
-		builder.fileStr = Application::Get().getConfig().internals + rawFilePath;
+		builder.fileStr = Project::Get().getProjectDirectory().string() + "\\Assets\\" + rawFilePath;
 		builder.loadModel(rawFilePath);
 		return std::make_unique<Model>(device, builder);
 	}
@@ -155,7 +156,7 @@ namespace Madam {
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
 		std::string warn, err;
-		std::string filePath = Application::Get().getConfig().projectFolder + Application::Get().getConfig().internals + rawFilePath;
+		std::string filePath = Project::Get().getProjectDirectory().string() + "\\Assets\\" + rawFilePath;
 
 		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filePath.c_str())) {
 			throw std::runtime_error(warn + err);

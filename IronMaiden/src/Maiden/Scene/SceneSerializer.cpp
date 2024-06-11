@@ -3,6 +3,7 @@
 #include "H_Scene.hpp"
 #include "H_Entity.hpp"
 #include "../Core/H_Application.hpp"
+#include "../Project/H_Project.h"
 //#include "H_components.hpp"
 
 //libs
@@ -363,7 +364,7 @@ namespace Madam {
 
 		std::string filePath = "";
 		if (!isFullPath) {
-			filePath = Application::Get().getConfig().projectFolder + Application::Get().getConfig().internals + rawfilePath;
+			filePath = Project::Get().getProjectDirectory().string() + "\\Assets\\" + rawfilePath;
 		}
 		else {
 			filePath = rawfilePath;
@@ -388,7 +389,7 @@ namespace Madam {
 
 		std::string filePath = "";
 		if (!isFullPath) {
-			filePath = Application::Get().getConfig().internals + rawFilePath;
+			filePath = Project::Get().getProjectDirectory().string() + "\\Assets\\" + rawFilePath;
 		}
 		else {
 			filePath = rawFilePath;
@@ -449,7 +450,7 @@ namespace Madam {
 					Material& material = deserializedEntity.AddComponent<Material>();
 					Shader shader = materialNode["Shader"].as<Shader>();
 					material.shader = std::make_shared<Shader>(shader);
-					std::string prefix = Application::Get().getConfig().projectFolder + Application::Get().getConfig().internals;
+					std::string prefix = Project::Get().getProjectDirectory().string() + "\\Assets\\";
 					std::string path = prefix + materialNode["Diffuse"].as<std::string>();
 					material.diffuseMap = Texture::createTextureFromFile(device, path);
 					path = prefix + materialNode["Normal"].as<std::string>();

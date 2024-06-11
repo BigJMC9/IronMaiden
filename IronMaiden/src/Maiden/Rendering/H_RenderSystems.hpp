@@ -48,6 +48,7 @@ namespace Madam {
 
             Scope<Pipeline> pipeline;
             VkPipelineLayout pipelineLayout;
+
 		};
 
         class MADAM_API GridRenderLayer : public RenderLayer {

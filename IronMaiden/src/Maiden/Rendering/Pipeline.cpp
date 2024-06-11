@@ -1,14 +1,15 @@
 #include "maidenpch.hpp"
 #include "H_Pipeline.hpp"
 #include "../Core/H_Application.hpp"
-
 #include "../Scene/H_Model.hpp"
+#include "../Project/H_Project.h"
+#include "../Asset/AssetUtils.h"
 
 namespace Madam {
 	//In future seperate the Pipeline and config part
 	Pipeline::Pipeline(Device& device, const std::string& rawVertFilepath, const std::string& rawFragFilepath, const PipelineConfigInfo& configInfo) : device{ device } {
-		std::string vertFilepath = Application::Get().getConfig().internals + rawVertFilepath;
-		std::string fragFilepath = Application::Get().getConfig().internals + rawFragFilepath;
+		std::string vertFilepath = Project::Get().getResourcesDirectory().string() + "\\" + rawVertFilepath;
+		std::string fragFilepath = Project::Get().getResourcesDirectory().string() + "\\" + rawFragFilepath;
 		createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
 	}
 

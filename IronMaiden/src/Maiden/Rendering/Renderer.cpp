@@ -49,11 +49,12 @@ namespace Madam {
 		//Recreate swapchain if window is resized
 		void Renderer::recreateSwapChain() 
 		{
+			hasSwapChainRecreated = true;
 			MADAM_CORE_INFO("Recreating SwapChain");
 			auto extent = window.getExtent();
 			while (extent.width == 0 || extent.height == 0) 
 			{
-				extent = window.getExtent();
+				auto extent = window.getExtent();
 				glfwWaitEvents();
 			}
 			vkDeviceWaitIdle(device.device());
@@ -72,11 +73,16 @@ namespace Madam {
 					MADAM_CORE_ERROR("Swap chain image(or depth) format has changed!");
 				}
 
+				WindowData windowData;
+				windowData.width = window.getWidth();
+				windowData.height = window.getHeight();
+				windowData.windowName = window.getName();
+				window.resetWindowResizedFlag();
 				//temporary, update this
 				bool isRecreate = false;
 				for (size_t i = 0; i < frames.size(); i++)
 				{
-					if (frames[i].width < swapChain->getSwapChainExtent().width || frames[i].height < swapChain->getSwapChainExtent().height) 
+					if (frames[i].width != swapChain->getSwapChainExtent().width || frames[i].height != swapChain->getSwapChainExtent().height) 
 					{
 						isRecreate = true;
 						break;
@@ -98,6 +104,8 @@ namespace Madam {
 					frames.resize(swapChain->imageCount());
 					createMainRenderPass();
 				}
+				Events::WindowResizeEvent e(windowData);
+				Events::EventSystem::Get().PushEvent(&e, true);
 			}
 		}
 
@@ -212,6 +220,11 @@ namespace Madam {
 			viewport.y = 0.0f;
 			viewport.width = swapChain->getSwapChainExtent().width;
 			viewport.height = swapChain->getSwapChainExtent().height;
+			if (hasSwapChainRecreated)
+			{
+				MADAM_CORE_INFO("Viewport Width: {0}, Height: {1}", viewport.width, viewport.height);
+				hasSwapChainRecreated = false;
+			}
 			viewport.minDepth = 0.0f;
 			viewport.maxDepth = 1.0f;
 			VkExtent2D extent = { viewportWidth, viewportHeight };
