@@ -6,6 +6,7 @@
 #include "../Scene/H_SceneSerializer.hpp"
 #include "../Rendering/H_Pipeline.hpp"
 #include "../Project/H_Project.h"
+#include "../Asset/H_AssetSystem.h"
 #include <cstring>
 
 using namespace Madam::Platform;
@@ -705,16 +706,100 @@ namespace Madam::UI {
 			}
 		}
 		ImGui::End();
-		
+
+		if (ImGui::Begin("Inspector")) {
+			if (selectedAsset) {
+				DrawAssetInfo(selectedAsset);
+			}
+			else {
+				ImGui::Text("No asset selected");
+			}
+		}
+		ImGui::End();
 	}
 
 	void GUI::Project() {
-		if (ImGui::Begin("FileSystem")) {
+		std::filesystem::path projectPath = Project::Get().getProjectDirectory();
+		std::filesystem::path assetPath = projectPath / curDir;
+		std::filesystem::path activeDir = curDir;
+		if (ImGui::Begin("FileSystem", nullptr, ImGuiWindowFlags_MenuBar)) {
+			ImGui::PushStyleColor(ImGuiCol_Button, RGBCon(27, 22, 31));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, RGBCon(27, 22, 31));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, RGBCon(27, 22, 43));
+			if (ImGui::BeginMenuBar())
+			{
+				std::filesystem::path tempDir;
+				bool arrow = false;
+				for (const auto& partDir : activeDir)
+				{
+					tempDir /= partDir;
+					if (arrow)
+					{
+						ImGui::SameLine();
+						ImGui::Text(" > ");
+						ImGui::SameLine();
+					}
+					else
+					{
+						arrow = true;
+					}
+					
+					if (ImGui::Button(partDir.filename().string().c_str()))
+					{
+						curDir = tempDir;
+					}
+					
+				}
 
-			
+				ImGui::EndMenuBar();
+			}
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			if ((projectPath / std::filesystem::u8path("Assets")) != assetPath)
+			{
+				if (ImGui::Button("<-Back"))
+				{
+					curDir = curDir.parent_path();
+				}
+			}
+			for (const auto& entry : std::filesystem::directory_iterator(assetPath))
+			{
+				if (entry.is_regular_file())
+				{
+					const AssetMetadata* metadata = &Project::Get().getAssetManager().GetMetadata(entry.path());
+
+					if (!metadata->isValid())
+					{
+						Project::Get().getAssetManager().appendMetaData(entry.path());
+						metadata = &Project::Get().getAssetManager().GetMetadata(entry.path());
+						if (metadata->isValid())
+						{
+							MADAM_CORE_INFO("Metadata: " + entry.path().string() + ", is valid!");
+						}
+						else
+						{
+							MADAM_CORE_ERROR("Metadata: " + entry.path().string() + ", still is not valid!");
+						}
+					}
+					else
+					{
+						if (ImGui::Button(entry.path().filename().string().c_str()))
+						{
+							selectedAsset = Project::Get().getAssetManager().GetAsset(Project::Get().getAssetManager().GetMetadata(entry.path()).uuid);
+						}
+					}
+				}
+				else if (entry.is_directory())
+				{
+					if (ImGui::Button(entry.path().filename().string().c_str()))
+					{
+						curDir /= std::filesystem::u8path(entry.path().filename().string());
+					}
+				}
+			}
 		}
 		ImGui::End();
-		
 	}
 
 	void GUI::Console() {
@@ -789,7 +874,7 @@ namespace Madam::UI {
 					else {
 						return false;
 					}
-					};
+				};
 
 				bool isUpHit = false;
 				bool isDownHit = false;
@@ -1117,6 +1202,34 @@ namespace Madam::UI {
 				entity.RemoveComponent<Material>();
 			}
 		}
+	}
+
+	void GUI::DrawAssetInfo(Ref<Asset>& asset)
+	{
+		if (asset->GetAssetType() == AssetType::TEXTURE)
+		{
+			Ref<Texture> texture = std::dynamic_pointer_cast<Texture>(asset);
+			
+			auto format = texture->GetFormat();
+			if (format == Rendering::Image::Format::RGBA_SRGB)
+			{
+				isSRGB = true;
+			}
+			else 
+			{
+				isSRGB = false;
+			}
+			if (ImGui::Checkbox("SRGB", &isSRGB))
+			{
+
+			}
+			std::string text = "Size: " + std::to_string(texture->GetWidth()) + " x " + std::to_string(texture->GetHeight());
+			ImGui::Text(text.c_str());
+			text = "Depth: " + std::to_string(texture->GetDepth());
+			ImGui::Text(text.c_str());
+		}
+
+		MADAM_CORE_INFO("Asset Type: " + assetTypeToString(asset->GetAssetType()));
 	}
 
 	void GUI::DrawVec3(const std::string& label, glm::vec3& values, float resetValue, float columnWidth) {

@@ -2,6 +2,7 @@
 
 #include "maidenpch.hpp"
 #include "H_Logger.hpp"
+#define VKB_VALIDATION_LAYERS
 #define GLFW_INCLUDE_VULKAN
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>

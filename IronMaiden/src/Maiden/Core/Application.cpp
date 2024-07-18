@@ -244,7 +244,7 @@ namespace Madam {
 				std::string value = line.substr(line.find(':') + 2);
 				if (key == "LastProject")
 				{
-					if (Project::Get().loadProject(std::filesystem::u8path(value))) 
+					if (Project::loadProject(std::filesystem::u8path(value))) 
 					{
 						config.windowName += " - " + Project::Get().getProjectInfo().projectName;
 					}
@@ -255,7 +255,7 @@ namespace Madam {
 						projConfig.projectName = "NewProject";
 						projConfig.projectVersion = config.version;
 						projConfig.projectsDirectory = config.projectsDirectory;
-						Project::Get().newProject(projConfig);
+						Project::newProject(projConfig);
 					}
 				}
 				else if (key == "WindowWidth")
@@ -278,7 +278,7 @@ namespace Madam {
 			projConfig.projectName = "NewProject";
 			projConfig.projectVersion = config.version;
 			projConfig.projectsDirectory = config.projectsDirectory;
-			Project::Get().newProject(projConfig);
+			Project::newProject(projConfig);
 		}
 	}
 
@@ -296,7 +296,7 @@ namespace Madam {
 		{
 			MADAM_CORE_ERROR("Failed to open session.ini");
 		}
-		Project::Get().saveProject();
+		Project::saveProject();
 	}
 
 	void Application::quit() {

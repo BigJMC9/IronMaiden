@@ -73,10 +73,10 @@ namespace Madam {
 		Entity& obj = Application::Get().getScene().CreateEntity();
 		obj.GetComponent<GameObject>().name = "Editor Camera";
 		obj.GetComponent<Transform>().translation.z = -2.5f;
-		obj.AddComponent<MaidenInternal>().name = "Editor Camera";
+		//obj.AddComponent<MaidenInternal>().name = "Editor Camera";
 		obj.AddComponent<Camera>(cameraData);
 		viewerObject = Entity(obj);
-		viewerObject.GetComponent<Camera>().cameraHandle->setViewDirection(glm::vec3(0.f, 2.0f, 0.f), glm::vec3(0.f, 0.f, 0.f));
+		viewerObject.GetComponent<Camera>().cameraHandle->setViewDirection(obj.GetComponent<Transform>().translation, glm::vec3(0.f, 0.f, 0.f));
 		viewerObject.GetComponent<Camera>().cameraHandle->setMain();
 		if (viewerObject.GetComponent<Camera>().cameraHandle->isMain()) {
 			MADAM_INFO("Camera is main camera");

@@ -297,10 +297,10 @@ namespace Madam {
 
 			Material& material = entity.GetComponent<Material>();
 			out << YAML::Key << "Shader" << YAML::Value << material.shader;
-			out << YAML::Key << "Diffuse" << YAML::Value << material.diffuseMap->getFile();
-			out << YAML::Key << "Normal" << YAML::Value << material.normalMap->getFile();
-			out << YAML::Key << "AO" << YAML::Value << material.ambientOcclusionMap->getFile();
-			out << YAML::Key << "Gloss" << YAML::Value << material.glossMap->getFile();
+			out << YAML::Key << "Diffuse" << YAML::Value << material.diffuseMap->GetFilepath().string();
+			out << YAML::Key << "Normal" << YAML::Value << material.normalMap->GetFilepath().string();
+			out << YAML::Key << "AO" << YAML::Value << material.ambientOcclusionMap->GetFilepath().string();
+			out << YAML::Key << "Gloss" << YAML::Value << material.glossMap->GetFilepath().string();
 			out << YAML::EndMap;
 		}
 
@@ -450,15 +450,17 @@ namespace Madam {
 					Material& material = deserializedEntity.AddComponent<Material>();
 					Shader shader = materialNode["Shader"].as<Shader>();
 					material.shader = std::make_shared<Shader>(shader);
-					std::string prefix = Project::Get().getProjectDirectory().string() + "\\Assets\\";
-					std::string path = prefix + materialNode["Diffuse"].as<std::string>();
-					material.diffuseMap = Texture::createTextureFromFile(device, path);
-					path = prefix + materialNode["Normal"].as<std::string>();
-					material.normalMap = Texture::createTextureFromFile(device, path);
-					path = prefix + materialNode["AO"].as<std::string>();
-					material.ambientOcclusionMap = Texture::createTextureFromFile(device, path);
-					path = prefix + materialNode["Gloss"].as<std::string>();
-					material.glossMap = Texture::createTextureFromFile(device, path);
+					std::filesystem::path prefix = Project::Get().getProjectDirectory();
+					prefix /= "Assets";
+					std::filesystem::path path = prefix / materialNode["Diffuse"].as<std::string>();
+					TextureData textureData;
+					material.diffuseMap = Texture::Create(textureData, path);
+					path = prefix / materialNode["Normal"].as<std::string>();
+					material.normalMap = Texture::Create(textureData, path);
+					path = prefix / materialNode["AO"].as<std::string>();
+					material.ambientOcclusionMap = Texture::Create(textureData, path);
+					path = prefix / materialNode["Gloss"].as<std::string>();
+					material.glossMap = Texture::Create(textureData, path);
 				}
 
 				auto pointLightNode = entity["PointLight"];

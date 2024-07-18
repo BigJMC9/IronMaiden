@@ -14,9 +14,7 @@ namespace Madam
 		"Resources",
 		"Logs"
 	};
-	namespace Asset {
-		class AssetManager;
-	}
+	class AssetManager;
 
 	struct ProjectInfo
 	{
@@ -38,6 +36,7 @@ namespace Madam
 	private:
 		Project(std::filesystem::path projectDirectory);
 		~Project();
+		void init();
 	public:
 		static Project& Get();
 		static void clear();
@@ -46,7 +45,7 @@ namespace Madam
 		static bool loadProject(std::filesystem::path projectDirectory);
 		static bool newProject(ProjectConfig config);
 		static bool saveProject();
-		Asset::AssetManager& getAssetManager() const;
+		AssetManager& getAssetManager() const;
 		ProjectInfo getProjectInfo() const;
 		std::filesystem::path getProjectDirectory() const { return projectDirectory; }
 		std::vector<std::filesystem::path> getProjectDirectories() const 
@@ -74,6 +73,6 @@ namespace Madam
 
 		std::filesystem::path projectDirectory;
 		ProjectInfo projectInfo;
-		Asset::AssetManager* assetManager = nullptr;
+		AssetManager* assetManager = nullptr;
 	};
 }

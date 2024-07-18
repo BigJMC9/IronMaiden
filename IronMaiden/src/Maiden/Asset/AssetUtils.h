@@ -1,7 +1,7 @@
 #pragma once
 #include "maidenpch.hpp"
 
-namespace Madam::Asset
+namespace Madam
 {
 	const std::string assets = "Assets";
 	const std::string resource = "Resources";

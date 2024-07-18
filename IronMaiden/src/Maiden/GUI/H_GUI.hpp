@@ -26,6 +26,7 @@ namespace Madam {
 	class DescriptorSetLayout;
 	class Entity;
 	class Pipeline;
+	class Asset;
 	namespace Rendering{
 		class RenderStack;
 		class RenderLayer;
@@ -86,6 +87,7 @@ namespace Madam::UI {
 		void CreateViewportPipeline();
 		void DrawEntityNode(Entity entity);
 		void DrawEntityComponents(Entity entity);
+		void DrawAssetInfo(Ref<Asset>& asset);
 		void DrawPipelineSettings(const Ref<Rendering::RenderLayer> pipeline, int index);
 
 		ImGui_ImplVulkan_InitInfo* init_info;
@@ -93,6 +95,10 @@ namespace Madam::UI {
 		
 		float uiTime = 0.0f;
 		int ImGuizmoType = -1;
+
+		std::filesystem::path curDir = std::filesystem::u8path("Assets");
+		Ref<Asset> selectedAsset = nullptr;
+		bool isSRGB = false;
 
 		Ref<Entity> selectedEntity = nullptr;
 		Ref<Entity> pendingEntityDeletion;

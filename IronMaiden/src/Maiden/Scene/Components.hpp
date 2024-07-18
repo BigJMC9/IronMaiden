@@ -3,7 +3,7 @@
 #include "maidenpch.hpp"
 #include "../Core/H_Utils.hpp"
 #include "H_Model.hpp"
-#include "H_Texture.hpp"
+#include "../Rendering/H_Texture.h"
 #include "ScriptableEntity.hpp"
 #include "../Rendering/H_Camera.hpp"
 

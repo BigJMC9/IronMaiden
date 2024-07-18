@@ -1,5 +1,6 @@
 #include "maidenpch.hpp"
 #include "H_RenderSystems.hpp"
+#include "../Core/H_Application.hpp"
 
 //May need overhaul since a pipeline may need to be created for each shader
 //Each shader needs a pipeline. Shader variants can use the same pipeline but ubershader has to be used which can cause a performance hit to the GPU.
@@ -115,20 +116,23 @@ namespace Madam {
 		}
 
 		void GridRenderLayer::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
-			/*VkPushConstantRange pushConstantRange{};
+			VkPushConstantRange pushConstantRange{};
 			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 			pushConstantRange.offset = 0;
-			pushConstantRange.size = 0;*/
+			pushConstantRange.size = sizeof(GridPushConstants);
 
 			//Change for different layout
-			std::vector<VkDescriptorSetLayout> descriptorSetLayout{ globalSetLayout };
+			std::vector<VkDescriptorSetLayout> descriptorSetLayout
+			{
+				globalSetLayout
+			};
 
 			VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayout.size());
 			pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
-			pipelineLayoutInfo.pushConstantRangeCount = 0;
-			pipelineLayoutInfo.pPushConstantRanges = nullptr;
+			pipelineLayoutInfo.pushConstantRangeCount = 1;
+			pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 			if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 				throw std::runtime_error("Failed to create pipeline layout!");
 			}
@@ -170,15 +174,130 @@ namespace Madam {
 				0,
 				nullptr);
 
-			/*vkCmdPushConstants(
+			GridPushConstants push{};
+			push.nearPlane = CameraHandle::getMain().getCameraData().perspective.near;
+			push.farPlane = CameraHandle::getMain().getCameraData().perspective.far;
+			vkCmdPushConstants(
 				frameInfo.commandBuffer,
 				pipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0,
-				0,
-				nullptr);*/
+				sizeof(GridPushConstants),
+				&push);
 			vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
 			isFirstFrame = false;
+		}
+
+		/*
+		------------------Skybox Render System------------------
+		*/
+
+		SkyboxRenderLayer::SkyboxRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
+			: RenderLayer(device, renderPass, globalSetLayout, _name) {
+			TextureData textureData;
+			noiseTexture = Texture::Create(textureData, std::filesystem::u8path("Internal\\textures\\noise.png"));
+			createPipelineLayout(globalSetLayout);
+			createPipeline(renderPass);
+		}
+
+		SkyboxRenderLayer::~SkyboxRenderLayer() {
+			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+		}
+
+		void SkyboxRenderLayer::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+
+			skyboxBuffer = std::make_unique<Buffer>(
+				device,
+				sizeof(SkyboxBuffer),
+				1,
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+			skyboxBuffer->map();
+
+			skyboxRenderSystemLayout =
+				DescriptorSetLayout::Builder(device)
+				.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
+				.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+				.build();
+
+			//Change for different layout
+			std::vector<VkDescriptorSetLayout> descriptorSetLayout
+			{
+				globalSetLayout,
+				skyboxRenderSystemLayout->getDescriptorSetLayout()
+			};
+
+			VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayout.size());
+			pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
+			pipelineLayoutInfo.pushConstantRangeCount = 0;
+			pipelineLayoutInfo.pPushConstantRanges = nullptr;
+			if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+				throw std::runtime_error("Failed to create pipeline layout!");
+			}
+		}
+
+		void SkyboxRenderLayer::createPipeline(VkRenderPass renderPass) {
+			assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+
+
+			PipelineConfigInfo pipelineConfig{};
+			Pipeline::setDescriptions(pipelineConfig);
+			//Pipeline::enableAlphaBlending(pipelineConfig);
+
+			//pipelineConfig.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+			pipelineConfig.attributeDescriptions.clear();
+			pipelineConfig.bindingDescriptions.clear();
+			pipelineConfig.renderPass = renderPass;
+			pipelineConfig.pipelineLayout = pipelineLayout;
+			pipelineConfig.depthStencilInfo.depthTestEnable = VK_TRUE;
+			pipelineConfig.depthStencilInfo.depthWriteEnable = VK_FALSE;
+			pipelineConfig.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+			pipelineConfig.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
+			pipelineConfig.depthStencilInfo.stencilTestEnable = VK_FALSE;
+			//pipelineConfig.rasterizationInfo.depthClampEnable = VK_TRUE;
+			pipeline = std::make_unique<Pipeline>(device, "shaders/skybox_shader_1.1.vert.spv", "shaders/skybox_shader_1.1.frag.spv", pipelineConfig);
+		}
+
+		void SkyboxRenderLayer::render(FrameInfo& frameInfo) {
+			/*pipeline->bind(frameInfo.commandBuffer);
+
+			vkCmdBindDescriptorSets(
+				frameInfo.commandBuffer,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				pipelineLayout,
+				0,
+				1,
+				&frameInfo.globalDescriptorSet,
+				0,
+				nullptr);
+
+			skyboxBufferData.resolution = glm::vec3(Application::Get().getWindow().getWidth(), Application::Get().getWindow().getHeight(), 1);
+			skyboxBufferData.textureResolution = glm::vec3(234, 119, 1);
+			skyboxBufferData.time = Time::GetTimeSinceStart();
+
+			skyboxBuffer->writeToBuffer(&skyboxBufferData);
+			skyboxBuffer->flush();
+			MADAM_CORE_INFO("Skybox Time: {0}", skyboxBufferData.time);
+			VkDescriptorSet descriptorSet1;
+			DescriptorWriter(*skyboxRenderSystemLayout, frameInfo.frameDescriptorPool)
+				.writeBuffer(0, &skyboxBuffer->descriptorInfo())
+				.writeImage(1, &noiseTexture->getImageInfo())
+				.build(descriptorSet1);
+
+			vkCmdBindDescriptorSets(
+				frameInfo.commandBuffer,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				pipelineLayout,
+				1,  // first set
+				1,  // set count
+				&descriptorSet1,
+				0,
+				nullptr);
+
+			vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
+			isFirstFrame = false;*/
 		}
 
 		/*
@@ -273,16 +392,16 @@ namespace Madam {
 				// writing descriptor set each frame can slow performance
 				// would be more efficient to implement some sort of caching
 				// Edit implement descriptor set pool
-				auto imageInfo = meshRenderer.getMaterial()->diffuseMap->getImageInfo();
-				auto normalInfo = meshRenderer.getMaterial()->normalMap->getImageInfo();
-				auto ambientOcclusionInfo = meshRenderer.getMaterial()->ambientOcclusionMap->getImageInfo();
-				auto glossInfo = meshRenderer.getMaterial()->glossMap->getImageInfo();
+				auto imageInfo = (VkDescriptorImageInfo*)meshRenderer.getMaterial()->diffuseMap->GetDescriptorInfo();
+				auto normalInfo = (VkDescriptorImageInfo*)meshRenderer.getMaterial()->normalMap->GetDescriptorInfo();
+				auto ambientOcclusionInfo = (VkDescriptorImageInfo*)meshRenderer.getMaterial()->ambientOcclusionMap->GetDescriptorInfo();
+				auto glossInfo = (VkDescriptorImageInfo*)meshRenderer.getMaterial()->glossMap->GetDescriptorInfo();
 				VkDescriptorSet descriptorSet1;
 				DescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
-					.writeImage(0, &imageInfo)
-					.writeImage(1, &normalInfo)
-					.writeImage(2, &ambientOcclusionInfo)
-					.writeImage(3, &glossInfo)
+					.writeImage(0, imageInfo)
+					.writeImage(1, normalInfo)
+					.writeImage(2, ambientOcclusionInfo)
+					.writeImage(3, glossInfo)
 					.build(descriptorSet1);
 
 				vkCmdBindDescriptorSets(
@@ -463,6 +582,13 @@ namespace Madam {
 		void RenderStack::initialize(Scope<DescriptorSetLayout>& globalSetLayout) {
 			MADAM_CORE_INFO("Pushing Render Systems in vector");
 			try {
+				renderSystems.push_back(std::make_unique<SkyboxRenderLayer>
+					(
+						device,
+						renderer.getMainRenderPass(),
+						globalSetLayout->getDescriptorSetLayout(),
+						"Skybox Render System"
+					));
 				renderSystems.push_back(std::make_unique<TextureRenderLayer>
 					(
 						device,

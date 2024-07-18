@@ -1,5 +1,6 @@
 #version 450
 #extension GL_KHR_vulkan_glsl : enable
+#extension GL_EXT_debug_printf : enable
 
 struct PointLight {
 	vec4 position; // ignore w
@@ -16,12 +17,18 @@ layout(set = 0, binding = 0) uniform GlobalUno {
 	int numLights;
 } ubo;
 
+layout(push_constant) uniform Push {
+	float nearPlane;
+    float farPlane;
+} push;
+
 layout(location = 0) out float near;
 layout(location = 1) out float far;
 layout(location = 2) out vec3 nearPoint;
 layout(location = 3) out vec3 farPoint;
 layout(location = 4) out mat4 fragView;
 layout(location = 8) out mat4 fragProj;
+
 
 // Grid position are in xy clipped space
 vec3 gridPlane[6] = vec3[](
@@ -40,8 +47,9 @@ void main() {
     vec3 p = gridPlane[gl_VertexIndex].xyz;
     nearPoint = UnprojectPoint(p.x, p.y, 0.0, ubo.view, ubo.invView, ubo.projection).xyz; // unprojecting on the near plane
     farPoint = UnprojectPoint(p.x, p.y, 1.0, ubo.view, ubo.invView, ubo.projection).xyz; // unprojecting on the far plane
-    near = 0.1;
-    far = 100.0;
+    near = push.nearPlane;
+    far = push.farPlane;
+
     fragView = ubo.view;
     fragProj = ubo.projection;
     gl_Position = vec4(p, 1.0); // using directly the clipped coordinates

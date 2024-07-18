@@ -2,25 +2,24 @@
 
 #include "maidenpch.hpp"
 #include "../Rendering/Vulkan/H_VulkanDevice.hpp"
+#include "../Asset/Asset.h"
 
 //libs
 #include <vulkan/vulkan.h>
 
-//We might need to move Texture to a struct or have a TextureData struct and Texture builder class??
+#include <filesystem>
+
 namespace Madam {
-	class Texture {
+
+	class Texture : public Asset {
 	public:
 		Texture(Device& device, const std::string& textureFilepath);
-		Texture(
-			Device& device,
-			VkFormat format,
-			VkExtent3D extent,
-			VkImageUsageFlags usage,
-			VkSampleCountFlagBits sampleCount);
-		~Texture();
+		Texture(Device& device, VkFormat format, VkExtent3D extent, VkImageUsageFlags usage, VkSampleCountFlagBits sampleCount);
 
-		Texture(const Texture&) = delete;
-		Texture& operator=(const Texture&) = delete;
+		~Texture() override;
+
+		//Texture(const Texture&) = delete;
+		//Texture& operator=(const Texture&) = delete;
 
 		VkImageView imageView() const { return mTextureImageView; }
 		VkSampler sampler() const { return mTextureSampler; }
@@ -32,6 +31,8 @@ namespace Madam {
 		VkFormat getFormat() const { return mFormat; }
 		std::string getFile() const { return file; }
 
+		bool loaded() { return true; }
+
 		void updateDescriptor();
 		void transitionLayout(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
 
@@ -39,6 +40,14 @@ namespace Madam {
 			Device& device,
 			const std::string& rawFilePath
 		);
+
+		static Ref<Texture> createTexture(
+			Device& device,
+			const std::string& rawFilePath
+		);
+
+		static AssetType GetStaticType() { return AssetType::TEXTURE; }
+		virtual AssetType GetAssetType() const override { return GetStaticType(); }
 
 	private:
 		void createTextureImage(const std::string& filePath);
@@ -58,6 +67,6 @@ namespace Madam {
 		uint32_t mLayerCount{ 1 };
 		VkExtent3D mExtent{};
 
-		std::string file{ "" };
+		std::string file;
 	};
 }

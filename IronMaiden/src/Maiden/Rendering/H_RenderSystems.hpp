@@ -26,6 +26,17 @@ namespace Madam {
             float radius;
         };
 
+        struct GridPushConstants {
+            float nearPlane;
+            float farPlane;
+        };
+
+        struct SkyboxBuffer {
+            glm::vec3 resolution;
+            float time;
+            glm::vec3 textureResolution;
+        };
+
 
         //Update this!!
 		class MADAM_API RenderLayer {
@@ -63,7 +74,24 @@ namespace Madam {
             void createPipelineLayout(VkDescriptorSetLayout globalSetLayout) override;
             void createPipeline(VkRenderPass renderPass) override;
 
-            Scope<DescriptorSetLayout> renderSystemLayout;
+        };
+
+        class MADAM_API SkyboxRenderLayer : public RenderLayer {
+
+        public:
+            SkyboxRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "Default");
+            ~SkyboxRenderLayer();
+
+            void render(FrameInfo& frameInfo) override;
+
+        protected:
+            void createPipelineLayout(VkDescriptorSetLayout globalSetLayout) override;
+            void createPipeline(VkRenderPass renderPass) override;
+
+            Scope<DescriptorSetLayout> skyboxRenderSystemLayout;
+            Scope<Buffer> skyboxBuffer;
+            Ref<Texture> noiseTexture;
+            SkyboxBuffer skyboxBufferData;
         };
 
         class MADAM_API TextureRenderLayer : public RenderLayer {

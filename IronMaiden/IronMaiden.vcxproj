@@ -139,7 +139,7 @@
       <PrecompiledHeaderFile>maidenpch.hpp</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;MADAM_DEBUG;MADAM_DYNAMIC_LINK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;vendors\shaderc\libshaderc_util\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -239,6 +239,9 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Maiden\Asset\Asset.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetSerializer.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetImporter.h" />
     <ClInclude Include="src\Maiden\Asset\H_AssetRegistry.h" />
     <ClInclude Include="src\Maiden\Asset\H_AssetSystem.h" />
     <ClInclude Include="src\Maiden\Asset\AssetUtils.h" />
@@ -247,6 +250,15 @@
     <ClInclude Include="maidenpch.hpp" />
     <ClInclude Include="src\Maiden.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Application.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_Material.h" />
+    <ClInclude Include="src\Maiden\Rendering\H_RIResource.h" />
+    <ClInclude Include="src\Maiden\Rendering\H_Shader.h" />
+    <ClInclude Include="src\Maiden\Rendering\H_Texture.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_DescriptorManager.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanImage.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMaterial.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShader.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanTexture.h" />
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanDevice.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Time.hpp" />
@@ -279,18 +291,23 @@
     <ClInclude Include="src\Maiden\Scene\H_Model.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_Scene.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_SceneSerializer.hpp" />
-    <ClInclude Include="src\Maiden\Scene\H_Texture.hpp" />
     <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp" />
     <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Maiden\Asset\AssetImporter.cpp" />
     <ClCompile Include="src\Maiden\Asset\AssetRegistry.cpp" />
+    <ClCompile Include="src\Maiden\Asset\AssetSerializer.cpp" />
     <ClCompile Include="src\Maiden\Asset\AssetSystem.cpp" />
     <ClCompile Include="src\Maiden\Project\Project.cpp" />
     <ClCompile Include="maidenpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Application.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Material.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Shader.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Texture.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\DescriptorManager.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp" />
     <ClCompile Include="src\Maiden\Core\Logger.cpp" />
     <ClCompile Include="src\Maiden\Core\Time.cpp" />
@@ -311,11 +328,14 @@
     <ClCompile Include="src\Maiden\Rendering\RenderUtils.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Renderer.cpp" />
     <ClCompile Include="src\Maiden\Rendering\SwapChain.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanImage.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMaterial.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanShader.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanTexture.cpp" />
     <ClCompile Include="src\Maiden\Scene\Entity.cpp" />
     <ClCompile Include="src\Maiden\Scene\Model.cpp" />
     <ClCompile Include="src\Maiden\Scene\Scene.cpp" />
     <ClCompile Include="src\Maiden\Scene\SceneSerializer.cpp" />
-    <ClCompile Include="src\Maiden\Scene\Texture.cpp" />
     <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

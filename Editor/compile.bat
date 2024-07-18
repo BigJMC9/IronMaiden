@@ -9,4 +9,8 @@ glslc.exe "%current_dir%\Internal\shaders\texture_shader.vert" -o "%current_dir%
 glslc.exe "%current_dir%\Internal\shaders\texture_shader.frag" -o "%current_dir%\Internal\shaders\texture_shader.frag.spv"
 glslc.exe "%current_dir%\Internal\shaders\grid_shader.vert" -o "%current_dir%\Internal\shaders\grid_shader.vert.spv"
 glslc.exe "%current_dir%\Internal\shaders\grid_shader.frag" -o "%current_dir%\Internal\shaders\grid_shader.frag.spv"
+glslc.exe "%current_dir%\Internal\shaders\skybox_shader.vert" -o "%current_dir%\Internal\shaders\skybox_shader.vert.spv"
+glslc.exe "%current_dir%\Internal\shaders\skybox_shader.frag" -o "%current_dir%\Internal\shaders\skybox_shader.frag.spv"
+glslc.exe "%current_dir%\Internal\shaders\skybox_shader_1.1.vert" -o "%current_dir%\Internal\shaders\skybox_shader_1.1.vert.spv"
+glslc.exe "%current_dir%\Internal\shaders\skybox_shader_1.1.frag" -o "%current_dir%\Internal\shaders\skybox_shader_1.1.frag.spv"
 pause

@@ -6,17 +6,19 @@
 
 #include <filesystem>
 
-namespace Madam::Asset
+namespace Madam
 {
 	class AssetRegistry
 	{
 	public:
 		AssetMetadata& operator[](const UUID uuid);
+		//AssetMetadata& operator[](const std::filesystem::path path);
 		AssetMetadata& Get(const UUID uuid);
 		const AssetMetadata& Get(const UUID uuid) const;
 
 		size_t count() const;
 		bool contains(const UUID uuid) const;
+		//bool contains(const std::filesystem::path path) const;
 		size_t remove(const UUID uuid);
 		void clear();
 
@@ -30,5 +32,8 @@ namespace Madam::Asset
 
 	private:
 		std::unordered_map<UUID, AssetMetadata> assetRegistry;
+
+		// How would I do this?
+		//std::unordered_map<std::filesystem::path, UUID> assetFileMap;
 	};
 }

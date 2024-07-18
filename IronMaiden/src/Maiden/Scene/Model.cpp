@@ -158,6 +158,7 @@ namespace Madam {
 		std::string warn, err;
 		std::string filePath = Project::Get().getProjectDirectory().string() + "\\Assets\\" + rawFilePath;
 
+		//when loading unsuccessful engine crashes, ensure that when loading if it is unsuccessful then bail out.
 		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filePath.c_str())) {
 			throw std::runtime_error(warn + err);
 		}

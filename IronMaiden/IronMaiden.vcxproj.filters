@@ -142,9 +142,6 @@
     <ClInclude Include="src\Maiden\Scene\H_SceneSerializer.hpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Scene\H_Texture.hpp">
-      <Filter>src\Maiden\Scene</Filter>
-    </ClInclude>
     <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClInclude>
@@ -156,6 +153,18 @@
     <ClInclude Include="src\Maiden\Asset\AssetUtils.h" />
     <ClInclude Include="src\Maiden\Asset\H_AssetRegistry.h" />
     <ClInclude Include="src\Maiden\Asset\H_Metadata.h" />
+    <ClInclude Include="src\Maiden\Asset\Asset.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetImporter.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetSerializer.h" />
+    <ClInclude Include="src\Maiden\Rendering\H_Texture.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanTexture.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanImage.h" />
+    <ClInclude Include="src\Maiden\Rendering\H_RIResource.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_DescriptorManager.h" />
+    <ClInclude Include="src\Maiden\Rendering\H_Material.h" />
+    <ClInclude Include="src\Maiden\Rendering\H_Shader.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShader.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMaterial.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
@@ -234,14 +243,21 @@
     <ClCompile Include="src\Maiden\Scene\SceneSerializer.cpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Scene\Texture.cpp">
-      <Filter>src\Maiden\Scene</Filter>
-    </ClCompile>
     <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">
       <Filter>vendors\ImGuizmo</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Project\Project.cpp" />
     <ClCompile Include="src\Maiden\Asset\AssetRegistry.cpp" />
     <ClCompile Include="src\Maiden\Asset\AssetSystem.cpp" />
+    <ClCompile Include="src\Maiden\Asset\AssetImporter.cpp" />
+    <ClCompile Include="src\Maiden\Asset\AssetSerializer.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanTexture.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanImage.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Texture.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\DescriptorManager.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Shader.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanShader.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Material.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMaterial.cpp" />
   </ItemGroup>
 </Project>

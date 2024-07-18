@@ -1,5 +1,6 @@
 #include "maidenpch.hpp"
 #include "H_AssetRegistry.h"
+#include "../Core/H_Logger.hpp"
 #include <fstream>
 
 #ifndef MADAM_DYNAMIC_LINK
@@ -28,22 +29,22 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<Madam::Asset::AssetMetadata>
+	struct convert<Madam::AssetMetadata>
 	{
-		static Node encode(const Madam::Asset::AssetMetadata& metadata)
+		static Node encode(const Madam::AssetMetadata& metadata)
 		{
 			Node node;
 			node["UUID"] = metadata.uuid;
-			node["Type"] = Madam::Asset::assetTypeToString(metadata.assetType);
+			node["Type"] = Madam::assetTypeToString(metadata.assetType);
 			node["File"] = metadata.filePath.string();
 			node["IsVirtual"] = metadata.isVirtual;
 			return node;
 		}
 
-		static bool decode(const Node& node, Madam::Asset::AssetMetadata& metadata)
+		static bool decode(const Node& node, Madam::AssetMetadata& metadata)
 		{
 			metadata.uuid = node["UUID"].as<Madam::UUID>();
-			metadata.assetType = Madam::Asset::assetTypeMap[node["Type"].as<std::string>()];
+			metadata.assetType = Madam::assetTypeMap[node["Type"].as<std::string>()];
 			metadata.filePath = std::filesystem::u8path(node["File"].as<std::string>());
 			metadata.isVirtual = node["IsVirtual"].as<bool>();
 			return true;
@@ -51,7 +52,7 @@ namespace YAML {
 	};
 }
 
-namespace Madam::Asset 
+namespace Madam
 {
 	YAML::Emitter& operator<<(YAML::Emitter& out, const AssetMetadata& metaData) {
 		out << YAML::Flow;
@@ -68,6 +69,11 @@ namespace Madam::Asset
 	{
 		return assetRegistry[uuid];
 	}
+
+	/*AssetMetadata& AssetRegistry::operator[](const std::filesystem::path path)
+	{
+		return assetRegistry[assetFileMap[path]];
+	}*/
 
 	AssetMetadata& AssetRegistry::Get(const UUID uuid)
 	{
@@ -90,6 +96,11 @@ namespace Madam::Asset
 	{
 		return assetRegistry.find(uuid) != assetRegistry.end();
 	}
+
+	/*bool AssetRegistry::contains(const std::filesystem::path path) const
+	{
+		return assetFileMap.find(path) != assetFileMap.end();
+	}*/
 
 	size_t AssetRegistry::remove(const UUID uuid)
 	{
@@ -122,12 +133,12 @@ namespace Madam::Asset
 		YAML::Node node = YAML::Load(file);
 		if (!node["Registry"])
 		{
-			std::cout << "AssetRegistry node does not exist" << std::endl;
+			MADAM_CORE_ERROR("AssetRegistry node does not exist");
 			return false;
 		}
-		else if (node["Registry"].IsDefined())
+		else if (node["Registry"].IsNull())
 		{
-			std::cout << "AssetRegistry node is null" << std::endl;
+			MADAM_CORE_ERROR("AssetRegistry node is null");
 			return false;
 		}
 		else
@@ -136,16 +147,17 @@ namespace Madam::Asset
 			{
 				if (!metadata)
 				{
-					std::cout << "AssetMetadata node does not exist" << std::endl;
+					MADAM_CORE_ERROR("AssetMetadata node does not exist");
 				}
 				else if (metadata.IsNull())
 				{
-					std::cout << "AssetMetadata node is null" << std::endl;
+					MADAM_CORE_ERROR("AssetMetadata node is null");
 				}
 				else
 				{
 					AssetMetadata assetMetadata = metadata.as<AssetMetadata>();
 					assetRegistry[assetMetadata.uuid] = assetMetadata;
+					//assetFileMap[assetMetadata.filePath] = assetMetadata.uuid;
 				}
 			}
 		}

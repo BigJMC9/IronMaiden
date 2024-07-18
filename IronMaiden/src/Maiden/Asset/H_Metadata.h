@@ -3,7 +3,7 @@
 #include "AssetUtils.h"
 #include <filesystem>
 
-namespace Madam::Asset
+namespace Madam
 {
 	struct AssetMetadata
 	{
@@ -13,5 +13,6 @@ namespace Madam::Asset
 
 		bool isLoaded = false;
 		bool isVirtual = false; // ?? maybe
+		bool isValid() const { return std::string(uuid) != ""; }
 	};
 }

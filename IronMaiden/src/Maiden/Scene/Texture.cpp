@@ -112,6 +112,12 @@ namespace Madam {
         return std::make_unique<Texture>(device, filePath);
     }
 
+    Ref<Texture> Texture::createTexture(
+        Device& device, const std::string& rawFilePath) {
+        std::string filePath = rawFilePath;
+        return CreateRef<Texture>(device, filePath);
+    }
+
     void Texture::updateDescriptor() {
         mDescriptor.sampler = mTextureSampler;
         mDescriptor.imageView = mTextureImageView;

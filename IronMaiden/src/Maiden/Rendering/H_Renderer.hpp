@@ -10,7 +10,7 @@
 namespace Madam {
 	namespace Rendering {
 
-		struct ImageData {
+		struct ImageInfo {
 			std::string debugName;
 			VkImageView imageView;
 			VkImage image;
@@ -18,7 +18,7 @@ namespace Madam {
 			VkFramebuffer frameBuffer;
 		};
 		struct Frame {
-			std::vector<ImageData> images;
+			std::vector<ImageInfo> images;
 			uint32_t width, height;
 		};
 		struct CommandBufferGroup {
@@ -169,7 +169,6 @@ namespace Madam {
 			//std::vector<ImageView> imageViews;
 
 			uint32_t viewportWidth = 800, viewportHeight = 450;
-
 		};
 	}
 }

@@ -42,14 +42,19 @@ namespace Madam
 		confFile.close();
 
 		clear();
-		assetManager = new Asset::AssetManager(projectDirectory);
 		instanceFlag = true;
 		instance = this;
+		init();
 	}
 
 	Project::~Project()
 	{
 		delete assetManager;
+	}
+
+	void Project::init()
+	{
+		assetManager = new AssetManager(projectDirectory);
 	}
 
 	Project& Project::Get()
@@ -176,7 +181,7 @@ namespace Madam
 		confFile << "AssetPackLocation: " << assetMetaPath.string() << std::endl;
 		confFile.close();
 
-		Project::Get().assetManager->updateMetaData();
+		Project::Get().assetManager->saveMetaData();
 		return true;
 	}
 
@@ -185,7 +190,7 @@ namespace Madam
 		return projectInfo;
 	}
 
-	Asset::AssetManager& Project::getAssetManager() const
+	AssetManager& Project::getAssetManager() const
 	{
 		return *assetManager;
 	}

@@ -358,7 +358,7 @@ namespace Madam {
 				viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 				viewInfo.components.a = VK_COMPONENT_SWIZZLE_ONE;
 
-				ImageData imageData;
+				ImageInfo imageData;
 				imageData.image = image;
 				imageData.imageMemory = imageMemory;
 
@@ -404,7 +404,7 @@ namespace Madam {
 				depthViewInfo.subresourceRange.baseArrayLayer = 0;
 				depthViewInfo.subresourceRange.layerCount = 1;
 
-				ImageData depthImageData;
+				ImageInfo depthImageData;
 				depthImageData.image = depthImage;
 				depthImageData.imageMemory = depthImageMemory;
 
