@@ -32,6 +32,10 @@ namespace Madam
 		virtual uint32_t GetDepth() const override { return data.depth; }
 		virtual glm::uvec2 GetSize() const override { return { data.width, data.height }; }
 		virtual ResourceDescriptorInfo GetDescriptorInfo() const override { return (ResourceDescriptorInfo)&imageDescInfo; }
+		
+		VkSampler& GetSampler() { return textureSampler; }
+		VkImage& GetImage() const { return image->GetImage(); }
+		VkImageView& GetImageView() const { return image->GetImageView(); }
 
 		const std::filesystem::path& GetFilepath() const override { return filepath; }
 		uint32_t GetMipLevelCount() const override { return data.mipLevels; }
@@ -46,8 +50,11 @@ namespace Madam
 			case Madam::Rendering::TextureWrap::Repeat:
 				return VK_SAMPLER_ADDRESS_MODE_REPEAT;
 				break;
-			case Madam::Rendering::TextureWrap::Clamp:
+			case Madam::Rendering::TextureWrap::Stretch:
 				return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+				break;
+			case Madam::Rendering::TextureWrap::Clamp:
+				return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 				break;
 			case Madam::Rendering::TextureWrap::Mirror:
 				return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;

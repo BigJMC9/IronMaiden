@@ -4,6 +4,7 @@
 #include "H_Entity.hpp"
 #include "../Core/H_Application.hpp"
 #include "../Project/H_Project.h"
+#include "../Asset/H_AssetSystem.h"
 //#include "H_components.hpp"
 
 //libs
@@ -100,6 +101,23 @@ namespace YAML {
 	};
 
 	template<>
+	struct convert<std::filesystem::path>
+	{
+		static Node encode(const std::filesystem::path& rhs)
+		{
+			Node node;
+			node.push_back(rhs.string());
+			return node;
+		}
+
+		static bool decode(const Node& node, std::filesystem::path& rhs)
+		{
+			rhs = std::filesystem::u8path(node.as<std::string>());
+			return true;
+		}
+	};
+
+	template<>
 	struct convert<Madam::UUID>
 	{
 		static Node encode(const Madam::UUID& uuid)
@@ -117,9 +135,9 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<Ref<Madam::Shader>>
+	struct convert<Ref<Madam::ShaderComponent>>
 	{
-		static Node encode(const Ref<Madam::Shader>& shader)
+		static Node encode(const Ref<Madam::ShaderComponent>& shader)
 		{
 			Node node;
 			node.push_back(shader->vertShaderPath);
@@ -127,7 +145,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, Ref<Madam::Shader>& shader)
+		static bool decode(const Node& node, Ref<Madam::ShaderComponent>& shader)
 		{
 			shader->vertShaderPath = node[0].as<std::string>();
 			shader->fragShaderPath = node[1].as<std::string>();
@@ -136,9 +154,9 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<Madam::Shader>
+	struct convert<Madam::ShaderComponent>
 	{
-		static Node encode(const Madam::Shader& shader)
+		static Node encode(const Madam::ShaderComponent& shader)
 		{
 			Node node;
 			node.push_back(shader.vertShaderPath);
@@ -146,7 +164,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, Madam::Shader& shader)
+		static bool decode(const Node& node, Madam::ShaderComponent& shader)
 		{
 			shader.vertShaderPath = node[0].as<std::string>();
 			shader.fragShaderPath = node[1].as<std::string>();
@@ -224,14 +242,14 @@ namespace Madam {
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const Shader s)
+	YAML::Emitter& operator<<(YAML::Emitter& out, const ShaderComponent s)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << s.vertShaderPath << s.fragShaderPath << YAML::EndSeq;
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const Ref<Shader> s)
+	YAML::Emitter& operator<<(YAML::Emitter& out, const Ref<ShaderComponent> s)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << s->vertShaderPath << s->fragShaderPath << YAML::EndSeq;
@@ -280,32 +298,27 @@ namespace Madam {
 			out << YAML::EndMap;
 		}
 
-		if (entity.HasComponent<MeshFilter>()) {
-			out << YAML::Key << "MeshFilter";
-			out << YAML::BeginMap;
-
-			MeshFilter& meshFilter = entity.GetComponent<MeshFilter>();
-			std::cout << "Debug: " << entity.GetComponent<UniqueIdentifier>().uuid << ", Saving MeshFilter: " << std::endl;
-			out << YAML::Key << "Model" << YAML::Value << meshFilter.model->getFile();
-
-			out << YAML::EndMap;
-		}
-
-		if (entity.HasComponent<Material>()) {
+		if (entity.HasComponent<MaterialComponent>()) {
 			out << YAML::Key << "Material";
 			out << YAML::BeginMap;
 
-			Material& material = entity.GetComponent<Material>();
+			MaterialComponent& material = entity.GetComponent<MaterialComponent>();
 			out << YAML::Key << "Shader" << YAML::Value << material.shader;
-			out << YAML::Key << "Diffuse" << YAML::Value << material.diffuseMap->GetFilepath().string();
-			out << YAML::Key << "Normal" << YAML::Value << material.normalMap->GetFilepath().string();
-			out << YAML::Key << "AO" << YAML::Value << material.ambientOcclusionMap->GetFilepath().string();
-			out << YAML::Key << "Gloss" << YAML::Value << material.glossMap->GetFilepath().string();
+			out << YAML::Key << "Diffuse" << YAML::Value << material.diffuseMap->GetUUID();
+			out << YAML::Key << "Normal" << YAML::Value << material.normalMap->GetUUID();
+			out << YAML::Key << "AO" << YAML::Value << material.ambientOcclusionMap->GetUUID();
+			out << YAML::Key << "Gloss" << YAML::Value << material.glossMap->GetUUID();
 			out << YAML::EndMap;
 		}
 
 		if (entity.HasComponent<MeshRenderer>()) {
-			out << YAML::Key << "MeshRenderer" << YAML::Value << "true";
+			out << YAML::Key << "MeshRenderer";
+			out << YAML::BeginMap;
+
+			MeshRenderer& meshRenderer = entity.GetComponent<MeshRenderer>();
+			out << YAML::Key << "Material" << YAML::Value << "True";
+			out << YAML::Key << "StaticMesh" << YAML::Value << meshRenderer.GetMesh()->GetFilepath().string();
+			out << YAML::EndMap;
 		}
 
 		if (entity.HasComponent<PointLight>()) {
@@ -383,7 +396,7 @@ namespace Madam {
 		std::string fileType = rawFilePath.substr(rawFilePath.size() - defaultFileType.size());
 
 		if (fileType != defaultFileType) {
-			std::cout << "Error loading scene: Parsed scene is wrong file type" << std::endl;
+			MADAM_ERROR("Error loading scene: Parsed scene is wrong file type");
 			return false;
 		}
 
@@ -398,7 +411,7 @@ namespace Madam {
 		std::ifstream file(filePath);
 
 		if (!file.good()) {
-			std::cout << "Error loading scene: Scene does not exist" << std::endl;
+			MADAM_ERROR("Error loading scene: Scene file does not exist");
 			return false;
 		}
 
@@ -436,31 +449,21 @@ namespace Madam {
 					transform.rotation = transformNode["Rotation"].as<glm::vec3>();
 					transform.scale = transformNode["Scale"].as<glm::vec3>();;
 				}
-				
-				auto meshFilterNode = entity["MeshFilter"];
-				if (meshFilterNode) {
-					MeshFilter& meshFilter = deserializedEntity.AddComponent<MeshFilter>();
-					std::string path = meshFilterNode["Model"].as<std::string>();
-					std::cout << "Loading Model: " << path << std::endl;
-					meshFilter.model = Model::createModelFromFile(device, path);
-				}
 
 				auto materialNode = entity["Material"];
 				if (materialNode) {
-					Material& material = deserializedEntity.AddComponent<Material>();
-					Shader shader = materialNode["Shader"].as<Shader>();
-					material.shader = std::make_shared<Shader>(shader);
-					std::filesystem::path prefix = Project::Get().getProjectDirectory();
-					prefix /= "Assets";
-					std::filesystem::path path = prefix / materialNode["Diffuse"].as<std::string>();
+					MaterialComponent& material = deserializedEntity.AddComponent<MaterialComponent>();
+					ShaderComponent shader = materialNode["Shader"].as<ShaderComponent>();
+					material.shader = std::make_shared<ShaderComponent>(shader);
+					UUID uuid = materialNode["Diffuse"].as<UUID>();
 					TextureData textureData;
-					material.diffuseMap = Texture::Create(textureData, path);
-					path = prefix / materialNode["Normal"].as<std::string>();
-					material.normalMap = Texture::Create(textureData, path);
-					path = prefix / materialNode["AO"].as<std::string>();
-					material.ambientOcclusionMap = Texture::Create(textureData, path);
-					path = prefix / materialNode["Gloss"].as<std::string>();
-					material.glossMap = Texture::Create(textureData, path);
+					material.diffuseMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+					uuid = materialNode["Normal"].as<UUID>();
+					material.normalMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+					uuid = materialNode["AO"].as<UUID>();
+					material.ambientOcclusionMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+					uuid = materialNode["Gloss"].as<UUID>();
+					material.glossMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
 				}
 
 				auto pointLightNode = entity["PointLight"];
@@ -473,13 +476,14 @@ namespace Madam {
 
 				auto meshRendererNode = entity["MeshRenderer"];
 				if (meshRendererNode) {
-					std::string isTrue = meshRendererNode.as<std::string>();
-					if (isTrue == "true") {
+					std::string material = meshRendererNode["Material"].as<std::string>();
+					if (material == "true") {
 						MeshRenderer& meshRenderer = deserializedEntity.AddComponent<MeshRenderer>();
-						if (deserializedEntity.HasComponent<Material>()) {
-							deserializedEntity.GetComponent<MeshRenderer>().material = std::make_shared<Material>(deserializedEntity.GetComponent<Material>());
+						if (deserializedEntity.HasComponent<MaterialComponent>()) {
+							deserializedEntity.GetComponent<MeshRenderer>().material = std::make_shared<MaterialComponent>(deserializedEntity.GetComponent<MaterialComponent>());
 						}
-						deserializedEntity.GetComponent<MeshRenderer>().mesh = deserializedEntity.GetComponent<MeshFilter>();
+						std::filesystem::path filepath = meshRendererNode["StaticMesh"].as<std::filesystem::path>();
+						deserializedEntity.GetComponent<MeshRenderer>().mesh = StaticMesh::Create(Project::Get().getProjectDirectory() / std::filesystem::u8path("Assets") / filepath);
 					}
 				}
 

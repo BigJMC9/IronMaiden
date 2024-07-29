@@ -36,7 +36,7 @@ namespace YAML {
 			Node node;
 			node["UUID"] = metadata.uuid;
 			node["Type"] = Madam::assetTypeToString(metadata.assetType);
-			node["File"] = metadata.filePath.string();
+			node["File"] = metadata.filepath.string();
 			node["IsVirtual"] = metadata.isVirtual;
 			return node;
 		}
@@ -45,7 +45,7 @@ namespace YAML {
 		{
 			metadata.uuid = node["UUID"].as<Madam::UUID>();
 			metadata.assetType = Madam::assetTypeMap[node["Type"].as<std::string>()];
-			metadata.filePath = std::filesystem::u8path(node["File"].as<std::string>());
+			metadata.filepath = std::filesystem::u8path(node["File"].as<std::string>());
 			metadata.isVirtual = node["IsVirtual"].as<bool>();
 			return true;
 		}
@@ -59,7 +59,7 @@ namespace Madam
 		out << YAML::BeginMap;
 		out << YAML::Key << "UUID" << YAML::Value << metaData.uuid;
 		out << YAML::Key << "Type" << YAML::Value << assetTypeToString(metaData.assetType);
-		out << YAML::Key << "File" << YAML::Value << metaData.filePath.string();
+		out << YAML::Key << "File" << YAML::Value << metaData.filepath.string();
 		out << YAML::Key << "IsVirtual" << YAML::Value << metaData.isVirtual;
 		out << YAML::EndMap;
 		return out;
@@ -143,7 +143,7 @@ namespace Madam
 		}
 		else
 		{
-			for (const auto& metadata : node)
+			for (const auto& metadata : node["Registry"])
 			{
 				if (!metadata)
 				{
@@ -157,7 +157,6 @@ namespace Madam
 				{
 					AssetMetadata assetMetadata = metadata.as<AssetMetadata>();
 					assetRegistry[assetMetadata.uuid] = assetMetadata;
-					//assetFileMap[assetMetadata.filePath] = assetMetadata.uuid;
 				}
 			}
 		}

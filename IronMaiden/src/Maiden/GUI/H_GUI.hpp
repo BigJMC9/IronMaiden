@@ -3,6 +3,8 @@
 #include "../Interfaces/H_Interface.h"
 #include "../Platform/Platforms.hpp"
 #include "../Events/H_EventSystem.h"
+#include "../Rendering/Vulkan/H_DescriptorManager.h"
+#include "../Rendering/Vulkan/H_VulkanTexture.h"
 
 
 #define IMGUI_ENABLE_DOCKING
@@ -41,6 +43,12 @@ namespace Madam::UI {
 		VkPipelineLayout layout;
 	};
 
+	struct IconInfo
+	{
+		Ref<Texture> texture = nullptr;
+		VkDescriptorSet descriptorSet = nullptr;
+	};
+
 	class GUI : public EngineInterface {
 	public:
 		GUI();
@@ -54,7 +62,8 @@ namespace Madam::UI {
 		void OnResizeEvent(WindowResizeEvent* e);
 		void OnSceneChangeEvent(SceneChangeEvent* e);
 
-		void SetUpEvents();
+		void SetupEvents();
+		void SetupIcons();
 		void Record(VkCommandBuffer commandBuffer);
 
 		void Style(ImGuiIO& io);
@@ -72,9 +81,9 @@ namespace Madam::UI {
 		void Project();
 		void Console();
 		void RenderingSettings();
-		
 
 		static void DrawViewport(const ImDrawList* parentList, const ImDrawCmd* pcmd);
+		//Ref<Asset>& AssetReference(const AssetType filter);
 	private:
 
 		enum WindowStates {
@@ -83,12 +92,16 @@ namespace Madam::UI {
 
 		int windowStates = 0;
 		void DrawVec3(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
+		void DrawViewportOverlays();
 		void DrawViewportGizmoButtons();
-		void CreateViewportPipeline();
 		void DrawEntityNode(Entity entity);
 		void DrawEntityComponents(Entity entity);
 		void DrawAssetInfo(Ref<Asset>& asset);
 		void DrawPipelineSettings(const Ref<Rendering::RenderLayer> pipeline, int index);
+
+		std::string TruncateTextToFit(const std::string& text, float maxWidth);
+
+		void CreateViewportPipeline();
 
 		ImGui_ImplVulkan_InitInfo* init_info;
 		Ref<DescriptorPool> guiPool;
@@ -113,24 +126,20 @@ namespace Madam::UI {
 
 		//Descriptors
 		VkDescriptorSet viewportSet;
-		VkDescriptorSetLayout viewportSetLayout;
 		VkSampler viewportSampler;
-		std::unique_ptr<DescriptorSetLayout> viewportLayout;
 
-		VkDescriptorSet playButtonSet;
-		VkDescriptorSetLayout playButtonSetLayout;
-		VkSampler playButtonSampler;
-		std::unique_ptr<DescriptorSetLayout> playButtonLayout;
+		std::unordered_map<std::string, IconInfo> icons;
+		std::unordered_map<UUID, IconInfo> loadedIconTextures;
 
-		VkDescriptorSet pauseButtonSet;
-		VkDescriptorSetLayout pauseButtonSetLayout;
-		VkSampler pauseButtonSampler;
-		std::unique_ptr<DescriptorSetLayout> pauseButtonLayout;
-
-		VkDescriptorSet stopButtonSet;
-		VkDescriptorSetLayout stopButtonSetLayout;
-		VkSampler stopButtonSampler;
-		std::unique_ptr<DescriptorSetLayout> stopButtonLayout;
+#define ICON_SIZE 5
+		std::filesystem::path iconFilepaths[ICON_SIZE] =
+		{
+			"resources\\icons\\PlayButton.png",
+			"resources\\icons\\PauseButton.png",
+			"resources\\icons\\StopButton.png",
+			"resources\\icons\\Folder.png",
+			"resources\\icons\\File.png"
+		};
 
 		template<typename T, typename U>
 		auto constexpr constPow(T base, U exponent) {
@@ -139,6 +148,6 @@ namespace Madam::UI {
 
 		constexpr float ColToFloat(float rgb) { return rgb / 255.0f; }
 		constexpr ImVec4 RGBCon(float r, float g, float b) { return ImVec4(ColToFloat(r), ColToFloat(g), ColToFloat(b), 1.0f); }
-		
+		bool tempDebug = false;
 	};
 }

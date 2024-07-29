@@ -9,7 +9,7 @@ namespace Madam
 	{
 		UUID uuid = UUID("");
 		AssetType assetType = AssetType::NONE;
-		std::filesystem::path filePath;
+		std::filesystem::path filepath;
 
 		bool isLoaded = false;
 		bool isVirtual = false; // ?? maybe

@@ -98,34 +98,30 @@ namespace Madam {
 		registry.destroy(entity);
 	}
 
-	Entity Scene::LoadGameObject(Ref<Model> model) {
+	Entity Scene::LoadGameObject(Ref<StaticMesh> mesh) {
 		Entity entity = { registry.create(), this};
 		entity.AddComponent<UniqueIdentifier>();
 		entity.AddComponent<GameObject>();
 		entity.AddComponent<MeshRenderer>();
-		entity.AddComponent<MeshFilter>();
-		entity.GetComponent<MeshFilter>().model = model;
-		entity.GetComponent<MeshRenderer>().mesh = entity.GetComponent<MeshFilter>();
+		entity.GetComponent<MeshRenderer>().mesh = mesh;
 		entity.AddComponent<Transform>();
 		//gameObject.transform = gameObject.GetComponent<Transform>();
 		return entity;
 	}
 
-	Entity Scene::LoadGameObject(Ref<Model> model, Material mat) {
+	Entity Scene::LoadGameObject(Ref<StaticMesh> mesh, MaterialComponent mat) {
 		Entity entity = { registry.create(), this};
 		entity.AddComponent<UniqueIdentifier>();
 		entity.AddComponent<GameObject>();
 		entity.AddComponent<MeshRenderer>();
-		entity.AddComponent<MeshFilter>();
-		entity.GetComponent<MeshFilter>().model = model;
-		entity.GetComponent<MeshRenderer>().mesh = entity.GetComponent<MeshFilter>();
-		entity.GetComponent<MeshRenderer>().material = std::make_shared<Material>(mat);
-		entity.AddComponent<Material>();
-		entity.GetComponent<Material>().shader = mat.shader;
-		entity.GetComponent<Material>().diffuseMap = mat.diffuseMap;
-		entity.GetComponent<Material>().normalMap = mat.normalMap;
-		entity.GetComponent<Material>().ambientOcclusionMap = mat.ambientOcclusionMap;
-		entity.GetComponent<Material>().glossMap = mat.glossMap;
+		entity.GetComponent<MeshRenderer>().mesh = mesh;
+		entity.GetComponent<MeshRenderer>().material = std::make_shared<MaterialComponent>(mat);
+		entity.AddComponent<MaterialComponent>();
+		entity.GetComponent<MaterialComponent>().shader = mat.shader;
+		entity.GetComponent<MaterialComponent>().diffuseMap = mat.diffuseMap;
+		entity.GetComponent<MaterialComponent>().normalMap = mat.normalMap;
+		entity.GetComponent<MaterialComponent>().ambientOcclusionMap = mat.ambientOcclusionMap;
+		entity.GetComponent<MaterialComponent>().glossMap = mat.glossMap;
 		entity.AddComponent<Transform>();
 		return entity;
 	}
@@ -188,12 +184,6 @@ namespace Madam {
 	}
 
 	template<>
-	void MADAM_API Scene::OnComponentAdded<MeshFilter>(Entity entity, MeshFilter& component)
-	{
-
-	}
-
-	template<>
 	void MADAM_API Scene::OnComponentAdded<MeshRenderer>(Entity entity, MeshRenderer& component)
 	{
 
@@ -206,7 +196,7 @@ namespace Madam {
 	}
 
 	template<>
-	void MADAM_API Scene::OnComponentAdded<Material>(Entity entity, Material& component)
+	void MADAM_API Scene::OnComponentAdded<MaterialComponent>(Entity entity, MaterialComponent& component)
 	{
 
 	}

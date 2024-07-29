@@ -114,6 +114,7 @@ namespace Madam
 		void VulkanImage::TransitionImageLayout(Device& device, VulkanImage& image, VkImageLayout srcLayout, VkImageLayout dstLayout)
 		{
 			device.transitionImageLayout(image.image, GetVkFormat(image.data.format), srcLayout, dstLayout, image.data.mipLevels, image.data.arrayLayers);
+			image.imageDescInfo.imageLayout = dstLayout;
 		}
 
 		void VulkanImage::CopyBufferToImage(Device& device, VkBuffer buffer, VulkanImage& image)

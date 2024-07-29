@@ -79,9 +79,9 @@ namespace Madam {
 					std::cerr << "Error, entity is not valid" << std::endl;
 					continue;
 				}
-				if (meshRenderer.getModel() == nullptr) continue;
+				if (meshRenderer.GetMesh() == nullptr) continue;
 
-				Ref<Material> material = meshRenderer.getMaterial();
+				Ref<MaterialComponent> material = meshRenderer.GetMaterial();
 				if (material != nullptr) continue;
 
 				DefaultPushConstantData push{};
@@ -95,8 +95,8 @@ namespace Madam {
 					0,
 					sizeof(DefaultPushConstantData),
 					&push);
-				meshRenderer.getModel()->bind(frameInfo.commandBuffer);
-				meshRenderer.getModel()->draw(frameInfo.commandBuffer);
+				meshRenderer.GetMesh()->bind(frameInfo.commandBuffer);
+				meshRenderer.GetMesh()->draw(frameInfo.commandBuffer);
 			}
 			isFirstFrame = false;
 		}
@@ -385,17 +385,17 @@ namespace Madam {
 				// skip objects that don't have both a model and texture
 				//JcvbMeshRenderer* meshRenderer = obj.getComponent<JcvbMeshRenderer>();
 				//if (meshRenderer == nullptr) continue;
-				Ref<Material> material = meshRenderer.getMaterial();
+				Ref<MaterialComponent> material = meshRenderer.GetMaterial();
 				if (material == nullptr) continue;
 				if (material->diffuseMap == nullptr) continue;
 
 				// writing descriptor set each frame can slow performance
 				// would be more efficient to implement some sort of caching
 				// Edit implement descriptor set pool
-				auto imageInfo = (VkDescriptorImageInfo*)meshRenderer.getMaterial()->diffuseMap->GetDescriptorInfo();
-				auto normalInfo = (VkDescriptorImageInfo*)meshRenderer.getMaterial()->normalMap->GetDescriptorInfo();
-				auto ambientOcclusionInfo = (VkDescriptorImageInfo*)meshRenderer.getMaterial()->ambientOcclusionMap->GetDescriptorInfo();
-				auto glossInfo = (VkDescriptorImageInfo*)meshRenderer.getMaterial()->glossMap->GetDescriptorInfo();
+				auto imageInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->diffuseMap->GetDescriptorInfo();
+				auto normalInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->normalMap->GetDescriptorInfo();
+				auto ambientOcclusionInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->ambientOcclusionMap->GetDescriptorInfo();
+				auto glossInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->glossMap->GetDescriptorInfo();
 				VkDescriptorSet descriptorSet1;
 				DescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
 					.writeImage(0, imageInfo)
@@ -426,8 +426,8 @@ namespace Madam {
 					sizeof(DefaultPushConstantData),
 					&push);
 
-				meshRenderer.getModel()->bind(frameInfo.commandBuffer);
-				meshRenderer.getModel()->draw(frameInfo.commandBuffer);
+				meshRenderer.GetMesh()->bind(frameInfo.commandBuffer);
+				meshRenderer.GetMesh()->draw(frameInfo.commandBuffer);
 			}
 
 			isFirstFrame = false;

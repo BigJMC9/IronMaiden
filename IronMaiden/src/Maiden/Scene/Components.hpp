@@ -2,7 +2,7 @@
 
 #include "maidenpch.hpp"
 #include "../Core/H_Utils.hpp"
-#include "H_Model.hpp"
+#include "../Rendering/H_Mesh.h"
 #include "../Rendering/H_Texture.h"
 #include "ScriptableEntity.hpp"
 #include "../Rendering/H_Camera.hpp"
@@ -99,9 +99,7 @@ namespace Madam {
 
 	struct GameObject {
 		std::string name = "Object";
-
 		GameObject() = default;
-		//Object(Object&) = default;
 		GameObject(const GameObject&) = default;
 		GameObject(std::string _name) {
 			name = _name;
@@ -112,55 +110,42 @@ namespace Madam {
 		//Icon
 	};
 
-	struct MaidenInternal {
-		std::string name = "Object";
-	};
-
-	struct MeshFilter {
-		Ref<Model> model;
-
-		MeshFilter() = default;
-		//MeshFilter(MeshFilter&) = default;
-		MeshFilter(const MeshFilter&) = default;
-	};
-
 	//Not Component, needs to be moved
-	struct Shader {
+	struct ShaderComponent {
 		std::string vertShaderPath;
 		std::string fragShaderPath;
 
-		Shader() = default;
+		ShaderComponent() = default;
 		//Shader(Shader&) = default;
-		Shader(const Shader&) = default;
+		ShaderComponent(const ShaderComponent&) = default;
 	};
-
-	struct Material {
-		Ref<Shader> shader = nullptr;
+	//Remove
+	struct MaterialComponent {
+		Ref<ShaderComponent> shader = nullptr;
 
 		Ref<Texture> diffuseMap = nullptr;
 		Ref<Texture> normalMap = nullptr;
 		Ref<Texture> ambientOcclusionMap = nullptr;
 		Ref<Texture> glossMap = nullptr;
 
-		Material() = default;
+		MaterialComponent() = default;
 		//Material(Material&) = default;
-		Material(const Material&) = default;
+		MaterialComponent(const MaterialComponent&) = default;
 	};
 
 	struct MeshRenderer {
 
-		MeshFilter mesh;
-		Ref<Material> material = nullptr;
+		Ref<StaticMesh> mesh = nullptr;
+		Ref<MaterialComponent> material = nullptr;
 
 		MeshRenderer() = default;
-		//MeshRenderer(MeshRenderer&) = default;
 		MeshRenderer(const MeshRenderer&) = default;
 
-		Ref<Model> getModel() {
-			return mesh.model;
+		Ref<StaticMesh> GetMesh() {
+			return mesh;
 		}
 
-		Ref<Material> getMaterial() {
+		Ref<MaterialComponent> GetMaterial() {
 			return material;
 		}
 	};
@@ -390,6 +375,5 @@ namespace Madam {
 	};
 
 	using AllComponents =
-		ComponentGroup<Transform, MeshRenderer,
-		MeshFilter, Camera, PointLight, NativeScriptComponent>;
+		ComponentGroup<Transform, MeshRenderer, Camera, PointLight, NativeScriptComponent>;
 }

@@ -14,7 +14,7 @@ namespace Madam
 	{
 		if (s_Serializers.find(metadata.assetType) == s_Serializers.end())
 		{
-			MADAM_CORE_WARN("There's currently no importer for assets {0} of type {1}", metadata.filePath.stem().string(), assetTypeToString(metadata.assetType));
+			MADAM_CORE_WARN("There's currently no importer for assets {0} of type {1}", metadata.filepath.stem().string(), assetTypeToString(metadata.assetType));
 			return false;
 		}
 

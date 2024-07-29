@@ -150,18 +150,7 @@ namespace Madam {
 			reservedScene = _scene;
 		}
 
-		void SwitchScenes() {
-			if (reservedScene == nullptr) {
-				MADAM_CORE_ERROR("Scene has not been primed into reserve");
-			}
-			else {
-				Ref<Scene> temp = scene;
-				scene = reservedScene;
-				reservedScene = temp;
-			}
-		}
-
-		void SwitchScenes(bool drop) {
+		void SwitchScenes(bool drop = true) {
 			if (reservedScene == nullptr) {
 				MADAM_CORE_ERROR("Scene has not been primed into reserve");
 			}
@@ -175,6 +164,8 @@ namespace Madam {
 					reservedScene = temp;
 				}
 			}
+			SceneChangeEvent e;
+			Events::EventSystem::Get().PushEvent(&e, true);
 		}
 
 		bool isUpdate() 

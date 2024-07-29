@@ -1,7 +1,7 @@
 #include "maidenpch.hpp"
 #include "H_Pipeline.hpp"
 #include "../Core/H_Application.hpp"
-#include "../Scene/H_Model.hpp"
+#include "../Rendering/Vulkan/H_VulkanMesh.h"
 #include "../Project/H_Project.h"
 #include "../Asset/AssetUtils.h"
 
@@ -199,8 +199,8 @@ namespace Madam {
 
 	void Pipeline::setDescriptions(PipelineConfigInfo& configInfo) {
 
-		configInfo.bindingDescriptions = Model::Vertex::getBindingDescriptions();
-		configInfo.attributeDescriptions = Model::Vertex::getAttributeDescriptions();
+		configInfo.bindingDescriptions = VulkanStaticMesh::Vertex::GetBindingDescriptions();
+		configInfo.attributeDescriptions = VulkanStaticMesh::Vertex::GetAttributeDescriptions();
 	}
 
 	void Pipeline::enableAlphaBlending(PipelineConfigInfo& configInfo) {

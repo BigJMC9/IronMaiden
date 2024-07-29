@@ -36,6 +36,71 @@ namespace Madam
 		return true;
 	}*/
 
+	DescWriter::DescWriter(DescSet& descriptorSet, Device* device) : descSet { descriptorSet }
+	{
+		descSet.device = device;
+	}
+
+	DescWriter& DescWriter::writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo) {
+		MADAM_CORE_ASSERT(descSet.layout->bindings.count(binding) == 1, "Layout does not contain specified binding");
+
+		auto& bindingDescription = descSet.layout->bindings[binding];
+
+		MADAM_CORE_ASSERT(bindingDescription.descriptorCount == 1, "Binding single descriptor info, but binding expects multiple");
+
+		VkWriteDescriptorSet write{};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.descriptorType = bindingDescription.descriptorType;
+		write.dstBinding = binding;
+		write.pBufferInfo = bufferInfo;
+		write.descriptorCount = 1;
+
+		writes.push_back(write);
+		return *this;
+	}
+
+	DescWriter& DescWriter::writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo) {
+		MADAM_CORE_ASSERT(descSet.layout->bindings.count(binding) == 1, "Layout does not contain specified binding");
+
+		auto& bindingDescription = descSet.layout->bindings[binding];
+
+		MADAM_CORE_ASSERT(bindingDescription.descriptorCount == 1, "Binding single descriptor info, but binding expects multiple");
+
+		VkWriteDescriptorSet write{};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.descriptorType = bindingDescription.descriptorType;
+		write.dstBinding = binding;
+		write.pImageInfo = imageInfo;
+		write.descriptorCount = 1;
+
+		writes.push_back(write);
+		return *this;
+	}
+
+	bool DescWriter::build() {
+
+		VkDescriptorSetAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = *descSet.pool;
+		allocInfo.pSetLayouts = &descSet.layout->descriptorSetLayout;
+		allocInfo.descriptorSetCount = 1;
+
+		// Might want to create a "DescriptorPoolManager" class that handles this case, and builds
+		// a new pool whenever an old pool fills up. But this is beyond our current scope
+		if (vkAllocateDescriptorSets(descSet.device->device(), &allocInfo, &descSet.set) != VK_SUCCESS) {
+			return false;
+		}
+		overwrite();
+		return true;
+	}
+
+	void DescWriter::overwrite() {
+		for (auto& write : writes) {
+			write.dstSet = descSet.set;
+		}
+		vkUpdateDescriptorSets(descSet.device->device(), writes.size(), writes.data(), 0, nullptr);
+	}
+
 	DescManager::DescManager(Device& device) : _device{device}
 	{
 
@@ -57,7 +122,7 @@ namespace Madam
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			allocInfo.pNext = nullptr;
 
-			allocInfo.pSetLayouts = &descSet.layout;
+			allocInfo.pSetLayouts = &descSet.layout->descriptorSetLayout;
 			allocInfo.descriptorSetCount = 1;
 
 			for (size_t i = 0; i < pools.size(); i++)

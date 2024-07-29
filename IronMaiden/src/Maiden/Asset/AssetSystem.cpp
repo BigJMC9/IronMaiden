@@ -69,7 +69,7 @@ namespace Madam
 	{
 		for (auto& [handle, metadata] : registry)
 		{
-			if (metadata.filePath == path)
+			if (metadata.filepath == path)
 				return metadata;
 		}
 
@@ -79,6 +79,25 @@ namespace Madam
 	const AssetMetadata& AssetManager::GetMetadata(const Ref<Asset>& asset)
 	{
 		return GetMetadata(asset->handle);
+	}
+
+	AssetMetadata& AssetManager::GetMutableMetadata(UUID uuid)
+	{
+		if (registry.contains(uuid))
+			return registry[uuid];
+
+		return s_NullMetadata;
+	}
+
+	AssetMetadata& AssetManager::GetMutableMetadata(std::filesystem::path path)
+	{
+		for (auto& [handle, metadata] : registry)
+		{
+			if (metadata.filepath == path)
+				return metadata;
+		}
+
+		return s_NullMetadata;
 	}
 
 	AssetMetadata& AssetManager::GetInternalMetadata(UUID uuid)
@@ -179,7 +198,7 @@ namespace Madam
 	void AssetManager::setMetaData(const std::filesystem::path& path)
 	{
 		AssetMetadata metadata;
-		metadata.filePath = path;
+		metadata.filepath = path;
 		metadata.uuid = UUID();
 		metadata.assetType = assetExtensionMap[path.extension().string()];
 		registry[metadata.uuid] = metadata;

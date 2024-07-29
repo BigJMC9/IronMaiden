@@ -7,8 +7,9 @@ namespace Madam {
 
 		enum class TextureWrap {
 			Repeat = 0,
-			Clamp = 1,
-			Mirror = 2
+			Stretch = 1,
+			Clamp = 2,
+			Mirror = 3,
 		};
 
 		enum class TextureFilter

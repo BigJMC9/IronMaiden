@@ -286,9 +286,10 @@
     <ClInclude Include="src\Maiden\Rendering\H_RenderUtils.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Renderer.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_SwapChain.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMesh.h" />
     <ClInclude Include="src\Maiden\Scene\Components.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_Entity.hpp" />
-    <ClInclude Include="src\Maiden\Scene\H_Model.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_Mesh.h" />
     <ClInclude Include="src\Maiden\Scene\H_Scene.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_SceneSerializer.hpp" />
     <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp" />
@@ -330,10 +331,11 @@
     <ClCompile Include="src\Maiden\Rendering\SwapChain.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanImage.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMaterial.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMesh.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanShader.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanTexture.cpp" />
     <ClCompile Include="src\Maiden\Scene\Entity.cpp" />
-    <ClCompile Include="src\Maiden\Scene\Model.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Mesh.cpp" />
     <ClCompile Include="src\Maiden\Scene\Scene.cpp" />
     <ClCompile Include="src\Maiden\Scene\SceneSerializer.cpp" />
     <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">

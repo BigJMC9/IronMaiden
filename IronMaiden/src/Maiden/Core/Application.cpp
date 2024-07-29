@@ -158,7 +158,6 @@ namespace Madam {
 				int lightIndex = 0;
 				for (auto entity : group)
 				{
-					MADAM_CORE_INFO("Light Index: {0}", lightIndex);
 					auto [transform, pointLight] = group.get<Transform, PointLight>(entity);
 
 					//copy light to ubo
@@ -192,6 +191,7 @@ namespace Madam {
 		globalPool.reset();
 		saveSession();
 		vkDeviceWaitIdle(device.device());
+		pGUI = nullptr;
 		deinit();
 	}
 

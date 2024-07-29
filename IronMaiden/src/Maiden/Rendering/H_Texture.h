@@ -55,7 +55,8 @@ namespace Madam {
 
 		virtual const std::filesystem::path& GetFilepath() const = 0;
 
-		static ResourceType GetStaticType() { return ResourceType::Texture; }
-		virtual ResourceType GetResourceType() const override { return GetStaticType(); }
+		static AssetType GetStaticType() { return AssetType::TEXTURE; }
+		virtual AssetType GetAssetType() const { return AssetType::TEXTURE; }
+
 	};
 }

@@ -53,4 +53,4 @@ namespace Madam {
         VkMemoryPropertyFlags memoryPropertyFlags;
     };
 
-}  // namespace lve
+}

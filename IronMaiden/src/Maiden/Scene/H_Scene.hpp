@@ -2,7 +2,7 @@
 
 #include "maidenpch.hpp"
 #include "../Rendering/Vulkan/H_VulkanDevice.hpp"
-#include "H_Model.hpp"
+#include "../Rendering/H_Mesh.h"
 #include "../Rendering/FrameInfo.hpp"
 #include "../Rendering/H_Camera.hpp"
 #include "../Events/H_EventSystem.h"
@@ -13,7 +13,7 @@
 
 //Rank Each Camera by priority and render in that order. Put the editor camera at the top of the list.
 namespace Madam {
-	struct Material;
+	struct MaterialComponent;
 
 	class Entity;
 	class UUID;
@@ -28,8 +28,8 @@ namespace Madam {
 		Entity CreateEntity(UUID uuid);
 		Entity CreateEntity(UUID uuid, const std::string& name);
 		void DestroyEntity(Entity entity);
-		Entity LoadGameObject(Ref<Model> model);
-		Entity LoadGameObject(Ref<Model> model, Material mat);
+		Entity LoadGameObject(Ref<StaticMesh> mesh);
+		Entity LoadGameObject(Ref<StaticMesh> mesh, MaterialComponent mat);
 
 		void Start();
 		void RunTimeStart();

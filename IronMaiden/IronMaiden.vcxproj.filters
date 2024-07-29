@@ -133,7 +133,7 @@
     <ClInclude Include="src\Maiden\Scene\H_Entity.hpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Scene\H_Model.hpp">
+    <ClInclude Include="src\Maiden\Rendering\H_Mesh.h">
       <Filter>src\Maiden\Scene</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Scene\H_Scene.hpp">
@@ -165,6 +165,7 @@
     <ClInclude Include="src\Maiden\Rendering\H_Shader.h" />
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShader.h" />
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMaterial.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMesh.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
@@ -234,7 +235,7 @@
     <ClCompile Include="src\Maiden\Scene\Entity.cpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Scene\Model.cpp">
+    <ClCompile Include="src\Maiden\Rendering\Mesh.cpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Scene\Scene.cpp">
@@ -259,5 +260,6 @@
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanShader.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Material.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMaterial.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMesh.cpp" />
   </ItemGroup>
 </Project>

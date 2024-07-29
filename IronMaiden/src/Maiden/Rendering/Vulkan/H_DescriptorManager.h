@@ -24,12 +24,58 @@ namespace Madam
 	};
 	//class DescPool;
 
+	class DescSetLayout {
+	public:
+		class Builder {
+		public:
+			Builder(Device& device) : device{ device } {}
+
+			Builder& AddBinding(uint32_t binding, VkDescriptorType descriptorType, VkShaderStageFlags stageFlags, uint32_t count = 1);
+			Ref<DescSetLayout> build() const;
+
+		private:
+			Device& device;
+			std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings{};
+		};
+
+		DescSetLayout(
+			Device& device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
+		~DescSetLayout();
+
+		VkDescriptorSetLayout GetDescriptorSetLayout() const { return descriptorSetLayout; }
+
+	private:
+		Device& device;
+		VkDescriptorSetLayout descriptorSetLayout;
+		std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
+
+		friend class DescWriter;
+		friend class DescManager;
+	};
+
 	struct DescSet
 	{
 	public:
+		DescSet() = default;
+		Device* device;
 		VkDescriptorSet set;
-		VkDescriptorSetLayout layout;
+		Ref<DescSetLayout> layout;
 		VkDescriptorPool* pool;
+	};
+
+	class DescWriter {
+	public:
+		DescWriter(DescSet& descriptorSet, Device* device);
+
+		DescWriter& writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo);
+		DescWriter& writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo);
+
+		bool build();
+		void overwrite();
+
+	private:
+		std::vector<VkWriteDescriptorSet> writes;
+		DescSet& descSet;
 	};
 
 	/*class DescPool

@@ -39,6 +39,12 @@ namespace Madam
 			virtual uint32_t GetDepth() const override { return data.depth; }
 			virtual ResourceDescriptorInfo GetDescriptorInfo() const override { return (ResourceDescriptorInfo)&imageDescInfo; }
 
+			VkImage& GetImage() { return image; }
+
+			VkImageView& GetImageView() { return imageView; }
+
+
+
 			static void TransitionImageLayout(Device& device, VulkanImage& image, VkImageLayout srcLayout, VkImageLayout dstLayout);
 
 			static void CopyBufferToImage(Device& device, VkBuffer buffer, VulkanImage& image);

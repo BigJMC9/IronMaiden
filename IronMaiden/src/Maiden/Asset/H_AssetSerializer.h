@@ -1,6 +1,7 @@
 #pragma once
 #include "H_Metadata.h"
 #include "Asset.h"
+#include "../Rendering/H_Mesh.h"
 
 namespace Madam
 {
@@ -12,6 +13,13 @@ namespace Madam
 	};
 
 	class TextureSerializer : public AssetSerializer
+	{
+	public:
+		virtual void serialize(const AssetMetadata& metadata, const Ref<Asset>& asset) const override {}
+		virtual bool tryLoadData(const AssetMetadata& metadata, Ref<Asset>& asset) const override;
+	};
+
+	class MeshSerializer : public AssetSerializer
 	{
 	public:
 		virtual void serialize(const AssetMetadata& metadata, const Ref<Asset>& asset) const override {}

@@ -22,7 +22,7 @@ namespace Madam
 		std::unordered_map<PipelineStage, VkShaderModule> shaderModules;
 		bool useFilepath = true;
 
-		DescSet descriptorSet = {};
+		DescSet descriptorSet;
 
 		Device* _device = nullptr;
 	};

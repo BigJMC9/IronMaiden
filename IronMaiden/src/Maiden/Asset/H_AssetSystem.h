@@ -23,6 +23,9 @@ namespace Madam
 		const AssetMetadata& GetMetadata(std::filesystem::path path);
 		const AssetMetadata& GetMetadata(const Ref<Asset>& asset);
 
+		AssetMetadata& GetMutableMetadata(UUID uuid);
+		AssetMetadata& GetMutableMetadata(std::filesystem::path path);
+
 		bool isAssetHandleValid(UUID uuid) { return GetMetadata(uuid).isValid(); }
 
 		bool saveMetaData();
