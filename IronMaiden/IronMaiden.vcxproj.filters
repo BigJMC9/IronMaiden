@@ -166,6 +166,7 @@
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShader.h" />
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMaterial.h" />
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMesh.h" />
+    <ClInclude Include="src\Maiden\Rendering\H_MeshPrimatives.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />

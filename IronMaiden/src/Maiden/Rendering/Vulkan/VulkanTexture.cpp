@@ -36,15 +36,27 @@ namespace Madam
 			return;
 		}
 
-        int texWidth, texHeight, texChannels;
+        int texWidth = 0, texHeight = 0, texChannels = 0;
         stbi_uc* pixels = stbi_load(filepath.string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        _flags |= TextureFlags::Loaded;
+        if (!pixels) 
+		{
+            stbi_image_free(pixels);
+            MADAM_ERROR("Asset {0}: Failed to load texture image!", handle);
+            const std::filesystem::path debugpath(std::filesystem::u8path("resources\\textures\\debug.png"));
+            pixels = stbi_load(debugpath.string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+            _flags |= TextureFlags::Error;
+            _flags &= ~TextureFlags::Loaded;
+            if (!pixels)
+            {
+                MADAM_CORE_ERROR("STBI FAILURE: {0}", stbi_failure_reason());
+                throw std::runtime_error("Missing Application Files:\nresources\\textures\\debug.png");
+                std::terminate();
+            }
+        }
         VkDeviceSize imageSize = texWidth * texHeight * 4;
         data.width = texWidth;
         data.height = texHeight;
-        if (!pixels) 
-		{
-            throw std::runtime_error("failed to load texture image!");
-        }
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -108,7 +120,6 @@ namespace Madam
         if (vkCreateSampler(device.device(), &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
             throw std::runtime_error("failed to create texture sampler!");
         }
-
         
         imageDescInfo = *((VkDescriptorImageInfo*)image->GetDescriptorInfo());
         imageDescInfo.sampler = textureSampler;

@@ -7,6 +7,7 @@
 #include "../Rendering/H_Pipeline.hpp"
 #include "../Project/H_Project.h"
 #include "../Asset/H_AssetSystem.h"
+#include "../Rendering/H_Mesh.h"
 
 #include <cwchar>
 #include <cstring>
@@ -489,21 +490,13 @@ namespace Madam::UI {
 				if (ImGui::MenuItem("New Scene")) {}
 				if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
 				{
-					//Window Specific, need to move to platform namespace
-					HWND hWnd = GetConsoleWindow(); // Get the window handle of the console window
-					WCHAR fileName[MAX_PATH]; // Buffer to store the selected file name
-
-					std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-
-					if (OpenFileDialog(hWnd, fileName, MAX_PATH)) {
-						std::wstring ws(fileName);
-
-						std::string fileNameStr = converter.to_bytes(ws);
-						Application::GetSceneSerializer()->Deserialize(fileNameStr, true);
+					std::filesystem::path filePath;
+					if (OpenFileDialog(filePath, L"scene", L"scene")) {
+						Application::GetSceneSerializer()->Deserialize(filePath.string(), true);
 					}
 					else {
-						// User canceled or error occurred
-						MessageBox(hWnd, L"No file selected.", L"Info", MB_OK | MB_ICONINFORMATION);
+						// User cancelled or error occurred
+						ShowMessageBox(L"No scene file selected.", L"Info", MB_OK | MB_ICONINFORMATION);
 					}
 				}
 				ImGui::Separator();
@@ -511,21 +504,14 @@ namespace Madam::UI {
 					Application::GetSceneSerializer()->Serialize("temp.scene");
 				}
 				if (ImGui::MenuItem("Save As..")) {
-					//Window Specific, Need to move to platform namespace
-					HWND hWnd = GetConsoleWindow(); // Get the window handle of the console window
-					WCHAR fileName[MAX_PATH]; // Buffer to store the selected file name
-
-					std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-
-					if (SaveFileDialog(hWnd, fileName, MAX_PATH)) {
-						std::wstring ws(fileName);
-
-						std::string fileNameStr = converter.to_bytes(ws);
-						Application::GetSceneSerializer()->Serialize(fileNameStr, true);
+					
+					std::filesystem::path filePath;
+					if (SaveFileDialog(filePath, L"scene", L"scene")) {
+						Application::GetSceneSerializer()->Serialize(filePath.string(), true);
 					}
 					else {
 						// User canceled or error occurred
-						MessageBox(hWnd, L"Could not save scene.", L"Info", MB_OK | MB_ICONINFORMATION);
+						ShowMessageBox(L"Could not save scene.", L"Info", MB_OK | MB_ICONINFORMATION);
 					}
 				}
 				if (ImGui::MenuItem("Exit")) Application::Get().quit();
@@ -699,8 +685,24 @@ namespace Madam::UI {
 		}
 
 		if (ImGui::BeginPopupContextWindow(0, 1 | ImGuiPopupFlags_NoOpenOverItems)) {
-			if (ImGui::MenuItem("Create Empty GameObject")) {
+			if (ImGui::MenuItem("Create Empty")) {
 				auto entity = Application::Get().getScene().CreateEntity();
+			}
+			if (ImGui::BeginMenu("3D")) {
+				if (ImGui::MenuItem("Quad"))
+				{
+					auto entity = Application::Get().getScene().CreateEntity();
+					entity.AddComponent<MeshRenderer>();
+					entity.GetComponent<MeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Quad);
+				}
+				if (ImGui::MenuItem("Cube"))
+				{
+					auto entity = Application::Get().getScene().CreateEntity();
+					entity.AddComponent<MeshRenderer>();
+					entity.GetComponent<MeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Cube);
+				}
+				//auto entity = Application::Get().getScene().CreateEntity(); 
+				ImGui::EndMenu();
 			}
 			ImGui::EndPopup();
 		}
@@ -752,9 +754,10 @@ namespace Madam::UI {
 
 	void GUI::Project() 
 	{
-		std::filesystem::path projectPath = Project::Get().getProjectDirectory();
-		std::filesystem::path assetPath = projectPath / curDir;
-		std::filesystem::path activeDir = curDir;
+		std::filesystem::path projectDir = Project::Get().getProjectDirectory();
+		std::filesystem::path activeDir = projectDir / curDir;
+		std::filesystem::path relativeActiveDir = curDir;
+		std::filesystem::path hoveredItemPath;
 		if (ImGui::Begin("FileSystem", nullptr, ImGuiWindowFlags_MenuBar)) 
 		{
 			ImGui::PushStyleColor(ImGuiCol_Button, RGBCon(27, 22, 31));
@@ -764,7 +767,7 @@ namespace Madam::UI {
 			{
 				std::filesystem::path tempDir;
 				bool arrow = false;
-				for (const auto& partDir : activeDir)
+				for (const auto& partDir : relativeActiveDir)
 				{
 					tempDir /= partDir;
 					if (arrow)
@@ -788,8 +791,8 @@ namespace Madam::UI {
 							const wchar_t* wPath = (const wchar_t*)payload->Data;
 							std::filesystem::path path(wPath);
 
-							std::filesystem::rename(path, projectPath / tempDir / path.filename());
-							Project::Get().getAssetManager().GetMutableMetadata(path).filepath = (projectPath / tempDir / path.filename());
+							std::filesystem::rename(path, projectDir / tempDir / path.filename());
+							Project::Get().getAssetManager().GetMutableMetadata(path).filepath = (projectDir / tempDir / path.filename());
 						}
 						ImGui::EndDragDropTarget();
 					}
@@ -806,7 +809,7 @@ namespace Madam::UI {
 			int step = 0;
 			std::vector<std::filesystem::directory_entry> files;
 
-			for (const auto& entry : std::filesystem::directory_iterator(assetPath))
+			for (const auto& entry : std::filesystem::directory_iterator(activeDir))
 			{
 				if (entry.is_regular_file())
 				{
@@ -821,6 +824,10 @@ namespace Madam::UI {
 					{
 						curDir /= std::filesystem::u8path(entry.path().filename().string());
 						MADAM_CORE_INFO("Folder selected");
+					}
+					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped))
+					{
+						hoveredItemPath = entry.path();
 					}
 					std::string text = entry.path().filename().string();
 					std::string truncatedText = TruncateTextToFit(text, thumbnailSize.x);
@@ -865,11 +872,11 @@ namespace Madam::UI {
 			{
 				const AssetMetadata* metadata = &Project::Get().getAssetManager().GetMetadata(files[i].path());
 
-				if (!metadata->isValid())
+				if (!metadata->IsValid())
 				{
-					Project::Get().getAssetManager().appendMetaData(files[i].path());
+					Project::Get().getAssetManager().AppendMetaData(files[i].path());
 					metadata = &Project::Get().getAssetManager().GetMetadata(files[i].path());
-					if (metadata->isValid())
+					if (metadata->IsValid())
 					{
 						MADAM_CORE_INFO("Metadata: " + files[i].path().string() + ", is valid!");
 					}
@@ -899,7 +906,12 @@ namespace Madam::UI {
 					{
 						selectedAsset = Project::Get().getAssetManager().GetAsset(metadata->uuid);
 					}
-					std::string text = files[i].path().filename().string();
+					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped))
+					{
+						hoveredItemPath = metadata->filepath;
+					}
+
+					std::string text = files[i].path().stem().string();
 					std::string truncatedText = TruncateTextToFit(text, thumbnailSize.x);
 					ImVec2 textSize = ImGui::CalcTextSize(truncatedText.c_str());
 					float textXOffset = (thumbnailSize.x - textSize.x) / 2;
@@ -928,24 +940,18 @@ namespace Madam::UI {
 				}
 			}
 
-			if (ImGui::BeginPopupContextWindow(0, 1 | ImGuiPopupFlags_NoOpenOverItems))
+			if (ImGui::BeginPopupContextWindow(0, 1))
 			{
+				if (!isPopupContextOpen)
+				{
+					popupContextSelectedItem = hoveredItemPath;
+					isPopupContextOpen = true;
+				}
 				if (ImGui::BeginMenu("Create"))
 				{
 					if (ImGui::MenuItem("Folder"))
 					{
-						try {
-							// Create the directory
-							if (std::filesystem::create_directory(assetPath / "New folder")) {
-								MADAM_CORE_INFO("Directory created successfully.");
-							}
-							else {
-								MADAM_CORE_INFO("Directory already exists.");
-							}
-						}
-						catch (const std::filesystem::filesystem_error& e) {
-							MADAM_CORE_ERROR("Error creating directory: {0}", e.what());
-						}
+						CreateDirectory(activeDir / "New folder");
 					}
 					if (ImGui::MenuItem("Scene"))
 					{
@@ -961,11 +967,29 @@ namespace Madam::UI {
 				{
 
 				}
-				if (ImGui::MenuItem("Delete"))
+				if (!popupContextSelectedItem.empty())
 				{
-
+					if (ImGui::MenuItem("Delete", NULL, false, true))
+					{
+						if (DeleteDirectory(popupContextSelectedItem, "Delete selected asset?", popupContextSelectedItem.string() + "\n\nYou cannot undo the delete assets action."))
+						{
+							Project::Get().getAssetManager().RemoveMetadata(popupContextSelectedItem);
+						}
+					}
+				}
+				else if (ImGui::MenuItem("Delete", NULL, false, (projectDir / ASSET_DIR) == activeDir ? false : true))
+				{
+					if (DeleteDirectory(activeDir, "Delete selected asset?", activeDir.string() + "\n\nYou cannot undo the delete assets action."))
+					{
+						Project::Get().getAssetManager().RemoveMetadata(activeDir);
+					}
 				}
 				ImGui::EndPopup();
+			}
+			else
+			{
+				popupContextSelectedItem = "";
+				isPopupContextOpen = false;
 			}
 		}
 		ImGui::End();

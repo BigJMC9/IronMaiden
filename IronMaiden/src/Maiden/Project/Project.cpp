@@ -181,7 +181,7 @@ namespace Madam
 		confFile << "AssetPackLocation: " << assetMetaPath.string() << std::endl;
 		confFile.close();
 
-		Project::Get().assetManager->saveMetaData();
+		Project::Get().assetManager->SaveMetaData();
 		return true;
 	}
 

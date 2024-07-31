@@ -12,7 +12,7 @@ namespace Madam
 		std::filesystem::path filepath;
 
 		bool isLoaded = false;
-		bool isVirtual = false; // ?? maybe
-		bool isValid() const { return std::string(uuid) != ""; }
+		bool isGPUObject = false;
+		bool IsValid() const { return std::string(uuid) != ""; }
 	};
 }

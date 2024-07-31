@@ -23,6 +23,8 @@
 
 #include <cmath>
 
+#define ASSET_DIR std::filesystem::u8path("Assets")
+
 namespace Madam {
 	class DescriptorPool;
 	class DescriptorSetLayout;
@@ -109,7 +111,7 @@ namespace Madam::UI {
 		float uiTime = 0.0f;
 		int ImGuizmoType = -1;
 
-		std::filesystem::path curDir = std::filesystem::u8path("Assets");
+		std::filesystem::path curDir = ASSET_DIR;
 		Ref<Asset> selectedAsset = nullptr;
 		bool isSRGB = false;
 
@@ -130,6 +132,8 @@ namespace Madam::UI {
 
 		std::unordered_map<std::string, IconInfo> icons;
 		std::unordered_map<UUID, IconInfo> loadedIconTextures;
+		std::filesystem::path popupContextSelectedItem;
+		bool isPopupContextOpen = false;
 
 #define ICON_SIZE 5
 		std::filesystem::path iconFilepaths[ICON_SIZE] =

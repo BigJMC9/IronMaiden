@@ -37,7 +37,7 @@ namespace YAML {
 			node["UUID"] = metadata.uuid;
 			node["Type"] = Madam::assetTypeToString(metadata.assetType);
 			node["File"] = metadata.filepath.string();
-			node["IsVirtual"] = metadata.isVirtual;
+			node["IsGPUObject"] = metadata.isGPUObject;
 			return node;
 		}
 
@@ -46,7 +46,7 @@ namespace YAML {
 			metadata.uuid = node["UUID"].as<Madam::UUID>();
 			metadata.assetType = Madam::assetTypeMap[node["Type"].as<std::string>()];
 			metadata.filepath = std::filesystem::u8path(node["File"].as<std::string>());
-			metadata.isVirtual = node["IsVirtual"].as<bool>();
+			metadata.isGPUObject = node["IsGPUObject"].as<bool>();
 			return true;
 		}
 	};
@@ -60,7 +60,7 @@ namespace Madam
 		out << YAML::Key << "UUID" << YAML::Value << metaData.uuid;
 		out << YAML::Key << "Type" << YAML::Value << assetTypeToString(metaData.assetType);
 		out << YAML::Key << "File" << YAML::Value << metaData.filepath.string();
-		out << YAML::Key << "IsVirtual" << YAML::Value << metaData.isVirtual;
+		out << YAML::Key << "IsGPUObject" << YAML::Value << metaData.isGPUObject;
 		out << YAML::EndMap;
 		return out;
 	}

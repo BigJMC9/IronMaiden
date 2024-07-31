@@ -251,6 +251,7 @@
     <ClInclude Include="src\Maiden.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Application.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Material.h" />
+    <ClInclude Include="src\Maiden\Rendering\H_MeshPrimatives.h" />
     <ClInclude Include="src\Maiden\Rendering\H_RIResource.h" />
     <ClInclude Include="src\Maiden\Rendering\H_Shader.h" />
     <ClInclude Include="src\Maiden\Rendering\H_Texture.h" />

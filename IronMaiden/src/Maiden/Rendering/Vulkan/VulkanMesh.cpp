@@ -1,6 +1,7 @@
 #include "maidenpch.hpp"
 #include "H_VulkanMesh.h"
 #include "../H_Renderer.hpp"
+#include "../H_MeshPrimatives.h"
 
 
 //libs
@@ -12,8 +13,10 @@
 
 namespace std {
 	template<>
-	struct hash<Madam::VulkanStaticMesh::Vertex> {
-		size_t operator()(Madam::VulkanStaticMesh::Vertex const& vertex) const {
+	struct hash<Madam::VulkanStaticMesh::Vertex> 
+	{
+		size_t operator()(Madam::VulkanStaticMesh::Vertex const& vertex) const 
+		{
 			size_t seed = 0;
 			Madam::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv/*, vertex.tangent*/);
 			return seed;
@@ -39,12 +42,18 @@ namespace Madam
 		}
 	}
 
+	VulkanStaticMesh::VulkanStaticMesh(const MeshPrimatives primative) : _device{ Rendering::Renderer::GetDevice() }
+	{
+		LoadPrimative(primative);
+	}
+
 	VulkanStaticMesh::~VulkanStaticMesh()
 	{
 		
 	}
 
-	void VulkanStaticMesh::LoadOBJ() {
+	void VulkanStaticMesh::LoadOBJ() 
+	{
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
@@ -66,14 +75,16 @@ namespace Madam
 				Vertex vertex{};
 				if (index.vertex_index >= 0) {
 					//xyz
-					vertex.position = {
+					vertex.position = 
+					{
 						attrib.vertices[3 * index.vertex_index + 0],
 						attrib.vertices[3 * index.vertex_index + 1],
 						attrib.vertices[3 * index.vertex_index + 2],
 					};
 
 					//rgb
-					vertex.color = {
+					vertex.color = 
+					{
 						attrib.colors[3 * index.vertex_index + 0],
 						attrib.colors[3 * index.vertex_index + 1],
 						attrib.colors[3 * index.vertex_index + 2],
@@ -81,7 +92,8 @@ namespace Madam
 				}
 
 				if (index.normal_index >= 0) {
-					vertex.normal = {
+					vertex.normal = 
+					{
 						attrib.normals[3 * index.normal_index + 0],
 						attrib.normals[3 * index.normal_index + 1],
 						attrib.normals[3 * index.normal_index + 2],
@@ -89,7 +101,8 @@ namespace Madam
 				}
 
 				if (index.texcoord_index >= 0) {
-					vertex.uv = {
+					vertex.uv = 
+					{
 						attrib.texcoords[2 * index.texcoord_index + 0],
 						attrib.texcoords[2 * index.texcoord_index + 1],
 					};
@@ -111,6 +124,38 @@ namespace Madam
 	void VulkanStaticMesh::LoadFBX()
 	{
 		MADAM_CORE_NOT_IMPL("Load FBX file.");
+	}
+
+	void VulkanStaticMesh::LoadPrimative(const MeshPrimatives primative)
+	{
+		std::vector<glm::vec3> verticesPos;
+		std::vector<Vertex> vertices;
+		std::vector<uint32_t> indices;
+		std::vector<glm::vec2> shape;
+
+		switch (primative)
+		{
+		case Madam::MeshPrimatives::Quad:
+			verticesPos = Primative::Quad::GetVertices();
+			indices = Primative::Quad::GetIndices();
+			break;
+		case Madam::MeshPrimatives::Cube:
+			verticesPos = Primative::Cube::GetVertices();
+			indices = Primative::Cube::GetIndices();
+			break;
+		default:
+			break;
+		}
+
+		for (size_t i = 0; i < verticesPos.size(); i++)
+		{
+			Vertex vertex;
+			vertex.position = verticesPos[i];
+			vertices.push_back(vertex);
+		}
+
+		CreateVertexBuffers(vertices);
+		CreateIndexBuffers(indices);
 	}
 
 	void VulkanStaticMesh::CreateVertexBuffers(const std::vector<Vertex>& vertices)
@@ -183,7 +228,8 @@ namespace Madam
 	}
 
 	//Move to render system and change to get the VertexBuffer
-	void VulkanStaticMesh::bind(void* commandBuffer) {
+	void VulkanStaticMesh::bind(void* commandBuffer) 
+	{
 
 		VkCommandBuffer cmdBuffer = static_cast<VkCommandBuffer>(commandBuffer);
 
@@ -196,7 +242,8 @@ namespace Madam
 		}
 	}
 
-	std::vector<VkVertexInputBindingDescription> VulkanStaticMesh::Vertex::GetBindingDescriptions() {
+	std::vector<VkVertexInputBindingDescription> VulkanStaticMesh::Vertex::GetBindingDescriptions() 
+	{
 		std::vector<VkVertexInputBindingDescription> bindDescriptions(1);
 		bindDescriptions[0].binding = 0;
 		bindDescriptions[0].stride = sizeof(Vertex);
@@ -204,7 +251,8 @@ namespace Madam
 		return bindDescriptions;
 	}
 
-	std::vector<VkVertexInputAttributeDescription> VulkanStaticMesh::Vertex::GetAttributeDescriptions() {
+	std::vector<VkVertexInputAttributeDescription> VulkanStaticMesh::Vertex::GetAttributeDescriptions() 
+	{
 		std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
 		attributeDescriptions.push_back({ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) });

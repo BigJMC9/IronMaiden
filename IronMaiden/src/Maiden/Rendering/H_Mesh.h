@@ -13,7 +13,15 @@
 #include <glm/glm.hpp>
 
 namespace Madam {
-	class StaticMesh : public RenderResource {
+
+	enum class MeshPrimatives
+	{
+		Quad = 0,
+		Cube = 1
+	};
+
+	class StaticMesh : public RenderResource 
+	{
 	public:
 		enum MeshFlags
 		{
@@ -23,13 +31,12 @@ namespace Madam {
 		virtual ~StaticMesh() {}
 
 		static Ref<StaticMesh> Create(const std::filesystem::path& filepath);
+		static Ref<StaticMesh> Create(const MeshPrimatives primative);
 
 		virtual void bind(void* commandBuffer) = 0;
 		virtual void draw(void* commandBuffer) = 0;
 
-		std::filesystem::path GetFilepath() const {
-			return _filepath;
-		}
+		std::filesystem::path GetFilepath() const { return _filepath; }
 
 		static AssetType GetStaticType() { return AssetType::MESH; }
 		virtual AssetType GetAssetType() const { return AssetType::MESH; }

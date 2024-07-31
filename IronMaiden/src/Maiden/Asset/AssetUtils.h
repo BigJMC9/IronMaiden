@@ -1,16 +1,26 @@
 #pragma once
 #include "maidenpch.hpp"
+#include "../Core/H_Utils.hpp"
 
 namespace Madam
 {
+	//should be macros
 	const std::string assets = "Assets";
 	const std::string resource = "Resources";
 	const std::string metadata = "Resources";
 	const std::string metadataExtension = ".mmeta";
+	//should be macros
 
-	inline std::string registryFile() {
+	inline std::string RegistryFile() {
 		return resource + "\\" + metadata + metadataExtension;
 	}
+
+	enum class AssetFlags : uint16_t
+	{
+		None = 0,
+		Missing = BIT(0),
+		Invalid = BIT(1)
+	};
 
 	enum class AssetType
 	{

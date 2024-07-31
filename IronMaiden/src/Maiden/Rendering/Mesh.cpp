@@ -12,4 +12,9 @@ namespace Madam {
 	{
 		return CreateRef<VulkanStaticMesh>(filepath);
 	}
+
+	Ref<StaticMesh> StaticMesh::Create(const MeshPrimatives primative)
+	{
+		return CreateRef<VulkanStaticMesh>(primative);
+	}
 }

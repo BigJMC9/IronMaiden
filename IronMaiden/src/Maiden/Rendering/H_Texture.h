@@ -17,6 +17,51 @@
 
 namespace Madam {
 
+	enum TextureFlags : uint32_t
+	{
+		NONE = 0,
+		Error = 1 << 1,
+		Loaded = 1 << 2,
+	};
+
+	/*inline TextureFlags operator|(TextureFlags lhs, TextureFlags rhs)
+	{
+		return static_cast<TextureFlags>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+	}*/
+	inline TextureFlags operator|(TextureFlags lhs, uint32_t rhs)
+	{
+		return static_cast<TextureFlags>(static_cast<uint32_t>(lhs) | rhs);
+	}
+
+	inline TextureFlags operator&(TextureFlags lhs, uint32_t rhs)
+	{
+		return static_cast<TextureFlags>(static_cast<uint32_t>(lhs) & rhs);
+	}
+
+	inline TextureFlags operator|=(TextureFlags& lhs, uint32_t rhs)
+	{
+		lhs = lhs | rhs;
+		return lhs;
+	}
+
+	inline TextureFlags operator&=(TextureFlags& lhs, TextureFlags rhs)
+	{
+		lhs = lhs & rhs;
+		return lhs;
+	}
+
+	inline TextureFlags operator&=(TextureFlags& lhs, uint32_t rhs)
+	{
+		lhs = lhs & rhs;
+		return lhs;
+	}
+
+	/*inline TextureFlags operator|=(TextureFlags& lhs, TextureFlags rhs)
+	{
+		lhs = lhs | rhs;
+		return lhs;
+	}*/
+
 	struct TextureData
 	{
 		Rendering::Image::Format format = Rendering::Image::Format::RGBA_SRGB;
@@ -55,8 +100,13 @@ namespace Madam {
 
 		virtual const std::filesystem::path& GetFilepath() const = 0;
 
+		virtual uint32_t GetFlags() const { return (uint32_t)_flags; }
+		virtual void SetFlags(uint32_t flags) { _flags |= flags; }
+
 		static AssetType GetStaticType() { return AssetType::TEXTURE; }
 		virtual AssetType GetAssetType() const { return AssetType::TEXTURE; }
 
+	protected:
+		TextureFlags _flags = TextureFlags::NONE;
 	};
 }

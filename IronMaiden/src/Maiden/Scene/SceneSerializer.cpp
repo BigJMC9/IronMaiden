@@ -316,7 +316,7 @@ namespace Madam {
 			out << YAML::BeginMap;
 
 			MeshRenderer& meshRenderer = entity.GetComponent<MeshRenderer>();
-			out << YAML::Key << "Material" << YAML::Value << "True";
+			out << YAML::Key << "Material" << YAML::Value << "true";
 			out << YAML::Key << "StaticMesh" << YAML::Value << meshRenderer.GetMesh()->GetFilepath().string();
 			out << YAML::EndMap;
 		}
@@ -346,6 +346,7 @@ namespace Madam {
 			out << YAML::Key << "ViewPosition" << YAML::Value << camera.getPosition();
 			out << YAML::Key << "ViewDirection" << YAML::Value << glm::vec3(0.f); //temporary solution
 			out << YAML::Key << "Main" << YAML::Value << camera.cameraHandle->isMain();
+			out << YAML::EndMap;
 		}
 
 		out << YAML::EndMap;
@@ -477,13 +478,15 @@ namespace Madam {
 				auto meshRendererNode = entity["MeshRenderer"];
 				if (meshRendererNode) {
 					std::string material = meshRendererNode["Material"].as<std::string>();
+					MeshRenderer& meshRenderer = deserializedEntity.AddComponent<MeshRenderer>();
+					std::filesystem::path filepath = meshRendererNode["StaticMesh"].as<std::filesystem::path>();
+					deserializedEntity.GetComponent<MeshRenderer>().mesh = StaticMesh::Create(Project::Get().getProjectDirectory() / std::filesystem::u8path("Assets") / filepath);
 					if (material == "true") {
-						MeshRenderer& meshRenderer = deserializedEntity.AddComponent<MeshRenderer>();
+						
 						if (deserializedEntity.HasComponent<MaterialComponent>()) {
 							deserializedEntity.GetComponent<MeshRenderer>().material = std::make_shared<MaterialComponent>(deserializedEntity.GetComponent<MaterialComponent>());
 						}
-						std::filesystem::path filepath = meshRendererNode["StaticMesh"].as<std::filesystem::path>();
-						deserializedEntity.GetComponent<MeshRenderer>().mesh = StaticMesh::Create(Project::Get().getProjectDirectory() / std::filesystem::u8path("Assets") / filepath);
+						
 					}
 				}
 

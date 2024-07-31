@@ -26,15 +26,18 @@ namespace Madam
 		AssetMetadata& GetMutableMetadata(UUID uuid);
 		AssetMetadata& GetMutableMetadata(std::filesystem::path path);
 
-		bool isAssetHandleValid(UUID uuid) { return GetMetadata(uuid).isValid(); }
+		void RemoveMetadata(UUID uuid);
+		void RemoveMetadata(std::filesystem::path path);
 
-		bool saveMetaData();
-		bool scanAssets();
+		bool IsAssetHandleValid(UUID uuid) { return GetMetadata(uuid).IsValid(); }
 
-		void appendMetaData(const std::filesystem::path& path);
+		bool SaveMetaData();
+		bool ScanAssets();
+
+		void AppendMetaData(const std::filesystem::path& path);
 	private:
-		void loadRegistry();
-		void setMetaData(const std::filesystem::path& path);
+		void LoadRegistry();
+		void SetMetaData(const std::filesystem::path& path);
 
 		AssetMetadata& GetInternalMetadata(UUID uuid);
 
