@@ -590,7 +590,7 @@ namespace Madam::UI {
 		if (ImGui::Begin("Viewport")) {
 
 			ImVec2 windowSize = ImGui::GetContentRegionAvail();
-			ImVec2 imageSize = ImVec2(Application::Get().getConfig().windowWidth, Application::Get().getConfig().windowHeight);
+			ImVec2 imageSize = ImVec2(static_cast<float>(Application::Get().getConfig().windowWidth), static_cast<float>(Application::Get().getConfig().windowHeight));
 			float imageAspectRatio = imageSize.x / imageSize.y;
 
 			ImVec2 displaySize;
@@ -615,11 +615,7 @@ namespace Madam::UI {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PROJECT_ITEM"))
 				{
 					const wchar_t* wPath = (const wchar_t*)payload->Data;
-					std::wstring ws(wPath);
-
-					// Create a wstring_convert object
-					std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-					std::string path = converter.to_bytes(ws);
+					std::string path = ConvertWideToUtf8(wPath);
 
 					MADAM_CORE_INFO("Opening scene: " + path);
 					Application::GetSceneSerializer()->Deserialize(path, true);
@@ -805,7 +801,7 @@ namespace Madam::UI {
 			int padding = 10;
 			int columns = 16;
 			int width = static_cast<int>(std::round(ImGui::GetWindowSize().x / columns));
-			ImVec2 thumbnailSize = ImVec2(width - padding, width - padding);
+			ImVec2 thumbnailSize = ImVec2(static_cast<float>(width - padding), static_cast<float>(width - padding));
 			int step = 0;
 			std::vector<std::filesystem::directory_entry> files;
 
@@ -858,7 +854,7 @@ namespace Madam::UI {
 
 					if (++step < columns)
 					{
-						ImGui::SameLine(0.0f, padding);
+						ImGui::SameLine(0.0f, static_cast<float>(padding));
 					}
 					else
 					{
@@ -929,7 +925,7 @@ namespace Madam::UI {
 
 					if (step < columns)
 					{
-						ImGui::SameLine(0.0f, padding);
+						ImGui::SameLine(0.0f, static_cast<float>(padding));
 						step++;
 					}
 					else
@@ -1047,7 +1043,7 @@ namespace Madam::UI {
 							for (size_t j = 0; j < renderLayers.size(); j++)
 							{
 								auto& renderLayer = renderLayers[j];
-								DrawPipelineSettings(renderLayer, j);
+								DrawPipelineSettings(renderLayer, static_cast<int>(j));
 							}
 							ImGui::PushStyleColor(ImGuiCol_HeaderHovered, headerColor);
 							ImGui::PushFont(boldFont);

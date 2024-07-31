@@ -98,7 +98,7 @@ namespace Madam
 		for (auto& write : writes) {
 			write.dstSet = descSet.set;
 		}
-		vkUpdateDescriptorSets(descSet.device->device(), writes.size(), writes.data(), 0, nullptr);
+		vkUpdateDescriptorSets(descSet.device->device(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 	}
 
 	DescManager::DescManager(Device& device) : _device{device}
@@ -175,6 +175,7 @@ namespace Madam
 		else
 		{
 			pools.push_front(CreatePool(descriptorSizes, maxSet, 0));
+			return true;
 		}
 	}
 

@@ -248,7 +248,11 @@ namespace Madam {
 			translation = vec3(localMatrix[3]);
 			localMatrix[3] = vec4(0, 0, 0, localMatrix[3].w);
 
-			vec3 row[3], Pdum3;
+#if 0
+			vec3 Pdum3;
+#endif
+			vec3 row[3];
+
 
 			// Now get scale and shear.
 			for (length_t i = 0; i < 3; ++i)

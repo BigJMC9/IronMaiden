@@ -14,7 +14,7 @@ namespace Madam
 		{
 			data = imageData;
 			VkImageAspectFlags aspectMask = 0;
-			VkImageLayout imageLayout;
+			VkImageLayout imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			VkImageUsageFlags usage = 0x00000000;
 			VkExtent3D extent;
 			extent.width = data.width;

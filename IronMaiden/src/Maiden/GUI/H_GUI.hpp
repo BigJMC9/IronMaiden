@@ -124,7 +124,7 @@ namespace Madam::UI {
 		ImGuiStyle style;
 
 		PipelineInfo viewportPipelineInfo;
-		ImDrawCallback viewportCallback;
+		ImDrawCallback viewportCallback = nullptr;
 
 		//Descriptors
 		VkDescriptorSet viewportSet;

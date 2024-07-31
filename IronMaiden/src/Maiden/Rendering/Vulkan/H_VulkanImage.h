@@ -31,7 +31,7 @@ namespace Madam
 
 			virtual float GetAspectRatio() const override
 			{
-				return data.width / data.height;
+				return static_cast<float>(data.width) / data.height;
 			}
 
 			virtual uint32_t GetWidth() const override { return data.width; }

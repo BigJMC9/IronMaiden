@@ -6,13 +6,10 @@ workspace "IronMaiden"
     configurations
     {
         "Debug",
-        "DebugDLL",
         "Release",
-        "ReleaseDLL",
         "Dist"
     }
     startproject "Editor"
-    startproject "Editor-NoGUI"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
@@ -29,7 +26,7 @@ project "IronMaiden"
     kind "StaticLib"
     language "C++"
     cppdialect "C++17"
-    staticruntime "on"
+    staticruntime "off"
 
     targetdir ("bin/" .. outputdir .. "/%{prj.name}")
     objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -71,14 +68,14 @@ project "IronMaiden"
         "%{IncludeDir.tinyobj}",
         "%{IncludeDir.stb}",
         "%{IncludeDir.openfbx}",
-        "%{IncludeDir.imguizmo}"
+        "%{IncludeDir.imguizmo}",
+        "%{IncludeDir.shaderc}"
     }
 
     libdirs 
     { 
         "%{LibDir.VulkanSDK}",
         "%{LibDir.glfw}",
-        "%{LibDir.yaml_cpp}",
         "%{LibDir.imgui}",
     }
 
@@ -93,7 +90,6 @@ project "IronMaiden"
             "_CRT_SECURE_NO_WARNINGS";
             "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
             "MADAM_PLATFORM_WINDOWS";
-            "MADAM_BUILD_DLL";
         }
         
     filter "configurations:Debug"
@@ -102,29 +98,9 @@ project "IronMaiden"
         runtime "debug"
         links
         {
-            "%{StaticLib.Vulkan}",
-            "%{StaticLib.glfw}",
-            "%{StaticLib.yaml_cpp}",
-            "%{StaticLib.imgui}",
-        }
-    
-    filter "configurations:DebugDLL"
-        defines "MADAM_DEBUG"
-        symbols "on"
-        staticruntime "off"
-        runtime "debug"
-        kind "SharedLib"
-        links
-        {
             "%{Lib.Vulkan}",
             "%{Lib.glfw}",
-            "%{Lib.yaml_cpp}",
-            "%{Lib.imgui}",
-        }
-        defines "MADAM_DYNAMIC_LINK"
-
-        postbuildcommands {
-            "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
+            "%{Lib.imgui}"
         }
 
     filter "configurations:Release"
@@ -133,30 +109,10 @@ project "IronMaiden"
         runtime "release"
         links
         {
-            "%{StaticLib.Vulkan}",
-            "%{StaticLib.glfw}",
-            "%{StaticLib.yaml_cpp}",
-            "%{StaticLib.imgui}",
-        }
-
-    filter "configurations:ReleaseDLL"
-        optimize "on"
-        staticruntime "off"
-        runtime "release"
-        kind "SharedLib"
-        links
-        {
             "%{Lib.Vulkan}",
             "%{Lib.glfw}",
-            "%{Lib.yaml_cpp}",
-            "dwmapi.lib",
+            "%{Lib.imgui}"
         }
-
-        postbuildcommands {
-            "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
-        }
-        defines "MADAM_DYNAMIC_LINK"
-
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
@@ -164,9 +120,9 @@ project "IronMaiden"
         runtime "release"
         links
         {
-            "%{StaticLib.Vulkan}",
-            "%{StaticLib.glfw}",
-            "%{StaticLib.yaml_cpp}"
+            "%{Lib.Vulkan}",
+            "%{Lib.glfw}",
+            "%{Lib.imgui}"
         }  
 
 project "Editor"
@@ -174,12 +130,10 @@ project "Editor"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++17"
-    staticruntime "on"
+    staticruntime "off"
 
     targetdir ("bin/" .. outputdir .. "/%{prj.name}")
     objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-
-    dependson { "Editor-NoGUI" }
 
     files
     {
@@ -230,46 +184,35 @@ project "Editor"
 
         prebuildcommands
         {
-            "copy %{wks.location}bin\\" .. outputdir .. "\\IronMaiden\\IronMaiden.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
             "copy %{wks.location}IronMaiden\\vendors\\yaml-cpp\\bin\\" .. outputdir .. "\\yaml-cpp\\yaml-cpp.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
         }
 
         postbuildcommands
         {
             "call \"compile.bat\"",
-            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\resources\\" "%{wks.location}bin\\" .. outputdir .. "\\Editor\\resources\\\" /E /I /Y",
-            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\logs\\" "%{wks.location}bin\\" .. outputdir .. "\\Editor\\logs\\\" /E /I /Y"
+            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\resources\\\" \"%{wks.location}bin\\" .. outputdir .. "\\Editor\\resources\\\" /E /I /Y",
+            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\logs\\\" \"%{wks.location}bin\\" .. outputdir .. "\\Editor\\logs\\\" /E /I /Y"
         }
 
     filter "configurations:Debug"
-        defines "MADAM_DEBUG"
-        symbols "on"
-        defines "YAML_CPP_STATIC_DEFINE"
-    
-    filter "configurations:DebugDLL"
-        defines "MADAM_DEBUG"
         symbols "on"
         staticruntime "off"
         defines { 
             "YAML_CPP_DLL";
-            "MADAM_DYNAMIC_LINK";
-        }
-
-    filter "configurations:ReleaseDLL"
-        optimize "on"
-        staticruntime "off"
-        defines { 
-            "YAML_CPP_DLL";
-            "MADAM_DYNAMIC_LINK";
+            "MADAM_DEBUG";
         }
 
     filter "configurations:Release"
-        defines "MADAM_RELEASE"
         optimize "on"
-        defines "YAML_CPP_STATIC_DEFINE"
+        defines {
+            "YAML_CPP_DLL";
+            "MADAM_RELEASE";
+        }
 
     filter "configurations:Dist"
-        defines "MADAM_DIST"
         optimize "on"
-        defines "YAML_CPP_STATIC_DEFINE"
-
+        symbols "off"
+        defines {
+            "YAML_CPP_DLL";
+            "MADAM_DIST";
+        }

@@ -6,7 +6,6 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <locale>
-#include <codecvt>
 #include <filesystem>
 #include <fstream>
 
@@ -19,14 +18,33 @@ typedef LPCWSTR NPSString; //Non-Platform-Specific String
 namespace Madam {
 	namespace Platform
 	{
-		static std::string ConvertWideToNarrow(const wchar_t* wideString) {
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-			return converter.to_bytes(wideString);
+		static std::string ConvertWideToUtf8(const wchar_t* wideString) {
+			if (wideString == nullptr) {
+				return std::string();
+			}
+
+			int size = WideCharToMultiByte(CP_UTF8, 0, wideString, -1, NULL, 0, NULL, NULL);
+			if (size == 0) {
+				return std::string();
+			}
+
+			std::string utf8String(size, 0);
+			WideCharToMultiByte(CP_UTF8, 0, wideString, -1, &utf8String[0], size, NULL, NULL);
+
+			utf8String.resize(size - 1);
+
+			return utf8String;
 		}
 
-		static std::wstring ConvertNarrowToWide(const std::string& str) {
-			std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-			return converter.from_bytes(str);
+		static std::wstring ConvertUtf8ToWide(const std::string& string) {
+			if (string.empty()) {
+				return std::wstring();
+			}
+
+			int size = MultiByteToWideChar(CP_UTF8, 0, string.c_str(), (int)string.size(), NULL, 0);
+			std::wstring wideStr(size, 0);
+			MultiByteToWideChar(CP_UTF8, 0, string.c_str(), (int)string.size(), &wideStr[0], size);
+			return wideStr;
 		}
 
 		static bool isChildOf(const std::filesystem::path& parent, const std::filesystem::path& child) {
@@ -35,14 +53,15 @@ namespace Madam {
 				return !relativePath.empty() && relativePath.has_root_path() == false;
 			}
 			catch (const std::filesystem::filesystem_error& e) {
+				MADAM_CORE_ERROR("isChildOf Filesystem error: {0} ", e.what());
 				return false;
 			}
 		}
 
 		static int ShowMessageBox(std::string title, std::string message, PlatformFlags flags = MB_OK, bool blockInput = true)
 		{
-			std::wstring _title = ConvertNarrowToWide(title);
-			std::wstring _message = ConvertNarrowToWide(title);
+			std::wstring _title = ConvertUtf8ToWide(title);
+			std::wstring _message = ConvertUtf8ToWide(title);
 			HWND hWnd = NULL;
 			if (blockInput)
 			{
@@ -79,7 +98,7 @@ namespace Madam {
 
 			if (GetOpenFileName(&ofn)) {
 				filePath = std::filesystem::path(std::wstring(_filePath));
-				MADAM_QUIET_INFO("File opened: {0}", ConvertWideToNarrow(_filePath));
+				MADAM_QUIET_INFO("File opened: {0}", ConvertWideToUtf8(_filePath));
 				std::filesystem::current_path(workingDirectory);
 				return true;
 			}
@@ -107,7 +126,7 @@ namespace Madam {
 
 			if (GetOpenFileName(&ofn)) {
 				filePath = std::filesystem::path(std::wstring(_filePath));
-				MADAM_QUIET_INFO("File opened: {0}", ConvertWideToNarrow(_filePath));
+				MADAM_QUIET_INFO("File opened: {0}", ConvertWideToUtf8(_filePath));
 				std::filesystem::current_path(workingDirectory);
 				return true;
 			}
@@ -134,7 +153,7 @@ namespace Madam {
 
 			if (GetOpenFileName(&ofn)) {
 				filePath = std::filesystem::path(std::wstring(_filePath));
-				MADAM_QUIET_INFO("File opened: {0}", ConvertWideToNarrow(_filePath));
+				MADAM_QUIET_INFO("File opened: {0}", ConvertWideToUtf8(_filePath));
 				std::filesystem::current_path(workingDirectory);
 				return true;
 			}
@@ -161,7 +180,7 @@ namespace Madam {
 
 			if (GetSaveFileName(&ofn)) {
 				filePath = std::filesystem::path(std::wstring(_filePath));
-				MADAM_QUIET_INFO("File saved: {0}", ConvertWideToNarrow(_filePath));
+				MADAM_QUIET_INFO("File saved: {0}", ConvertWideToUtf8(_filePath));
 				return true;
 			}
 			else {
@@ -186,7 +205,7 @@ namespace Madam {
 
 			if (GetSaveFileName(&ofn)) {
 				filePath = std::filesystem::path(std::wstring(_filePath));
-				MADAM_QUIET_INFO("File saved: {0}", ConvertWideToNarrow(_filePath));
+				MADAM_QUIET_INFO("File saved: {0}", ConvertWideToUtf8(_filePath));
 				return true;
 			}
 			else {
@@ -211,7 +230,7 @@ namespace Madam {
 
 			if (GetSaveFileName(&ofn)) {
 				filePath = std::filesystem::path(std::wstring(_filePath));
-				MADAM_QUIET_INFO("File saved: {0}", ConvertWideToNarrow(_filePath));
+				MADAM_QUIET_INFO("File saved: {0}", ConvertWideToUtf8(_filePath));
 				return true;
 			}
 			else {
@@ -269,8 +288,8 @@ namespace Madam {
 
 		static bool DeleteDirectory(const std::filesystem::path path, std::string title = "Delete selected?", std::string message = "You cannot undo the delete action.")
 		{
-			std::wstring _title = ConvertNarrowToWide(title);
-			std::wstring _message = ConvertNarrowToWide(message);
+			std::wstring _title = ConvertUtf8ToWide(title);
+			std::wstring _message = ConvertUtf8ToWide(message);
 			int messageBoxID = ShowMessageBox(_title, _message, MB_ICONQUESTION | MB_YESNO);
 			if (messageBoxID == IDYES) {
 				try {

@@ -218,8 +218,8 @@ namespace Madam {
 			VkViewport viewport{};
 			viewport.x = 0.0f;
 			viewport.y = 0.0f;
-			viewport.width = swapChain->getSwapChainExtent().width;
-			viewport.height = swapChain->getSwapChainExtent().height;
+			viewport.width = static_cast<float>(swapChain->getSwapChainExtent().width);
+			viewport.height = static_cast<float>(swapChain->getSwapChainExtent().height);
 			if (hasSwapChainRecreated)
 			{
 				MADAM_CORE_INFO("Viewport Width: {0}, Height: {1}", viewport.width, viewport.height);
@@ -300,9 +300,9 @@ namespace Madam {
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 			renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 			renderPassInfo.pAttachments = attachments.data();
-			renderPassInfo.subpassCount = subpass.size();
+			renderPassInfo.subpassCount = static_cast<uint32_t>(subpass.size());
 			renderPassInfo.pSubpasses = subpass.data();
-			renderPassInfo.dependencyCount = dependencies.size();
+			renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 			renderPassInfo.pDependencies = dependencies.data();
 
 			if (vkCreateRenderPass(device.device(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) 

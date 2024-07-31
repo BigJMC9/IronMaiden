@@ -87,8 +87,8 @@ namespace Madam {
 				init_info.Device = device.device();
 				init_info.PipelineCache = VK_NULL_HANDLE;
 				init_info.Allocator = VK_NULL_HANDLE;
-				init_info.MinImageCount = swapChain->imageCount();
-				init_info.ImageCount = swapChain->imageCount();
+				init_info.MinImageCount = static_cast<uint32_t>(swapChain->imageCount());
+				init_info.ImageCount = static_cast<uint32_t>(swapChain->imageCount());
 				init_info.CheckVkResultFn = nullptr;
 				device.getImGuiInitInfo(&init_info);
 				return init_info;
