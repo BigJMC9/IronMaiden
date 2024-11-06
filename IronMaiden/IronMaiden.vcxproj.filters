@@ -37,8 +37,8 @@
     <Filter Include="src\Maiden\Rendering\Vulkan">
       <UniqueIdentifier>{57B96788-C3C6-956E-4CAD-9159B8B96125}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\Maiden\Rendering\depreciated">
-      <UniqueIdentifier>{00021FAA-EC52-0AEC-15B7-F8AD01679D55}</UniqueIdentifier>
+    <Filter Include="src\Maiden\Rendering\Vulkan\ShaderCompilation">
+      <UniqueIdentifier>{7C73E435-E8E3-E6AE-B102-61371D321FB0}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\Maiden\Scene">
       <UniqueIdentifier>{875E4093-7357-5FE5-9C89-446A88E13EF1}</UniqueIdentifier>
@@ -193,8 +193,17 @@
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShader.h">
       <Filter>src\Maiden\Rendering\Vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShaderResources.h">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanTexture.h">
       <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderCompiler.h">
+      <Filter>src\Maiden\Rendering\Vulkan\ShaderCompilation</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderPreprocessor.h">
+      <Filter>src\Maiden\Rendering\Vulkan\ShaderCompilation</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Scene\Components.hpp">
       <Filter>src\Maiden\Scene</Filter>
@@ -214,9 +223,6 @@
     <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h">
       <Filter>vendors\ImGuizmo</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShaderResources.h" />
-    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderCompiler.h" />
-    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderPreprocessor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
@@ -310,6 +316,12 @@
     <ClCompile Include="src\Maiden\Rendering\Vulkan\DescriptorManager.cpp">
       <Filter>src\Maiden\Rendering\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderCompiler.cpp">
+      <Filter>src\Maiden\Rendering\Vulkan\ShaderCompilation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderPreprocessor.cpp">
+      <Filter>src\Maiden\Rendering\Vulkan\ShaderCompilation</Filter>
+    </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp">
       <Filter>src\Maiden\Rendering\Vulkan</Filter>
     </ClCompile>
@@ -340,7 +352,5 @@
     <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">
       <Filter>vendors\ImGuizmo</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderPreprocessor.cpp" />
-    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderCompiler.cpp" />
   </ItemGroup>
 </Project>

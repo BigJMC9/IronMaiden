@@ -4,6 +4,7 @@ VULKAN_SDK = os.getenv("VK_SDK_PATH")
 
 CoreBuildDependencies = {}
 CoreBuildDependencies["yaml_cpp"] = "%{wks.location}/IronMaiden/vendors/yaml-cpp"
+CoreBuildDependencies["imgui"] = "%{wks.location}/IronMaiden/vendors/imgui"
 
 IncludeDir = {}
 IncludeDir["shaderc"] = "%{wks.location}/IronMaiden/vendors/shaderc/libshaderc_util/include"
