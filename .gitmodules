@@ -16,18 +16,15 @@
 [submodule "IronMaiden/vendors/entt"]
 	path = IronMaiden/vendors/entt
 	url = https://github.com/skypjack/entt
-[submodule "OpenFBX"]
-	path = OpenFBX
-	url = https://github.com/nem0/OpenFBX
-[submodule "Ironmaiden/vendors/yaml-cpp"]
-	path = Ironmaiden/vendors/yaml-cpp
+[submodule "IronMaiden/vendors/yaml-cpp"]
+	path = IronMaiden/vendors/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp
 [submodule "IronMaiden/vendors/yaml-cpp"]
 	path = IronMaiden/vendors/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp/tree/master
 [submodule "IronMaiden/vendors/imgui"]
 	path = IronMaiden/vendors/imgui
-	url = https://github.com/BigJMC9/imgui/tree/docking
+	url = https://github.com/BigJMC9/yaml-cpp
 [submodule "IronMaiden/vendors/ImGuizmo"]
 	path = IronMaiden/vendors/ImGuizmo
 	url = https://github.com/BigJMC9/ImGuizmo
