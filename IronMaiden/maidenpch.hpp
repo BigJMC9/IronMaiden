@@ -23,6 +23,7 @@
 #include <cmath>
 #include <thread>
 #include <chrono>
+#include <regex>
 
 #ifdef MADAM_PLATFORM_WINDOWS
 	#include <windows.h>

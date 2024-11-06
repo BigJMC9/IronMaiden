@@ -26,22 +26,11 @@ namespace Madam {
         return instanceSize;
     }
 
-    Buffer::Buffer(
-        Device& device,
-        VkDeviceSize instanceSize,
-        uint32_t instanceCount,
-        VkBufferUsageFlags usageFlags,
-        VkMemoryPropertyFlags memoryPropertyFlags,
-        VkDeviceSize minOffsetAlignment)
-        : device{ device },
-        instanceSize{ instanceSize },
-        instanceCount{ instanceCount },
-        usageFlags{ usageFlags },
-        memoryPropertyFlags{ memoryPropertyFlags } {
+    Buffer::Buffer(Device& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment) : device{ device }, instanceSize{ instanceSize }, instanceCount{ instanceCount }, usageFlags{ usageFlags }, memoryPropertyFlags{ memoryPropertyFlags } {
 
-            alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
-            bufferSize = alignmentSize * instanceCount;
-            device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory);
+        alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
+        bufferSize = alignmentSize * instanceCount;
+        device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory);
     }
 
     Buffer::~Buffer() {
@@ -60,7 +49,7 @@ namespace Madam {
      * @return VkResult of the buffer mapping call
      */
     VkResult Buffer::map(VkDeviceSize size, VkDeviceSize offset) {
-        assert(buffer && memory && "Called map on buffer before create");
+        MADAM_CORE_ASSERT(buffer && memory, "Called map on buffer before create");
         return vkMapMemory(device.device(), memory, offset, size, 0, &mapped);
     }
 
@@ -86,7 +75,7 @@ namespace Madam {
      *
      */
     void Buffer::writeToBuffer(void* data, VkDeviceSize size, VkDeviceSize offset) {
-        assert(mapped && "Cannot copy to unmapped buffer");
+        MADAM_CORE_ASSERT(mapped, "Cannot copy to unmapped buffer");
 
         if (size == VK_WHOLE_SIZE) {
             memcpy(mapped, data, bufferSize);
@@ -197,4 +186,4 @@ namespace Madam {
         return invalidate(alignmentSize, index * alignmentSize);
     }
 
-}  // namespace lve
+}

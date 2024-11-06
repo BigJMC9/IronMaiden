@@ -38,5 +38,42 @@ namespace Madam {
 				break;
 			}
 		}
+
+		static VkFormat GetFormat(ImageFormat format) {
+			switch (format)
+			{
+			case Madam::Rendering::ImageFormat::None:
+				MADAM_CORE_ERROR("Image format not specified");
+				break;
+			case Madam::Rendering::ImageFormat::RGB:
+				return VK_FORMAT_R8G8B8_UNORM;
+				break;
+			case Madam::Rendering::ImageFormat::RGBA:
+				return VK_FORMAT_R8G8B8A8_UNORM;
+				break;
+			case Madam::Rendering::ImageFormat::RGBA16F:
+				return VK_FORMAT_R16G16B16A16_SFLOAT;
+				break;
+			case Madam::Rendering::ImageFormat::RGBA32F:
+				return VK_FORMAT_R32G32B32A32_SFLOAT;
+				break;
+			case Madam::Rendering::ImageFormat::SRGB:
+				return VK_FORMAT_R8G8B8A8_SRGB;
+				break;
+			case Madam::Rendering::ImageFormat::D32F:
+				return VK_FORMAT_D32_SFLOAT;
+				break;
+			case Madam::Rendering::ImageFormat::D32FS8:
+				return VK_FORMAT_D32_SFLOAT_S8_UINT;
+				break;
+			case Madam::Rendering::ImageFormat::D24S8:
+				return VK_FORMAT_D24_UNORM_S8_UINT;
+				break;
+			default:
+				MADAM_CORE_ERROR("Image format not specified");
+				return VK_FORMAT_UNDEFINED;
+				break;
+			}
+		}
 	}
 }

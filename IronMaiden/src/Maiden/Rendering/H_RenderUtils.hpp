@@ -5,6 +5,20 @@
 namespace Madam {
 	namespace Rendering {
 
+		enum class TextureWrap {
+			Repeat = 0,
+			Stretch = 1,
+			Clamp = 2,
+			Mirror = 3,
+		};
+
+		enum class TextureFilter
+		{
+			Linear = 0,
+			Nearest = 1,
+			Cubic = 2
+		};
+
 		enum class MultiSample {
 			None = VK_SAMPLE_COUNT_1_BIT,
 			MSAAx2 = VK_SAMPLE_COUNT_2_BIT,
@@ -100,5 +114,6 @@ namespace Madam {
 		}
 
 		static VkFormat GetFormat(RenderPassAttachmentType attachmentType);
+		static VkFormat GetFormat(ImageFormat imageFormat);
 	}
 }

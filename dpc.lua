@@ -6,6 +6,7 @@ CoreBuildDependencies = {}
 CoreBuildDependencies["yaml_cpp"] = "%{wks.location}/IronMaiden/vendors/yaml-cpp"
 
 IncludeDir = {}
+IncludeDir["shaderc"] = "%{wks.location}/IronMaiden/vendors/shaderc/libshaderc_util/include"
 IncludeDir["stb"] = "%{wks.location}/IronMaiden/vendors/stb"
 IncludeDir["yaml_cpp"] = "%{wks.location}/IronMaiden/vendors/yaml-cpp/include"
 IncludeDir["glfw"] = "%{wks.location}/IronMaiden/vendors/glfw-3.3.8.bin.WIN64/include"
@@ -23,12 +24,6 @@ LibDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
 LibDir["glfw"] = "%{wks.location}/IronMaiden/vendors/glfw-3.3.8.bin.WIN64/lib-vc2022"
 LibDir["yaml_cpp"] = "%{wks.location}/IronMaiden/vendors/yaml-cpp/bin/%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}/yaml-cpp"
 LibDir["imgui"] = "%{wks.location}/IronMaiden/vendors/imgui/bin/%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}/ImGui"
-
-StaticLib = {}
-StaticLib["Vulkan"] = "vulkan-1.lib"
-StaticLib["glfw"] = "glfw3_mt.lib"
-StaticLib["yaml_cpp"] = "yaml-cpp.lib"
-StaticLib["imgui"] = "ImGui.lib"
 
 Lib = {}
 Lib["Vulkan"] = "vulkan-1.lib"

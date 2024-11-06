@@ -51,6 +51,7 @@ namespace Madam {
 	{
 		return std::make_unique<T>(std::forward<Args>(args)...);
 	}
+
 	template<typename T>
 	using Ref = std::shared_ptr<T>;
 	template<typename T, typename ... Args>
@@ -59,6 +60,31 @@ namespace Madam {
 		return std::make_shared<T>(std::forward<Args>(args)...);
 	}
 
+#define BIT(x) (1u << x)
+
+	inline std::vector<std::string> SplitString(std::string str, bool keepDelimeters = false)
+	{
+		if (keepDelimeters)
+		{
+			const static std::regex re(R"((^\W|^\w+)|(\w+)|[:()])", std::regex_constants::optimize);
+
+			std::regex_iterator<std::string::iterator> rit(str.begin(), str.end(), re);
+			std::regex_iterator<std::string::iterator> rend;
+			std::vector<std::string> result;
+
+			while (rit != rend)
+			{
+				result.emplace_back(rit->str());
+				++rit;
+			}
+			return result;
+		}
+		else
+		{
+			std::vector<std::string> str;
+			return str;
+		}
+	}
 }
 
 namespace std {

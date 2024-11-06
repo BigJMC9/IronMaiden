@@ -1,14 +1,15 @@
 #include "maidenpch.hpp"
 #include "H_Pipeline.hpp"
 #include "../Core/H_Application.hpp"
-
-#include "../Scene/H_Model.hpp"
+#include "../Rendering/Vulkan/H_VulkanMesh.h"
+#include "../Project/H_Project.h"
+#include "../Asset/AssetUtils.h"
 
 namespace Madam {
 	//In future seperate the Pipeline and config part
 	Pipeline::Pipeline(Device& device, const std::string& rawVertFilepath, const std::string& rawFragFilepath, const PipelineConfigInfo& configInfo) : device{ device } {
-		std::string vertFilepath = Application::Get().getConfig().internals + rawVertFilepath;
-		std::string fragFilepath = Application::Get().getConfig().internals + rawFragFilepath;
+		std::string vertFilepath = "resources\\" + rawVertFilepath;
+		std::string fragFilepath = "resources\\" + rawFragFilepath;
 		createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
 	}
 
@@ -198,8 +199,8 @@ namespace Madam {
 
 	void Pipeline::setDescriptions(PipelineConfigInfo& configInfo) {
 
-		configInfo.bindingDescriptions = Model::Vertex::getBindingDescriptions();
-		configInfo.attributeDescriptions = Model::Vertex::getAttributeDescriptions();
+		configInfo.bindingDescriptions = VulkanStaticMesh::Vertex::GetBindingDescriptions();
+		configInfo.attributeDescriptions = VulkanStaticMesh::Vertex::GetAttributeDescriptions();
 	}
 
 	void Pipeline::enableAlphaBlending(PipelineConfigInfo& configInfo) {
