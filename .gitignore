@@ -365,3 +365,5 @@ FodyWeavers.xsd
 # Directories
 .vs/
 bin-int/
+Editor/pref.conf
+Editor/session.ini
