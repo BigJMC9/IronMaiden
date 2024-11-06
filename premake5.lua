@@ -34,6 +34,7 @@ project "IronMaiden"
     pchheader "maidenpch.hpp"
     pchsource "%{prj.name}/maidenpch.cpp"
     
+    dependson{"ImGui", "yaml-cpp"}
 
 
     files 
@@ -134,6 +135,7 @@ project "Editor"
 
     targetdir ("bin/" .. outputdir .. "/%{prj.name}")
     objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+    dependson {"IronMaiden"}
 
     files
     {
@@ -180,11 +182,6 @@ project "Editor"
             "_CRT_SECURE_NO_WARNINGS";
             "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
             "MADAM_PLATFORM_WINDOWS"; 
-        }
-
-        prebuildcommands
-        {
-            "copy %{wks.location}IronMaiden\\vendors\\yaml-cpp\\bin\\" .. outputdir .. "\\yaml-cpp\\yaml-cpp.dll %{wks.location}bin\\" .. outputdir .. "\\Editor\\",
         }
 
         postbuildcommands
