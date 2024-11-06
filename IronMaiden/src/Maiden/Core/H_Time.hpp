@@ -14,6 +14,11 @@ namespace Madam
 		static std::chrono::steady_clock::time_point GetTime() {
 			return time;
 		}
+
+		static float GetTimeSinceStart() {
+			return std::chrono::duration<float, std::chrono::seconds::period>(std::chrono::high_resolution_clock::now() - startTime).count();
+		}
+
 		//More Accurate
 		static float GetFrameTime() {
 			return frameTime;

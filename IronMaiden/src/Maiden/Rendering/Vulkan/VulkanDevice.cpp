@@ -12,16 +12,16 @@ namespace Madam {
 		void* pUserData) {
 		switch (messageSeverity) {
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-				MADAM_CORE_TRACE("validation layer: {0}", pCallbackData->pMessage);
+				MADAM_CORE_VALID_VERBOSE("{0}", pCallbackData->pMessage);
 				break;
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-				MADAM_CORE_INFO("validation layer: {0}", pCallbackData->pMessage);
+				MADAM_CORE_VALID_INFO("{0}", pCallbackData->pMessage);
 				break;
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-				MADAM_CORE_WARN("validation layer: {0}", pCallbackData->pMessage);
+				MADAM_CORE_VALID_WARN("{0}", pCallbackData->pMessage);
 				break;
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-				MADAM_CORE_WARN("validation layer: {0}", pCallbackData->pMessage);
+				MADAM_CORE_VALID_ERROR("{0}", pCallbackData->pMessage);
 				break;
 			default:
 				break;
@@ -57,24 +57,18 @@ namespace Madam {
 		}
 	}
 
-	// class member functions
 	Device::Device(Window& window) : window{window} {
-		//createInstance(); // Intializes Vulkan library, is the connection between our app and vulkan library
-		//setupDebugMessenger(); // Sets up validation layer to check for vulkan errors
-		//createSurface(); // Sets the connection between window and vulkan display results
-		//pickPhysicalDevice(); // Picks GPU which the application will be using
-		//createLogicalDevice(); // Describe what features of our physical device we want to use
-		//createCommandPool(); // Sets up command buffer pool
+
 	}
 
 	Device::~Device() {
 		if (isRunning) {
 			MADAM_CORE_WARN("Device shutdown prematurally");
-			ShutDown();
+			deinit();
 		}
 	}
 
-	void Device::StartUp() {
+	void Device::init() {
 		createInstance(); // Intializes Vulkan library, is the connection between our app and vulkan library
 		setupDebugMessenger(); // Sets up validation layer to check for vulkan errors
 		createSurface(); // Sets the connection between window and vulkan display results
@@ -84,7 +78,7 @@ namespace Madam {
 		isRunning = true;
 	}
 
-	void Device::ShutDown() {
+	void Device::deinit() {
 		vkDestroyCommandPool(device_, commandPool, nullptr);
 		vkDestroyDevice(device_, nullptr);
 
@@ -104,11 +98,11 @@ namespace Madam {
 
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pApplicationName = "VulkinBasedEditor";
+		appInfo.pApplicationName = "IronMaidenEditor";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 1, 0);
-		appInfo.pEngineName = "Vulkin Based Engine";
+		appInfo.pEngineName = "Iron Maiden Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 1, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_0;
+		appInfo.apiVersion = VK_API_VERSION_1_2; //Update
 
 		VkInstanceCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -119,14 +113,27 @@ namespace Madam {
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
 		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-		if (enableValidationLayers) {
+		VkValidationFeaturesEXT features = { VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT };
+		if (enableValidationLayers) 
+		{
+			VkValidationFeatureEnableEXT enabled[] = 
+			{ 
+				VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT
+			};
+			features.disabledValidationFeatureCount = 0;
+			features.enabledValidationFeatureCount = sizeof(enabled) / sizeof(enabled[0]);
+			features.pDisabledValidationFeatures = nullptr;
+			features.pEnabledValidationFeatures = enabled;
+
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			createInfo.ppEnabledLayerNames = validationLayers.data();
 
 			populateDebugMessengerCreateInfo(debugCreateInfo);
-			createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+			features.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+			createInfo.pNext = &features;
 		}
-		else {
+		else 
+		{
 			createInfo.enabledLayerCount = 0;
 			createInfo.pNext = nullptr;
 		}
@@ -144,7 +151,7 @@ namespace Madam {
 		if (deviceCount == 0) {
 			throw std::runtime_error("failed to find GPUs with Vulkan support!");
 		}
-		std::cout << "Device count: " << deviceCount << std::endl;
+		MADAM_CORE_INFO(" Device count: " + deviceCount);
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
@@ -160,7 +167,7 @@ namespace Madam {
 		}
 
 		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-		std::cout << "physical device: " << properties.deviceName << std::endl;
+		MADAM_CORE_INFO("Physical device: " + std::string(properties.deviceName));
 	}
 
 	void Device::createLogicalDevice() {
@@ -243,13 +250,16 @@ namespace Madam {
 		return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 	}
 
-	void Device::populateDebugMessengerCreateInfo(
-		VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+	void Device::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) 
+	{
 		createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+		createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+									 VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+									 VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+									 VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		createInfo.messageType = 
+			VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
 			VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
 			VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 		createInfo.pfnUserCallback = debugCallback;
@@ -299,6 +309,8 @@ namespace Madam {
 
 		if (enableValidationLayers) {
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			//extensions.push_back(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT)
+			extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 		}
 
 		return extensions;
@@ -310,21 +322,24 @@ namespace Madam {
 		std::vector<VkExtensionProperties> extensions(extensionCount);
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-		std::cout << "available extensions:" << std::endl;
+		std::stringstream msg;
+		msg << "available extensions:\n";
 		std::unordered_set<std::string> available;
 		for (const auto& extension : extensions) {
-			std::cout << "\t" << extension.extensionName << std::endl;
+			msg << "\t" << extension.extensionName << "\n";
 			available.insert(extension.extensionName);
 		}
-
-		std::cout << "required extensions:" << std::endl;
+		MADAM_CORE_INFO("{0}", msg.str());
+		msg = std::stringstream();
+		msg << "required extensions:" << "\n";
 		auto requiredExtensions = getRequiredExtensions();
 		for (const auto& required : requiredExtensions) {
-			std::cout << "\t" << required << std::endl;
+			msg << "\t" << required << "\n";
 			if (available.find(required) == available.end()) {
 				throw std::runtime_error("Missing required glfw extension");
 			}
 		}
+		MADAM_CORE_INFO("{0}", msg.str());
 	}
 
 	bool Device::checkDeviceExtensionSupport(VkPhysicalDevice device) {
@@ -537,11 +552,8 @@ namespace Madam {
 		endSingleTimeCommands(commandBuffer);
 	}
 
-	void Device::createImageWithInfo(
-		const VkImageCreateInfo& imageInfo,
-		VkMemoryPropertyFlags properties,
-		VkImage& image,
-		VkDeviceMemory& imageMemory) {
+	void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+	{
 		if (vkCreateImage(device_, &imageInfo, nullptr, &image) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create image!");
 		}
@@ -654,4 +666,4 @@ namespace Madam {
 		endSingleTimeCommands(commandBuffer);
 	}
 
-}  // namespace lve
+}

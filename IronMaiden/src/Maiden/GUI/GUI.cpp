@@ -5,6 +5,13 @@
 #include "../Core/H_Application.hpp"
 #include "../Scene/H_SceneSerializer.hpp"
 #include "../Rendering/H_Pipeline.hpp"
+#include "../Project/H_Project.h"
+#include "../Asset/H_AssetSystem.h"
+#include "../Rendering/H_Mesh.h"
+
+#include <cwchar>
+#include <cstring>
+#include <cmath>
 
 using namespace Madam::Platform;
 
@@ -270,10 +277,6 @@ namespace Madam::UI {
 			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
 			.build();
 
-		/*viewportLayout = DescriptorSetLayout::Builder(device)
-			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-			.buildRef();*/
-
 		ImGui::CreateContext();
 
 		ImGuiIO& io = ImGui::GetIO();
@@ -313,20 +316,38 @@ namespace Madam::UI {
 
 		ImGui_ImplGlfw_InitForVulkan(Application::Get().getWindow().getGLFWwindow(), true);
 		ImGui_ImplVulkan_Init(init_info);
-		//ImGui_ImplVulkan_Data* bd = ImGui::GetCurrentContext() ? (ImGui_ImplVulkan_Data*)ImGui::GetIO().BackendRendererUserData : nullptr;
 
 		//viewport descriptors
 		viewportSet = ImGui_ImplVulkan_AddTexture(viewportSampler, Rendering::Renderer::Get().getImageView(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		SetupIcons();
 
 		ImGui_ImplVulkan_CreateFontsTexture();
 		viewportCallback = ImDrawCallback(DrawViewport);
 		CreateViewportPipeline();
 		gizmoButtonStates = { false, false, false};
 
-		SetUpEvents();
+		SetupEvents();
 	}
 
-	void GUI::SetUpEvents() {
+	void GUI::SetupIcons()
+	{
+		for (size_t i = 0; i < ICON_SIZE; i++)
+		{
+			TextureData textureData;
+			textureData.format = Rendering::Image::Format::RGBA;
+			textureData.samplerWrap = Rendering::TextureWrap::Clamp;
+			
+			IconInfo iconInfo;
+			iconInfo.texture = Texture::Create(textureData, iconFilepaths[i]);
+
+			iconInfo.descriptorSet = ImGui_ImplVulkan_AddTexture(std::static_pointer_cast<VulkanTexture>(iconInfo.texture)->GetSampler(), std::static_pointer_cast<VulkanTexture>(iconInfo.texture)->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			
+			icons.emplace(iconFilepaths[i].filename().string(), iconInfo);
+		}
+	}
+
+	void GUI::SetupEvents() {
 		EventSystem::Get().AddListener(this, &GUI::OnResizeEvent);
 		EventSystem::Get().AddListener(this, &GUI::OnRenderPassEvent);
 		EventSystem::Get().AddListener(this, &GUI::OnSceneChangeEvent);
@@ -343,12 +364,16 @@ namespace Madam::UI {
 	}
 
 	void GUI::OnResizeEvent(WindowResizeEvent* e) {
-	
 		ImGui_ImplGlfw_Shutdown();
 		ImGui_ImplVulkan_Shutdown();
-		ImGui::DestroyContext();
-		fonts.clear();
-		OnAttach();
+		init_info = &Rendering::Renderer::Get().getImGuiInitInfo();
+		init_info->DescriptorPool = guiPool.get()->descriptorPool;
+		init_info->MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+		init_info->RenderPass = Rendering::Renderer::Get().getSwapChainRenderPass();
+		ImGui_ImplGlfw_InitForVulkan(Application::Get().getWindow().getGLFWwindow(), true);
+		ImGui_ImplVulkan_Init(init_info);
+		viewportSet = ImGui_ImplVulkan_AddTexture(viewportSampler, Rendering::Renderer::Get().getImageView(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		CreateViewportPipeline();
 	}
 
 	void GUI::OnDetach() {
@@ -356,14 +381,26 @@ namespace Madam::UI {
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
 		fonts.clear();
+		EventSystem::Get().RemoveListener(this, &GUI::OnResizeEvent);
+		EventSystem::Get().RemoveListener(this, &GUI::OnRenderPassEvent);
+		EventSystem::Get().RemoveListener(this, &GUI::OnSceneChangeEvent);
 	}
 
 	void GUI::Style(ImGuiIO& io) {
 		//Fonts
-		ImFont* font = io.Fonts->AddFontFromFileTTF("Internal/fonts/Roboto-Medium.ttf", 16.0f);
-		fonts.push_back(font);
-		font = io.Fonts->AddFontFromFileTTF("Internal/fonts/Roboto-Bold.ttf", 16.0f);
-		fonts.push_back(font);
+		std::vector<std::string> fontPaths =
+		{
+			"resources\\fonts\\Roboto-Medium.ttf",
+			"resources\\fonts\\Roboto-Bold.ttf"
+		};
+		ImFont* font;
+		for each (std::string fontPath in fontPaths)
+		{
+			MADAM_CORE_INFO("Loading Font: {0}", fontPath);
+			font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
+			fonts.push_back(font);
+		}
+
 		style = ImGui::GetStyle();
 		//Windows
 		style.Colors[ImGuiCol_WindowBg] = RGBCon(17, 17, 21);
@@ -446,54 +483,52 @@ namespace Madam::UI {
 	}
 
 	void GUI::MenuBar() {
-		if (ImGui::BeginMainMenuBar())
-		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::MenuItem("New Scene")) {}
-				if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
-				{
-					//Window Specific, need to move to platform namespace
-					HWND hWnd = GetConsoleWindow(); // Get the window handle of the console window
-					WCHAR fileName[MAX_PATH]; // Buffer to store the selected file name
-
-					std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-
-					if (OpenFileDialog(hWnd, fileName, MAX_PATH)) {
-						// File selected, do something with the file
-						std::wstring ws(fileName);
-
-						std::string fileNameStr = converter.to_bytes(ws);
-						Application::GetSceneSerializer()->Deserialize(fileNameStr, true);
-						SceneChangeEvent e;
-						EventSystem::Get().PushEvent(&e, true);
-						//MessageBox(hWnd, fileName, L"Selected File", MB_OK | MB_ICONINFORMATION);
+		if (ImGui::BeginMainMenuBar()) {
+			if (ImGui::BeginMenu("File")) {
+				if (ImGui::MenuItem("New Scene")) {
+					//Move this behaviour somewhere else (probably scene class)
+					Scene newScene{};
+					Entity camera = newScene.CreateEntity();
+					camera.GetComponent<CMetadata>().name = "Editor Camera";
+					camera.GetComponent<CTransform>().translation.z = -2.5f;
+					Rendering::CameraData cameraData;
+					cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
+					cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().getAspectRatio(), 0.1f, 1000.0f);
+					camera.AddComponent<CCamera>(cameraData);
+					camera.GetComponent<CCamera>().cameraHandle->SetViewDirection(glm::vec3(0.f, 2.0f, 0.f), glm::vec3(0.f, 0.f, 0.f));
+					camera.GetComponent<CCamera>().cameraHandle->SetMain();
+					Application::Get().SwitchScenes(CreateRef<Scene>(std::move(newScene)));
+				}
+				if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {
+					if (OpenFileDialog(sceneDir, L"scene", L"scene")) {
+						Application::GetSceneSerializer()->Deserialize(sceneDir);
 					}
 					else {
-						// User canceled or error occurred
-						MessageBox(hWnd, L"No file selected.", L"Info", MB_OK | MB_ICONINFORMATION);
+						// User cancelled or error occurred
+						ShowMessageBox(L"No scene file selected.", L"Info", MB_OK | MB_ICONINFORMATION);
 					}
 				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Save", "Ctrl+S")) {
+					if (sceneDir.empty())
+					{
+						if (SaveFileDialog(sceneDir, L"scene", L"scene")) {
+							Application::GetSceneSerializer()->Serialize(sceneDir);
+						}
+						else {
+							// User canceled or error occurred
+							ShowMessageBox(L"Could not save scene.", L"Info", MB_OK | MB_ICONINFORMATION);
+						}
+					}
 					Application::GetSceneSerializer()->Serialize("temp.scene");
 				}
 				if (ImGui::MenuItem("Save As..")) {
-					//Window Specific, Need to move to platform namespace
-					HWND hWnd = GetConsoleWindow(); // Get the window handle of the console window
-					WCHAR fileName[MAX_PATH]; // Buffer to store the selected file name
-
-					std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-
-					if (SaveFileDialog(hWnd, fileName, MAX_PATH)) {
-						std::wstring ws(fileName);
-
-						std::string fileNameStr = converter.to_bytes(ws);
-						Application::GetSceneSerializer()->Serialize(fileNameStr, true);
+					if (SaveFileDialog(sceneDir, L"scene", L"scene")) {
+						Application::GetSceneSerializer()->Serialize(sceneDir);
 					}
 					else {
 						// User canceled or error occurred
-						MessageBox(hWnd, L"Could not save scene.", L"Info", MB_OK | MB_ICONINFORMATION);
+						ShowMessageBox(L"Could not save scene.", L"Info", MB_OK | MB_ICONINFORMATION);
 					}
 				}
 				if (ImGui::MenuItem("Exit")) Application::Get().quit();
@@ -552,7 +587,9 @@ namespace Madam::UI {
 		ImGui::PopStyleVar();
 
 		if (opt_fullscreen)
+		{
 			ImGui::PopStyleVar(2);
+		}
 
 		ImGuiIO& io = ImGui::GetIO();
 		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
@@ -568,10 +605,9 @@ namespace Madam::UI {
 
 		//update in future to scale with window size
 		if (ImGui::Begin("Viewport")) {
-			
 
 			ImVec2 windowSize = ImGui::GetContentRegionAvail();
-			ImVec2 imageSize = ImVec2(Application::Get().getConfig().windowWidth, Application::Get().getConfig().windowHeight);
+			ImVec2 imageSize = ImVec2(static_cast<float>(Application::Get().getConfig().windowWidth), static_cast<float>(Application::Get().getConfig().windowHeight));
 			float imageAspectRatio = imageSize.x / imageSize.y;
 
 			ImVec2 displaySize;
@@ -591,10 +627,28 @@ namespace Madam::UI {
 			ImGui::Image(viewportSet, displaySize, uv0, ImVec2(1,1), ImVec4(1, 1, 1, 1));
 			drawList->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PROJECT_ITEM"))
+				{
+					const wchar_t* wPath = (const wchar_t*)payload->Data;
+					std::string path = ConvertWideToUtf8(wPath);
+
+					MADAM_CORE_INFO("Opening scene: " + path);
+					Application::GetSceneSerializer()->Deserialize(path);
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::SameLine();
+			float xPos = ImGui::GetCursorPos().x - (displaySize.x / 2);
+			ImGui::SetCursorPosX(xPos);
+			DrawViewportOverlays();
+
 			//imGuizmo
 			DrawViewportGizmoButtons();
 			if (selectedEntity) {
-				if (Rendering::CameraHandle::getMain().CameraData().projectionType == Rendering::CameraData::ProjectionType::Orthographic) {
+				if (Rendering::CameraHandle::GetMain().GetCameraData().projectionType == Rendering::CameraData::ProjectionType::Orthographic) {
 					ImGuizmo::SetOrthographic(true);
 				}
 				else {
@@ -605,24 +659,24 @@ namespace Madam::UI {
 				float windowHeight = (float)ImGui::GetWindowHeight();
 				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, displaySize.x, displaySize.y);
 
-				auto& cameraHandle = Rendering::CameraHandle::getMain();
-				glm::mat4 cameraProjection = cameraHandle.getProjection();
+				auto& cameraHandle = Rendering::CameraHandle::GetMain();
+				glm::mat4 cameraProjection = cameraHandle.GetProjection();
 				cameraProjection[1][1] *= -1;
 
-				glm::mat4 cameraView = cameraHandle.getView();
+				glm::mat4 cameraView = cameraHandle.GetView();
 
-				glm::mat4 transform = selectedEntity->GetComponent<Transform>();
+				glm::mat4 transform = selectedEntity->GetComponent<CTransform>();
 
 				
 				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)ImGuizmoType,
 					ImGuizmo::LOCAL, glm::value_ptr(transform));
 
 				if (ImGuizmo::IsUsing()) {
-					glm::vec3 rotation = selectedEntity->GetComponent<Transform>().rotation;
+					glm::vec3 rotation = selectedEntity->GetComponent<CTransform>().rotation;
 
-					selectedEntity->GetComponent<Transform>().UpdateTransform(transform);
-					glm::vec3 deltaRotation = selectedEntity->GetComponent<Transform>().rotation - rotation;
-					selectedEntity->GetComponent<Transform>().rotation = rotation + deltaRotation;
+					selectedEntity->GetComponent<CTransform>().UpdateTransform(transform);
+					glm::vec3 deltaRotation = selectedEntity->GetComponent<CTransform>().rotation - rotation;
+					selectedEntity->GetComponent<CTransform>().rotation = rotation + deltaRotation;
 				}
 			}
 		}
@@ -632,7 +686,7 @@ namespace Madam::UI {
 	void GUI::Hierarchy() {
 
 		if (ImGui::Begin("Hierarchy")) {
-			Application::Get().getScene().GetAllEntitiesWith<GameObject>(entt::exclude<MaidenInternal>).each([&](auto entityId, auto& gameObject)
+			Application::Get().getScene().GetAllEntitiesWith<CMetadata>().each([&](auto entityId, auto& gameObject)
 			{
 				Entity entity {entityId, &Application::Get().getScene()};
 				DrawEntityNode(entity);
@@ -644,8 +698,38 @@ namespace Madam::UI {
 		}
 
 		if (ImGui::BeginPopupContextWindow(0, 1 | ImGuiPopupFlags_NoOpenOverItems)) {
-			if (ImGui::MenuItem("Create Empty GameObject")) {
+			if (ImGui::MenuItem("Create Empty")) {
 				auto entity = Application::Get().getScene().CreateEntity();
+			}
+			if (ImGui::BeginMenu("3D")) {
+				if (ImGui::MenuItem("Quad"))
+				{
+					auto entity = Application::Get().getScene().CreateEntity("Quad");
+					entity.AddComponent<CMeshRenderer>();
+					entity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Quad);
+				}
+				if (ImGui::MenuItem("Cube"))
+				{
+					auto entity = Application::Get().getScene().CreateEntity("Cube");
+					entity.AddComponent<CMeshRenderer>();
+					entity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Cube);
+				}
+				if (ImGui::MenuItem("Sphere"))
+				{
+					auto entity = Application::Get().getScene().CreateEntity("Sphere");
+					entity.AddComponent<CMeshRenderer>();
+					entity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Sphere);
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Lights"))
+			{
+				if (ImGui::MenuItem("Point Light"))
+				{
+					auto entity = Application::Get().getScene().CreateEntity("Point Light");
+					entity.AddComponent<CPointLight>();
+				}
+				ImGui::EndMenu();
 			}
 			ImGui::EndPopup();
 		}
@@ -664,19 +748,15 @@ namespace Madam::UI {
 				if (ImGui::BeginPopup("AddComponent")) 
 				{
 					if (ImGui::MenuItem("Camera")) {
-						selectedEntity->AddComponent<Camera>();
-						ImGui::CloseCurrentPopup();
-					}
-					if (ImGui::MenuItem("Mesh Filter")) {
-						selectedEntity->AddComponent<MeshFilter>();
+						selectedEntity->AddComponent<CCamera>();
 						ImGui::CloseCurrentPopup();
 					}
 					if (ImGui::MenuItem("Mesh Renderer")) {
-						selectedEntity->AddComponent<MeshRenderer>();
+						selectedEntity->AddComponent<CMeshRenderer>();
 						ImGui::CloseCurrentPopup();
 					}
 					if (ImGui::MenuItem("Point Light")) {
-						selectedEntity->AddComponent<PointLight>();
+						selectedEntity->AddComponent<CPointLight>();
 						ImGui::CloseCurrentPopup();
 					}
 					ImGui::EndPopup();
@@ -687,16 +767,260 @@ namespace Madam::UI {
 			}
 		}
 		ImGui::End();
-		
-	}
 
-	void GUI::Project() {
-		if (ImGui::Begin("FileSystem")) {
-
-			
+		if (ImGui::Begin("Asset")) {
+			if (selectedAsset) {
+				DrawAssetInfo(selectedAsset);
+			}
+			else {
+				ImGui::Text("No asset selected");
+			}
 		}
 		ImGui::End();
-		
+	}
+
+	void GUI::Project() 
+	{
+		std::filesystem::path projectDir = Project::Get().getProjectDirectory();
+		std::filesystem::path activeDir = projectDir / curDir;
+		std::filesystem::path relativeActiveDir = curDir;
+		std::filesystem::path hoveredItemPath;
+		if (ImGui::Begin("FileSystem", nullptr, ImGuiWindowFlags_MenuBar)) 
+		{
+			ImGui::PushStyleColor(ImGuiCol_Button, RGBCon(27, 22, 31));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, RGBCon(27, 22, 31));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, RGBCon(27, 22, 43));
+			if (ImGui::BeginMenuBar())
+			{
+				std::filesystem::path tempDir;
+				bool arrow = false;
+				for (const auto& partDir : relativeActiveDir)
+				{
+					tempDir /= partDir;
+					if (arrow)
+					{
+						ImGui::SameLine();
+						ImGui::Text(" > ");
+						ImGui::SameLine();
+					}
+					else
+					{
+						arrow = true;
+					}
+					if (ImGui::Button(partDir.filename().string().c_str()))
+					{
+						curDir = tempDir;
+					}
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PROJECT_ITEM"))
+						{
+							const wchar_t* wPath = (const wchar_t*)payload->Data;
+							std::filesystem::path path(wPath);
+
+							std::filesystem::rename(path, projectDir / tempDir / path.filename());
+							Project::Get().getAssetManager().GetMutableMetadata(path).filepath = (projectDir / tempDir / path.filename());
+						}
+						ImGui::EndDragDropTarget();
+					}
+				}
+				ImGui::EndMenuBar();
+			}
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			int padding = 10;
+			int columns = 16;
+			int width = static_cast<int>(std::round(ImGui::GetWindowSize().x / columns));
+			ImVec2 thumbnailSize = ImVec2(static_cast<float>(width - padding), static_cast<float>(width - padding));
+			int step = 0;
+			std::vector<std::filesystem::directory_entry> files;
+
+			for (const auto& entry : std::filesystem::directory_iterator(activeDir))
+			{
+				if (entry.is_regular_file())
+				{
+					files.push_back(entry);
+				}
+				else if (entry.is_directory())
+				{
+					ImGui::BeginGroup();
+
+					std::string buttonID = "FolderButton##" + entry.path().string();
+					if (ImGui::ImageButton(buttonID.c_str(), icons["Folder.png"].descriptorSet, thumbnailSize))
+					{
+						curDir /= std::filesystem::u8path(entry.path().filename().string());
+						MADAM_CORE_INFO("Folder selected");
+					}
+					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped))
+					{
+						hoveredItemPath = entry.path();
+					}
+					std::string text = entry.path().filename().string();
+					std::string truncatedText = TruncateTextToFit(text, thumbnailSize.x);
+					ImVec2 textSize = ImGui::CalcTextSize(truncatedText.c_str());
+					float textXOffset = (thumbnailSize.x - textSize.x) / 2;
+
+					if (textXOffset < 0)
+					{
+						textXOffset = 0;
+					}
+
+					ImGui::SetCursorPosX(ImGui::GetCursorPos().x + textXOffset);
+					ImGui::TextWrapped(truncatedText.c_str());
+					ImGui::EndGroup();
+
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PROJECT_ITEM"))
+						{
+							const wchar_t* wPath = (const wchar_t*)payload->Data;
+							std::filesystem::path path(wPath);
+
+							std::filesystem::rename(path, entry.path() / path.filename());
+							Project::Get().getAssetManager().GetMutableMetadata(path).filepath = (entry.path() / path.filename());
+						}
+						ImGui::EndDragDropTarget();
+					}
+
+					if (++step < columns)
+					{
+						ImGui::SameLine(0.0f, static_cast<float>(padding));
+					}
+					else
+					{
+						step = 0;
+						ImGui::NewLine();
+					}
+				}
+			}
+
+			for (size_t i = 0; i < files.size(); i++)
+			{
+				const AssetMetadata* metadata = &Project::Get().getAssetManager().GetMetadata(files[i].path());
+
+				if (!metadata->IsValid())
+				{
+					Project::Get().getAssetManager().AppendMetaData(files[i].path());
+					metadata = &Project::Get().getAssetManager().GetMetadata(files[i].path());
+					if (metadata->IsValid())
+					{
+						MADAM_CORE_INFO("Metadata: " + files[i].path().string() + ", is valid!");
+					}
+					else
+					{
+						MADAM_CORE_ERROR("Metadata: " + files[i].path().string() + ", still is not valid!");
+					}
+				}
+				else
+				{
+					ImGui::BeginGroup();
+					std::string buttonID = "FileButton##" + files[i].path().string();
+					if (Project::Get().getAssetManager().GetAssetType(metadata->uuid) == AssetType::TEXTURE)
+					{
+						IconInfo& icon = loadedIconTextures[metadata->uuid];
+						if (icon.texture == nullptr || icon.descriptorSet == nullptr)
+						{
+							icon.texture = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(metadata->uuid));
+							icon.descriptorSet = ImGui_ImplVulkan_AddTexture(std::static_pointer_cast<VulkanTexture>(icon.texture)->GetSampler(), std::static_pointer_cast<VulkanTexture>(icon.texture)->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+						}
+						else if (ImGui::ImageButton(buttonID.c_str(), icon.descriptorSet, thumbnailSize))
+						{
+							selectedAsset = Project::Get().getAssetManager().GetAsset(metadata->uuid);
+						}
+					}
+					else if (ImGui::ImageButton(buttonID.c_str(), icons["File.png"].descriptorSet, thumbnailSize))
+					{
+						selectedAsset = Project::Get().getAssetManager().GetAsset(metadata->uuid);
+					}
+					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped))
+					{
+						hoveredItemPath = metadata->filepath;
+					}
+
+					std::string text = files[i].path().stem().string();
+					std::string truncatedText = TruncateTextToFit(text, thumbnailSize.x);
+					ImVec2 textSize = ImGui::CalcTextSize(truncatedText.c_str());
+					float textXOffset = (thumbnailSize.x - textSize.x) / 2;
+
+					ImGui::SetCursorPosX(ImGui::GetCursorPos().x + textXOffset);
+					ImGui::TextWrapped(truncatedText.c_str());
+					ImGui::EndGroup();
+
+					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+					{
+						const wchar_t* itempath = files[i].path().c_str();
+						ImGui::SetDragDropPayload("PROJECT_ITEM", itempath, (std::wcslen(itempath) + 1) * sizeof(wchar_t));
+						ImGui::EndDragDropSource();
+					}
+
+					if (step < columns)
+					{
+						ImGui::SameLine(0.0f, static_cast<float>(padding));
+						step++;
+					}
+					else
+					{
+						step = 0;
+						ImGui::NewLine();
+					}
+				}
+			}
+
+			if (ImGui::BeginPopupContextWindow(0, 1))
+			{
+				if (!isPopupContextOpen)
+				{
+					popupContextSelectedItem = hoveredItemPath;
+					isPopupContextOpen = true;
+				}
+				if (ImGui::BeginMenu("Create"))
+				{
+					if (ImGui::MenuItem("Folder"))
+					{
+						CreateDirectory(activeDir / "New folder");
+					}
+					if (ImGui::MenuItem("Scene"))
+					{
+						//Update this
+						Application::GetSceneSerializer()->Serialize(activeDir);
+					}
+					if (ImGui::MenuItem("Script"))
+					{
+
+					}
+					ImGui::EndMenu();
+				}
+				if (ImGui::MenuItem("Rename"))
+				{
+
+				}
+				if (!popupContextSelectedItem.empty())
+				{
+					if (ImGui::MenuItem("Delete", NULL, false, true))
+					{
+						if (DeleteDirectory(popupContextSelectedItem, "Delete selected asset?", popupContextSelectedItem.string() + "\n\nYou cannot undo the delete assets action."))
+						{
+							Project::Get().getAssetManager().RemoveMetadata(popupContextSelectedItem);
+						}
+					}
+				}
+				else if (ImGui::MenuItem("Delete", NULL, false, (projectDir / ASSET_DIR) == activeDir ? false : true))
+				{
+					if (DeleteDirectory(activeDir, "Delete selected asset?", activeDir.string() + "\n\nYou cannot undo the delete assets action."))
+					{
+						Project::Get().getAssetManager().RemoveMetadata(activeDir);
+					}
+				}
+				ImGui::EndPopup();
+			}
+			else
+			{
+				popupContextSelectedItem = "";
+				isPopupContextOpen = false;
+			}
+		}
+		ImGui::End();
 	}
 
 	void GUI::Console() {
@@ -751,7 +1075,7 @@ namespace Madam::UI {
 							for (size_t j = 0; j < renderLayers.size(); j++)
 							{
 								auto& renderLayer = renderLayers[j];
-								DrawPipelineSettings(renderLayer, j);
+								DrawPipelineSettings(renderLayer, static_cast<int>(j));
 							}
 							ImGui::PushStyleColor(ImGuiCol_HeaderHovered, headerColor);
 							ImGui::PushFont(boldFont);
@@ -771,7 +1095,7 @@ namespace Madam::UI {
 					else {
 						return false;
 					}
-					};
+				};
 
 				bool isUpHit = false;
 				bool isDownHit = false;
@@ -835,7 +1159,7 @@ namespace Madam::UI {
 	}
 
 	void GUI::DrawEntityNode(Entity entity) {
-		auto name = entity.GetComponent<GameObject>().name;
+		auto name = entity.GetComponent<CMetadata>().name;
 
 		ImGuiTreeNodeFlags flags = ((selectedEntity != nullptr && *selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0 ) | ImGuiTreeNodeFlags_OpenOnArrow;
 		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, name.c_str());
@@ -864,8 +1188,8 @@ namespace Madam::UI {
 	}
 
 	void GUI::DrawEntityComponents(Entity entity) {
-		if (entity.HasComponent<GameObject>()) {
-			auto& gameObject = entity.GetComponent<GameObject>();
+		if (entity.HasComponent<CMetadata>()) {
+			auto& gameObject = entity.GetComponent<CMetadata>();
 
 			char buffer[256];
 			memset(buffer, 0, sizeof(buffer));
@@ -873,7 +1197,7 @@ namespace Madam::UI {
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
 			if (ImGui::InputText("##Name", buffer, sizeof(buffer))) {
-				entity.GetComponent<GameObject>().name = std::string(buffer);
+				entity.GetComponent<CMetadata>().name = std::string(buffer);
 			}
 			ImGui::PopStyleVar();
 		}
@@ -881,11 +1205,11 @@ namespace Madam::UI {
 		const ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth;
 
 
-		if (entity.HasComponent<Transform>()) {
+		if (entity.HasComponent<CTransform>()) {
 
-			auto& transform = entity.GetComponent<Transform>();
+			auto& transform = entity.GetComponent<CTransform>();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(Transform).hash_code(), headerFlags, "Transform");
+			bool open = ImGui::TreeNodeEx((void*)typeid(CTransform).hash_code(), headerFlags, "Transform");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
 			float lineHeight = ImGui::GetFontSize() + 8;
@@ -913,10 +1237,10 @@ namespace Madam::UI {
 			}
 		}
 
-		if (entity.HasComponent<Camera>()) {
-			auto& camera = entity.GetComponent<Camera>();
+		if (entity.HasComponent<CCamera>()) {
+			auto& camera = entity.GetComponent<CCamera>();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(Camera).hash_code(), headerFlags, "Camera");
+			bool open = ImGui::TreeNodeEx((void*)typeid(CCamera).hash_code(), headerFlags, "Camera");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
 			float lineHeight = ImGui::GetFontSize() + 8;
@@ -936,7 +1260,7 @@ namespace Madam::UI {
 			if (open) {
 				//ImGui::Checkbox("Primary", &camera.primary);
 				const char* items[] = { "None", "Perspective", "Orthographic"};
-				Rendering::CameraData& cameraData = camera.cameraHandle->CameraData();
+				Rendering::CameraData& cameraData = camera.cameraHandle->GetCameraData();
 				int currentItem = (int)cameraData.projectionType;
 				if (ImGui::BeginCombo("Projection", items[currentItem])) {
 					for (int i = 0; i < 3; i++) {
@@ -973,44 +1297,14 @@ namespace Madam::UI {
 			}
 
 			if (removeComponent) {
-				entity.RemoveComponent<Camera>();
+				entity.RemoveComponent<CCamera>();
 			}
 		}
 
-		if (entity.HasComponent<MeshFilter>()) {
-			auto& meshFilter = entity.GetComponent<MeshFilter>();
+		if (entity.HasComponent<CMeshRenderer>()) {
+			auto& meshRenderer = entity.GetComponent<CMeshRenderer>();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(MeshFilter).hash_code(), headerFlags, "Mesh Filter");
-			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
-
-			float lineHeight = ImGui::GetFontSize() + 8;
-			if (ImGui::Button("...", ImVec2{ 20, lineHeight })) {
-				ImGui::OpenPopup("Component Settings");
-			}
-			ImGui::PopStyleVar();
-
-			bool removeComponent = false;
-			if (ImGui::BeginPopup("Component Settings")) {
-				if (ImGui::MenuItem("Remove Component")) {
-					removeComponent = true;
-				}
-				ImGui::EndPopup();
-			}
-
-			if (open) {
-				ImGui::Text("Mesh Filter");
-				ImGui::TreePop();
-			}
-
-			if (removeComponent) {
-				entity.RemoveComponent<MeshFilter>();
-			}
-		}
-
-		if (entity.HasComponent<MeshRenderer>()) {
-			auto& meshRenderer = entity.GetComponent<MeshRenderer>();
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(MeshRenderer).hash_code(), headerFlags, "Mesh Renderer");
+			bool open = ImGui::TreeNodeEx((void*)typeid(CMeshRenderer).hash_code(), headerFlags, "Mesh Renderer");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
 			float lineHeight = ImGui::GetFontSize() + 8;
@@ -1033,14 +1327,14 @@ namespace Madam::UI {
 			}
 
 			if (removeComponent) {
-				entity.RemoveComponent<MeshRenderer>();
+				entity.RemoveComponent<CMeshRenderer>();
 			}
 		}
 
-		if (entity.HasComponent<PointLight>()) {
-			auto& pointLight = entity.GetComponent<PointLight>();
+		if (entity.HasComponent<CPointLight>()) {
+			auto& pointLight = entity.GetComponent<CPointLight>();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(PointLight).hash_code(), headerFlags, "Point Light");
+			bool open = ImGui::TreeNodeEx((void*)typeid(CPointLight).hash_code(), headerFlags, "Point Light");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
 			float lineHeight = ImGui::GetFontSize() + 8;
@@ -1066,14 +1360,14 @@ namespace Madam::UI {
 			}
 
 			if (removeComponent) {
-				entity.RemoveComponent<PointLight>();
+				entity.RemoveComponent<CPointLight>();
 			}
 		}
 
-		if (entity.HasComponent<Material>()) {
-			auto& material = entity.GetComponent<Material>();
+		if (entity.HasComponent<CMaterial>()) {
+			auto& material = entity.GetComponent<CMaterial>();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(Material).hash_code(), headerFlags, "Material");
+			bool open = ImGui::TreeNodeEx((void*)typeid(CMaterial).hash_code(), headerFlags, "Material");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
 			float lineHeight = ImGui::GetFontSize() + 8;
@@ -1096,9 +1390,37 @@ namespace Madam::UI {
 			}
 
 			if (removeComponent) {
-				entity.RemoveComponent<Material>();
+				entity.RemoveComponent<CMaterial>();
 			}
 		}
+	}
+
+	void GUI::DrawAssetInfo(Ref<Asset>& asset)
+	{
+		if (asset->GetAssetType() == AssetType::TEXTURE)
+		{
+			Ref<Texture> texture = std::dynamic_pointer_cast<Texture>(asset);
+			
+			auto format = texture->GetFormat();
+			if (format == Rendering::Image::Format::RGBA_SRGB)
+			{
+				isSRGB = true;
+			}
+			else 
+			{
+				isSRGB = false;
+			}
+			if (ImGui::Checkbox("SRGB", &isSRGB))
+			{
+
+			}
+			std::string text = "Size: " + std::to_string(texture->GetWidth()) + " x " + std::to_string(texture->GetHeight());
+			ImGui::Text(text.c_str());
+			text = "Depth: " + std::to_string(texture->GetDepth());
+			ImGui::Text(text.c_str());
+		}
+
+		MADAM_CORE_INFO("Asset Type: " + assetTypeToString(asset->GetAssetType()));
 	}
 
 	void GUI::DrawVec3(const std::string& label, glm::vec3& values, float resetValue, float columnWidth) {
@@ -1165,6 +1487,29 @@ namespace Madam::UI {
 		ImGui::Columns(1);
 
 		ImGui::PopID();
+	}
+
+	void GUI::DrawViewportOverlays()
+	{
+		ImGui::BeginGroup();
+		//ImGui::ImageButton(buttonID.c_str(), icons["File.png"].descriptorSet, fileSize)
+		if (ImGui::ImageButton(icons["PlayButton.png"].descriptorSet, ImVec2(ImGui::GetFrameHeight(), ImGui::GetFrameHeight()), ImVec2(0, 0), ImVec2(1, 1)))
+		{
+			MADAM_CORE_INFO("Play!");
+		}
+		ImGui::SameLine();
+		if (ImGui::ImageButton(icons["PauseButton.png"].descriptorSet, ImVec2(ImGui::GetFrameHeight(), ImGui::GetFrameHeight()), ImVec2(0, 0), ImVec2(1, 1)))
+		{
+			MADAM_CORE_INFO("Pause!");
+		}
+		ImGui::SameLine();
+		if (ImGui::ImageButton(icons["StopButton.png"].descriptorSet, ImVec2(ImGui::GetFrameHeight(), ImGui::GetFrameHeight()), ImVec2(0, 0), ImVec2(1, 1)))
+		{
+			MADAM_CORE_INFO("Stop!");
+		}
+		ImGui::EndGroup();
+
+		//GizmoButtons
 	}
 
 	void GUI::DrawViewportGizmoButtons() {
@@ -1271,5 +1616,34 @@ namespace Madam::UI {
 		Device& device = Rendering::Renderer::GetDevice();
 		viewportPipelineInfo.pipeline = CreateRef<Pipeline>(device, vertCode, fragCode, configInfo);
 		viewportPipelineInfo.layout = configInfo.pipelineLayout;
+	}
+
+	/*Ref<Asset>& GUI::AssetReference(const AssetType filter)
+	{
+		switch (filter)
+		{
+			case AssetType::TEXTURE:
+
+				break;
+			case AssetType::MESH:
+
+				break;
+			default:
+				break;
+		}
+	}*/
+
+	std::string GUI::TruncateTextToFit(const std::string & text, float maxWidth)
+	{
+		if (ImGui::CalcTextSize(text.c_str()).x <= maxWidth) {
+			return text;
+		}
+
+		std::string truncatedText = text;
+		while (!truncatedText.empty() && ImGui::CalcTextSize((truncatedText + "...").c_str()).x > maxWidth) {
+			truncatedText.pop_back();
+		}
+
+		return truncatedText + "...";
 	}
 }

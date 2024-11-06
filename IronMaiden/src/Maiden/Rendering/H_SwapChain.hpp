@@ -10,10 +10,13 @@
 namespace Madam {
 
 	namespace Rendering {
-		class Image;
-		struct ImageView;
-
-
+		class VulkanImage;
+		struct SwapChainImage
+		{
+			VkImage image;
+			VkImageView view;
+			VkDeviceMemory memory;
+		};
 		class SwapChain {
 		public:
 			static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
@@ -30,7 +33,7 @@ namespace Madam {
 			VkRenderPass getRenderPass();
 			VkImageView getImageView(int index);
 			size_t imageCount() { return swapChainImages.size(); }
-			VkImage getSwapChainImage(int index) { return swapChainImages[index]; }
+			VkImage getSwapChainImage(int index);
 			VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
 			VkExtent2D getSwapChainExtent() { return swapChainExtent; } //dimension of the swap chain image
 			uint32_t width() { return swapChainExtent.width; }
@@ -49,14 +52,12 @@ namespace Madam {
 			}
 
 		private:
-			void startUp();
-			void createSwapChain();
-			void createImageViews();
-			//void createDepthResources();
-			//void createSceneResources();
-			void createRenderPass();
-			void createFramebuffers();
-			void createSyncObjects();
+			void StartUp();
+			void CreateSwapChain();
+			void CreateImageViews();
+			void CreateRenderPass();
+			void CreateFramebuffers();
+			void CreateSyncObjects();
 
 			int32_t viewportWidth;
 			int32_t viewportHeight;
@@ -75,12 +76,7 @@ namespace Madam {
 			std::vector<VkFramebuffer> swapChainFramebuffers;
 			VkRenderPass renderpass = VK_NULL_HANDLE;
 
-			std::vector<VkImage> depthImages;
-			std::vector<VkImageView> depthImageViews;
-			std::vector<VkDeviceMemory> depthImageMemorys;
-			std::vector<VkImage> swapChainImages;
-			std::vector<ImageView> swapChainImageViews;
-
+			std::vector<SwapChainImage> swapChainImages;
 
 			Device& device;
 			VkExtent2D windowExtent;

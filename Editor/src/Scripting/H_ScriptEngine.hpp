@@ -43,7 +43,7 @@ namespace Madam {
 		private:
 
 			typedef void (*SetAppInstance)(Application* app);
-			typedef NativeScriptComponent(*BindType)(std::string);
+			typedef CNativeScript(*BindType)(std::string);
 
 			bool isImported = false;
 			HINSTANCE hGetProcIDDLL = NULL;
@@ -85,7 +85,7 @@ namespace Madam {
 			std::vector<std::string> formatIF(std::string _class) {
 				return std::vector<std::string> { 
 					"\t\tif (type == \"" + _class + "\") {",
-					"\t\t\tNativeScriptComponent nsc;",
+					"\t\t\tCNativeScript nsc;",
 					"\t\t\tnsc.Bind<" + _class + ">();",
 					"\t\t\treturn nsc;",
 					"\t\t}"
@@ -95,7 +95,7 @@ namespace Madam {
 			std::vector<std::string> formatELIF(std::string _class) {
 				return std::vector<std::string> {
 					"\t\telse if (type == \"" + _class + "\") {",
-					"\t\t\tNativeScriptComponent nsc;",
+					"\t\t\tCNativeScript nsc;",
 					"\t\t\tnsc.Bind<" + _class + ">();",
 					"\t\t\treturn nsc;",
 					"\t\t}"
@@ -105,7 +105,7 @@ namespace Madam {
 			std::vector<std::string> formatELSE{
 					"\t\telse {",
 					"\t\t\tstd::cout << \"No script found\" << std::endl;",
-					"\t\t\treturn NativeScriptComponent();",
+					"\t\t\treturn CNativeScript();",
 					"\t\t}"
 			};
 		};

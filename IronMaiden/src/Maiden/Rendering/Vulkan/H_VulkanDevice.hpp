@@ -34,7 +34,7 @@ namespace Madam {
 
 	class Device {
 	public:
-#ifdef NDEBUG
+#ifndef MADAM_DEBUG
 		const bool enableValidationLayers = false;
 #else
 		const bool enableValidationLayers = true;
@@ -43,8 +43,8 @@ namespace Madam {
 		Device(Window& window);
 		~Device();
 
-		void StartUp();
-		void ShutDown();
+		void init();
+		void deinit();
 		// Not copyable or movable
 		Device(const Device&) = delete;
 		Device& operator=(const Device&) = delete;

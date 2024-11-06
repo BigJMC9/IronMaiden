@@ -2,6 +2,7 @@
 
 #include "maidenpch.hpp"
 #include "H_Logger.hpp"
+#define VKB_VALIDATION_LAYERS
 #define GLFW_INCLUDE_VULKAN
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
@@ -28,8 +29,8 @@ namespace Madam {
 		Window(const Window&) = delete;
 		Window& operator=(const Window&) = delete;
 
-		void StartUp(uint32_t w, uint32_t h, std::string name);
-		void ShutDown();
+		void init(uint32_t w, uint32_t h, std::string name);
+		void deinit();
 
 		bool shouldClose() { return glfwWindowShouldClose(window); }
 		void quit() { glfwSetWindowShouldClose(window, GLFW_TRUE); }

@@ -5,16 +5,8 @@
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="DebugDLL|x64">
-      <Configuration>DebugDLL</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="ReleaseDLL|x64">
-      <Configuration>ReleaseDLL</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Dist|x64">
@@ -36,21 +28,9 @@
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
@@ -66,13 +46,7 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
@@ -85,25 +59,11 @@
     <TargetName>IronMaiden</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\bin\DebugDLL-windows-x86_64\IronMaiden\</OutDir>
-    <IntDir>..\bin-int\DebugDLL-windows-x86_64\IronMaiden\</IntDir>
-    <TargetName>IronMaiden</TargetName>
-    <TargetExt>.dll</TargetExt>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\bin\Release-windows-x86_64\IronMaiden\</OutDir>
     <IntDir>..\bin-int\Release-windows-x86_64\IronMaiden\</IntDir>
     <TargetName>IronMaiden</TargetName>
     <TargetExt>.lib</TargetExt>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\bin\ReleaseDLL-windows-x86_64\IronMaiden\</OutDir>
-    <IntDir>..\bin-int\ReleaseDLL-windows-x86_64\IronMaiden\</IntDir>
-    <TargetName>IronMaiden</TargetName>
-    <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <OutDir>..\bin\Dist-windows-x86_64\IronMaiden\</OutDir>
@@ -116,30 +76,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>maidenpch.hpp</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;MADAM_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <Optimization>Disabled</Optimization>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-      <ExternalWarningLevel>Level3</ExternalWarningLevel>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-    <Lib>
-      <AdditionalDependencies>vulkan-1.lib;glfw3_mt.lib;yaml-cpp.lib;ImGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;vendors\glfw-3.3.8.bin.WIN64\lib-vc2022;vendors\yaml-cpp\bin\Debug-windows-x86_64\yaml-cpp;vendors\imgui\bin\Debug-windows-x86_64\ImGui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Lib>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
-    <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>maidenpch.hpp</PrecompiledHeaderFile>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;MADAM_DEBUG;MADAM_DYNAMIC_LINK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;vendors\shaderc\libshaderc_util\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -149,27 +87,25 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;yaml-cpp.lib;ImGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;vendors\glfw-3.3.8.bin.WIN64\lib-vc2022;vendors\yaml-cpp\bin\DebugDLL-windows-x86_64\yaml-cpp;vendors\imgui\bin\DebugDLL-windows-x86_64\ImGui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <ImportLibrary>..\bin\DebugDLL-windows-x86_64\IronMaiden\IronMaiden.lib</ImportLibrary>
     </Link>
-    <PostBuildEvent>
-      <Command>copy $(SolutionDir)bin\DebugDLL-windows-x86_64\IronMaiden\IronMaiden.dll $(SolutionDir)bin\DebugDLL-windows-x86_64\Editor\</Command>
-    </PostBuildEvent>
+    <Lib>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ImGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;vendors\glfw-3.3.8.bin.WIN64\lib-vc2022;vendors\imgui\bin\Debug-windows-x86_64\ImGui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>maidenpch.hpp</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;MADAM_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;vendors\shaderc\libshaderc_util\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -179,52 +115,23 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>vulkan-1.lib;glfw3_mt.lib;yaml-cpp.lib;ImGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;vendors\glfw-3.3.8.bin.WIN64\lib-vc2022;vendors\yaml-cpp\bin\Release-windows-x86_64\yaml-cpp;vendors\imgui\bin\Release-windows-x86_64\ImGui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ImGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;vendors\glfw-3.3.8.bin.WIN64\lib-vc2022;vendors\imgui\bin\Release-windows-x86_64\ImGui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
-    <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>maidenpch.hpp</PrecompiledHeaderFile>
-      <WarningLevel>Level3</WarningLevel>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;MADAM_DYNAMIC_LINK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>Full</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <MinimalRebuild>false</MinimalRebuild>
-      <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-      <ExternalWarningLevel>Level3</ExternalWarningLevel>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;yaml-cpp.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;vendors\glfw-3.3.8.bin.WIN64\lib-vc2022;vendors\yaml-cpp\bin\ReleaseDLL-windows-x86_64\yaml-cpp;vendors\imgui\bin\ReleaseDLL-windows-x86_64\ImGui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <ImportLibrary>..\bin\ReleaseDLL-windows-x86_64\IronMaiden\IronMaiden.lib</ImportLibrary>
-    </Link>
-    <PostBuildEvent>
-      <Command>copy $(SolutionDir)bin\ReleaseDLL-windows-x86_64\IronMaiden\IronMaiden.dll $(SolutionDir)bin\ReleaseDLL-windows-x86_64\Editor\</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>maidenpch.hpp</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_BUILD_DLL;MADAM_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;C:\Program Files\VulkanSDK\1.3.268.0\include;vendors\glfw-3.3.8.bin.WIN64\include;vendors\glm;vendors\spdlog\include;vendors\imgui;vendors\entt\single_include;vendors\yaml-cpp\include;vendors\tinyobjloader;vendors\stb;vendors\OpenFBX\src;vendors\ImGuizmo;vendors\shaderc\libshaderc_util\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -234,15 +141,21 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>vulkan-1.lib;glfw3_mt.lib;yaml-cpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;vendors\glfw-3.3.8.bin.WIN64\lib-vc2022;vendors\yaml-cpp\bin\Dist-windows-x86_64\yaml-cpp;vendors\imgui\bin\Dist-windows-x86_64\ImGui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ImGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\VulkanSDK\1.3.268.0\Lib;vendors\glfw-3.3.8.bin.WIN64\lib-vc2022;vendors\imgui\bin\Dist-windows-x86_64\ImGui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="maidenpch.hpp" />
     <ClInclude Include="src\Maiden.hpp" />
+    <ClInclude Include="src\Maiden\Asset\Asset.h" />
+    <ClInclude Include="src\Maiden\Asset\AssetUtils.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetImporter.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetRegistry.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetSerializer.h" />
+    <ClInclude Include="src\Maiden\Asset\H_AssetSystem.h" />
+    <ClInclude Include="src\Maiden\Asset\H_Metadata.h" />
     <ClInclude Include="src\Maiden\Core\H_Application.hpp" />
-    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanDevice.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Time.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Utils.hpp" />
@@ -259,23 +172,36 @@
     <ClInclude Include="src\Maiden\Platform\MacOS.hpp" />
     <ClInclude Include="src\Maiden\Platform\Platforms.hpp" />
     <ClInclude Include="src\Maiden\Platform\Windows.hpp" />
+    <ClInclude Include="src\Maiden\Project\H_Project.h" />
     <ClInclude Include="src\Maiden\Rendering\FrameInfo.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Buffer.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Camera.hpp" />
-    <ClInclude Include="src\Maiden\Rendering\H_DescriptorAllocator.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_DescriptorSetLayout.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Image.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_Material.h" />
+    <ClInclude Include="src\Maiden\Rendering\H_Mesh.h" />
     <ClInclude Include="src\Maiden\Rendering\H_Pipeline.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_RIResource.h" />
     <ClInclude Include="src\Maiden\Rendering\H_RenderSystems.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_RenderUtils.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Renderer.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_Shader.h" />
     <ClInclude Include="src\Maiden\Rendering\H_SwapChain.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\H_Texture.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_DescriptorManager.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanDevice.hpp" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanImage.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMaterial.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMesh.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShader.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShaderResources.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanTexture.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderCompiler.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderPreprocessor.h" />
     <ClInclude Include="src\Maiden\Scene\Components.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_Entity.hpp" />
-    <ClInclude Include="src\Maiden\Scene\H_Model.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_Scene.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_SceneSerializer.hpp" />
-    <ClInclude Include="src\Maiden\Scene\H_Texture.hpp" />
     <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp" />
     <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h" />
   </ItemGroup>
@@ -283,8 +209,11 @@
     <ClCompile Include="maidenpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Asset\AssetImporter.cpp" />
+    <ClCompile Include="src\Maiden\Asset\AssetRegistry.cpp" />
+    <ClCompile Include="src\Maiden\Asset\AssetSerializer.cpp" />
+    <ClCompile Include="src\Maiden\Asset\AssetSystem.cpp" />
     <ClCompile Include="src\Maiden\Core\Application.cpp" />
-    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp" />
     <ClCompile Include="src\Maiden\Core\Logger.cpp" />
     <ClCompile Include="src\Maiden\Core\Time.cpp" />
     <ClCompile Include="src\Maiden\Core\Utils.cpp" />
@@ -295,21 +224,32 @@
     <ClCompile Include="src\Maiden\GUI\GUI.cpp" />
     <ClCompile Include="src\Maiden\Interfaces\Interface.cpp" />
     <ClCompile Include="src\Maiden\Interfaces\InterfaceManager.cpp" />
+    <ClCompile Include="src\Maiden\Project\Project.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Buffer.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Camera.cpp" />
-    <ClCompile Include="src\Maiden\Rendering\DescriptorAllocator.cpp" />
     <ClCompile Include="src\Maiden\Rendering\DescriptorSetLayout.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Image.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Material.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Mesh.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Pipeline.cpp" />
     <ClCompile Include="src\Maiden\Rendering\RenderSystems.cpp" />
     <ClCompile Include="src\Maiden\Rendering\RenderUtils.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Renderer.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Shader.cpp" />
     <ClCompile Include="src\Maiden\Rendering\SwapChain.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Texture.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\DescriptorManager.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderCompiler.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderPreprocessor.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanImage.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMaterial.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMesh.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanShader.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanTexture.cpp" />
     <ClCompile Include="src\Maiden\Scene\Entity.cpp" />
-    <ClCompile Include="src\Maiden\Scene\Model.cpp" />
     <ClCompile Include="src\Maiden\Scene\Scene.cpp" />
     <ClCompile Include="src\Maiden\Scene\SceneSerializer.cpp" />
-    <ClCompile Include="src\Maiden\Scene\Texture.cpp" />
     <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

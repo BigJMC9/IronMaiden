@@ -7,6 +7,9 @@
     <Filter Include="src\Maiden">
       <UniqueIdentifier>{EAA9F11F-D661-336D-3F69-0CC92B40CE5D}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Maiden\Asset">
+      <UniqueIdentifier>{F9A50392-E59E-22E4-0ED1-0769FA2802F0}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\Maiden\Core">
       <UniqueIdentifier>{8290B31B-EE1B-21E0-F72C-A4D463377DE0}</UniqueIdentifier>
     </Filter>
@@ -25,8 +28,17 @@
     <Filter Include="src\Maiden\Platform">
       <UniqueIdentifier>{7EAD36E6-EA0E-14F4-737C-5AA6DFDC4AB3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Maiden\Project">
+      <UniqueIdentifier>{309893A1-1C7C-54F7-85DC-4E4A71DF3E79}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\Maiden\Rendering">
       <UniqueIdentifier>{B75F8AE3-A3EE-13AD-4C0D-28A8387B2453}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Maiden\Rendering\Vulkan">
+      <UniqueIdentifier>{57B96788-C3C6-956E-4CAD-9159B8B96125}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Maiden\Rendering\depreciated">
+      <UniqueIdentifier>{00021FAA-EC52-0AEC-15B7-F8AD01679D55}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\Maiden\Scene">
       <UniqueIdentifier>{875E4093-7357-5FE5-9C89-446A88E13EF1}</UniqueIdentifier>
@@ -43,10 +55,28 @@
     <ClInclude Include="src\Maiden.hpp">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Core\H_Application.hpp">
-      <Filter>src\Maiden\Core</Filter>
+    <ClInclude Include="src\Maiden\Asset\Asset.h">
+      <Filter>src\Maiden\Asset</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanDevice.hpp">
+    <ClInclude Include="src\Maiden\Asset\AssetUtils.h">
+      <Filter>src\Maiden\Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Asset\H_AssetImporter.h">
+      <Filter>src\Maiden\Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Asset\H_AssetRegistry.h">
+      <Filter>src\Maiden\Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Asset\H_AssetSerializer.h">
+      <Filter>src\Maiden\Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Asset\H_AssetSystem.h">
+      <Filter>src\Maiden\Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Asset\H_Metadata.h">
+      <Filter>src\Maiden\Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Core\H_Application.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp">
@@ -97,6 +127,9 @@
     <ClInclude Include="src\Maiden\Platform\Windows.hpp">
       <Filter>src\Maiden\Platform</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Project\H_Project.h">
+      <Filter>src\Maiden\Project</Filter>
+    </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\FrameInfo.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
@@ -106,16 +139,22 @@
     <ClInclude Include="src\Maiden\Rendering\H_Camera.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\H_DescriptorAllocator.hpp">
-      <Filter>src\Maiden\Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_DescriptorSetLayout.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_Image.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Material.h">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Mesh.h">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_Pipeline.hpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_RIResource.h">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_RenderSystems.hpp">
@@ -127,16 +166,40 @@
     <ClInclude Include="src\Maiden\Rendering\H_Renderer.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Shader.h">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_SwapChain.hpp">
       <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\H_Texture.h">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_DescriptorManager.h">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanDevice.hpp">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanImage.h">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMaterial.h">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMesh.h">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShader.h">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanTexture.h">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Scene\Components.hpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Scene\H_Entity.hpp">
-      <Filter>src\Maiden\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Maiden\Scene\H_Model.hpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClInclude>
     <ClInclude Include="src\Maiden\Scene\H_Scene.hpp">
@@ -145,22 +208,31 @@
     <ClInclude Include="src\Maiden\Scene\H_SceneSerializer.hpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Scene\H_Texture.hpp">
-      <Filter>src\Maiden\Scene</Filter>
-    </ClInclude>
     <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClInclude>
     <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h">
       <Filter>vendors\ImGuizmo</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShaderResources.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderCompiler.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderPreprocessor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
-    <ClCompile Include="src\Maiden\Core\Application.cpp">
-      <Filter>src\Maiden\Core</Filter>
+    <ClCompile Include="src\Maiden\Asset\AssetImporter.cpp">
+      <Filter>src\Maiden\Asset</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp">
+    <ClCompile Include="src\Maiden\Asset\AssetRegistry.cpp">
+      <Filter>src\Maiden\Asset</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Asset\AssetSerializer.cpp">
+      <Filter>src\Maiden\Asset</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Asset\AssetSystem.cpp">
+      <Filter>src\Maiden\Asset</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Core\Application.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Logger.cpp">
@@ -193,19 +265,25 @@
     <ClCompile Include="src\Maiden\Interfaces\InterfaceManager.cpp">
       <Filter>src\Maiden\Interfaces</Filter>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Project\Project.cpp">
+      <Filter>src\Maiden\Project</Filter>
+    </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\Buffer.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\Camera.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Rendering\DescriptorAllocator.cpp">
-      <Filter>src\Maiden\Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\DescriptorSetLayout.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\Image.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Material.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Mesh.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\Pipeline.cpp">
@@ -220,13 +298,37 @@
     <ClCompile Include="src\Maiden\Rendering\Renderer.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Shader.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\Maiden\Rendering\SwapChain.cpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Scene\Entity.cpp">
-      <Filter>src\Maiden\Scene</Filter>
+    <ClCompile Include="src\Maiden\Rendering\Texture.cpp">
+      <Filter>src\Maiden\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Scene\Model.cpp">
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\DescriptorManager.cpp">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanImage.cpp">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMaterial.cpp">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMesh.cpp">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanShader.cpp">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanTexture.cpp">
+      <Filter>src\Maiden\Rendering\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Scene\Entity.cpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Scene\Scene.cpp">
@@ -235,11 +337,10 @@
     <ClCompile Include="src\Maiden\Scene\SceneSerializer.cpp">
       <Filter>src\Maiden\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Scene\Texture.cpp">
-      <Filter>src\Maiden\Scene</Filter>
-    </ClCompile>
     <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">
       <Filter>vendors\ImGuizmo</Filter>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderPreprocessor.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderCompiler.cpp" />
   </ItemGroup>
 </Project>

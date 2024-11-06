@@ -10,6 +10,8 @@ namespace Madam {
 
 namespace Madam::Events {
 
+	class EventSystem;
+
 	class ListenerHandler {
 	public:
 		void Execute(Event* _event) {
@@ -21,6 +23,7 @@ namespace Madam::Events {
 		virtual void call(Event* _event) = 0;
 	protected:
 		virtual ~ListenerHandler() {};
+		friend class EventSystem;
 	};
 
 	template<class T, class EventType>
@@ -36,6 +39,7 @@ namespace Madam::Events {
 	private:
 		T* _instance;
 		MemberFunction _function;
+		friend class EventSystem;
 	};
 
 	struct EventHandler {
@@ -81,6 +85,21 @@ namespace Madam::Events {
 				_listeners[typeid(EventType)] = listeners;
 			}
 			listeners->push_back(new MemberListenerHandler<T, EventType>(instance, function));
+		}
+
+		template<class T, class EventType>
+		void RemoveListener(T* instance, void (T::* function)(EventType*)) {
+			ListenerHandlers* listeners = _listeners[typeid(EventType)];
+			for (ListenerHandler* listener : *listeners) {
+				MemberListenerHandler<T, EventType>* memberListener = static_cast<MemberListenerHandler<T, EventType>*>(listener);
+				if (memberListener != nullptr) {
+					if (memberListener->_instance == instance && memberListener->_function == function) {
+						listeners->erase(std::remove(listeners->begin(), listeners->end(), listener), listeners->end());
+						delete listener;
+						break;
+					}
+				}
+			}
 		}
 
 	private:

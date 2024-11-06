@@ -5,16 +5,8 @@
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="DebugDLL|x64">
-      <Configuration>DebugDLL</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="ReleaseDLL|x64">
-      <Configuration>ReleaseDLL</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Dist|x64">
@@ -36,19 +28,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
@@ -66,13 +46,7 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
@@ -86,24 +60,10 @@
     <TargetName>Editor</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\bin\DebugDLL-windows-x86_64\Editor\</OutDir>
-    <IntDir>..\bin-int\DebugDLL-windows-x86_64\Editor\</IntDir>
-    <TargetName>Editor</TargetName>
-    <TargetExt>.exe</TargetExt>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\Release-windows-x86_64\Editor\</OutDir>
     <IntDir>..\bin-int\Release-windows-x86_64\Editor\</IntDir>
-    <TargetName>Editor</TargetName>
-    <TargetExt>.exe</TargetExt>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\bin\ReleaseDLL-windows-x86_64\Editor\</OutDir>
-    <IntDir>..\bin-int\ReleaseDLL-windows-x86_64\Editor\</IntDir>
     <TargetName>Editor</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
@@ -118,33 +78,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_DEBUG;YAML_CPP_STATIC_DEFINE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\include;..\IronMaiden\vendors\glfw-3.3.8.bin.WIN64\include;..\IronMaiden\vendors\glm;..\IronMaiden\vendors\spdlog\include;..\IronMaiden\vendors\entt\single_include;..\IronMaiden\vendors\imgui;..\IronMaiden\vendors\ImGuizmo;..\IronMaiden\src;..\IronMaiden;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <Optimization>Disabled</Optimization>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-      <ExternalWarningLevel>Level3</ExternalWarningLevel>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>IronMaiden.lib;yaml-cpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\bin\Debug-windows-x86_64\IronMaiden;..\IronMaiden\vendors\yaml-cpp\bin\Debug-windows-x86_64\yaml-cpp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <PreBuildEvent>
-      <Command>copy $(SolutionDir)bin\Debug-windows-x86_64\IronMaiden\IronMaiden.dll $(SolutionDir)bin\Debug-windows-x86_64\Editor\
-copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Debug-windows-x86_64\yaml-cpp\yaml-cpp.dll $(SolutionDir)bin\Debug-windows-x86_64\Editor\</Command>
-    </PreBuildEvent>
-    <PostBuildEvent>
-      <Command>call "compile.bat"</Command>
-    </PostBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
-    <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_DEBUG;YAML_CPP_DLL;MADAM_DYNAMIC_LINK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;YAML_CPP_DLL;MADAM_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\include;..\IronMaiden\vendors\glfw-3.3.8.bin.WIN64\include;..\IronMaiden\vendors\glm;..\IronMaiden\vendors\spdlog\include;..\IronMaiden\vendors\entt\single_include;..\IronMaiden\vendors\imgui;..\IronMaiden\vendors\ImGuizmo;..\IronMaiden\src;..\IronMaiden;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -156,51 +90,22 @@ copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Debug-windows-x86_64\yaml-cpp
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>IronMaiden.lib;yaml-cpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\bin\DebugDLL-windows-x86_64\IronMaiden;..\IronMaiden\vendors\yaml-cpp\bin\DebugDLL-windows-x86_64\yaml-cpp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\bin\Debug-windows-x86_64\IronMaiden;..\IronMaiden\vendors\yaml-cpp\bin\Debug-windows-x86_64\yaml-cpp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
-      <Command>copy $(SolutionDir)bin\DebugDLL-windows-x86_64\IronMaiden\IronMaiden.dll $(SolutionDir)bin\DebugDLL-windows-x86_64\Editor\
-copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\DebugDLL-windows-x86_64\yaml-cpp\yaml-cpp.dll $(SolutionDir)bin\DebugDLL-windows-x86_64\Editor\</Command>
+      <Command>copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Debug-windows-x86_64\yaml-cpp\yaml-cpp.dll $(SolutionDir)bin\Debug-windows-x86_64\Editor\</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>call "compile.bat"</Command>
+      <Command>call "compile.bat"
+C:\Windows\System32\xcopy "$(SolutionDir)Editor\resources\" "$(SolutionDir)bin\Debug-windows-x86_64\Editor\resources\" /E /I /Y
+C:\Windows\System32\xcopy "$(SolutionDir)Editor\logs\" "$(SolutionDir)bin\Debug-windows-x86_64\Editor\logs\" /E /I /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_RELEASE;YAML_CPP_STATIC_DEFINE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\include;..\IronMaiden\vendors\glfw-3.3.8.bin.WIN64\include;..\IronMaiden\vendors\glm;..\IronMaiden\vendors\spdlog\include;..\IronMaiden\vendors\entt\single_include;..\IronMaiden\vendors\imgui;..\IronMaiden\vendors\ImGuizmo;..\IronMaiden\src;..\IronMaiden;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>Full</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <MinimalRebuild>false</MinimalRebuild>
-      <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-      <ExternalWarningLevel>Level3</ExternalWarningLevel>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>IronMaiden.lib;yaml-cpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\bin\Release-windows-x86_64\IronMaiden;..\IronMaiden\vendors\yaml-cpp\bin\Release-windows-x86_64\yaml-cpp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <PreBuildEvent>
-      <Command>copy $(SolutionDir)bin\Release-windows-x86_64\IronMaiden\IronMaiden.dll $(SolutionDir)bin\Release-windows-x86_64\Editor\
-copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Release-windows-x86_64\yaml-cpp\yaml-cpp.dll $(SolutionDir)bin\Release-windows-x86_64\Editor\</Command>
-    </PreBuildEvent>
-    <PostBuildEvent>
-      <Command>call "compile.bat"</Command>
-    </PostBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
-    <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;YAML_CPP_DLL;MADAM_DYNAMIC_LINK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;YAML_CPP_DLL;MADAM_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\include;..\IronMaiden\vendors\glfw-3.3.8.bin.WIN64\include;..\IronMaiden\vendors\glm;..\IronMaiden\vendors\spdlog\include;..\IronMaiden\vendors\entt\single_include;..\IronMaiden\vendors\imgui;..\IronMaiden\vendors\ImGuizmo;..\IronMaiden\src;..\IronMaiden;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -216,44 +121,48 @@ copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Release-windows-x86_64\yaml-c
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>IronMaiden.lib;yaml-cpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\bin\ReleaseDLL-windows-x86_64\IronMaiden;..\IronMaiden\vendors\yaml-cpp\bin\ReleaseDLL-windows-x86_64\yaml-cpp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\bin\Release-windows-x86_64\IronMaiden;..\IronMaiden\vendors\yaml-cpp\bin\Release-windows-x86_64\yaml-cpp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
-      <Command>copy $(SolutionDir)bin\ReleaseDLL-windows-x86_64\IronMaiden\IronMaiden.dll $(SolutionDir)bin\ReleaseDLL-windows-x86_64\Editor\
-copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\ReleaseDLL-windows-x86_64\yaml-cpp\yaml-cpp.dll $(SolutionDir)bin\ReleaseDLL-windows-x86_64\Editor\</Command>
+      <Command>copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Release-windows-x86_64\yaml-cpp\yaml-cpp.dll $(SolutionDir)bin\Release-windows-x86_64\Editor\</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>call "compile.bat"</Command>
+      <Command>call "compile.bat"
+C:\Windows\System32\xcopy "$(SolutionDir)Editor\resources\" "$(SolutionDir)bin\Release-windows-x86_64\Editor\resources\" /E /I /Y
+C:\Windows\System32\xcopy "$(SolutionDir)Editor\logs\" "$(SolutionDir)bin\Release-windows-x86_64\Editor\logs\" /E /I /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;MADAM_DIST;YAML_CPP_STATIC_DEFINE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;MADAM_PLATFORM_WINDOWS;YAML_CPP_DLL;MADAM_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\Program Files\VulkanSDK\1.3.268.0\include;..\IronMaiden\vendors\glfw-3.3.8.bin.WIN64\include;..\IronMaiden\vendors\glm;..\IronMaiden\vendors\spdlog\include;..\IronMaiden\vendors\entt\single_include;..\IronMaiden\vendors\imgui;..\IronMaiden\vendors\ImGuizmo;..\IronMaiden\src;..\IronMaiden;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>IronMaiden.lib;yaml-cpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\bin\Dist-windows-x86_64\IronMaiden;..\IronMaiden\vendors\yaml-cpp\bin\Dist-windows-x86_64\yaml-cpp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
-      <Command>copy $(SolutionDir)bin\Dist-windows-x86_64\IronMaiden\IronMaiden.dll $(SolutionDir)bin\Dist-windows-x86_64\Editor\
-copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Dist-windows-x86_64\yaml-cpp\yaml-cpp.dll $(SolutionDir)bin\Dist-windows-x86_64\Editor\</Command>
+      <Command>copy $(SolutionDir)IronMaiden\vendors\yaml-cpp\bin\Dist-windows-x86_64\yaml-cpp\yaml-cpp.dll $(SolutionDir)bin\Dist-windows-x86_64\Editor\</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>call "compile.bat"</Command>
+      <Command>call "compile.bat"
+C:\Windows\System32\xcopy "$(SolutionDir)Editor\resources\" "$(SolutionDir)bin\Dist-windows-x86_64\Editor\resources\" /E /I /Y
+C:\Windows\System32\xcopy "$(SolutionDir)Editor\logs\" "$(SolutionDir)bin\Dist-windows-x86_64\Editor\logs\" /E /I /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

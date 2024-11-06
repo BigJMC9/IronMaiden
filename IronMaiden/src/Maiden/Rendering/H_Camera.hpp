@@ -14,6 +14,7 @@
 
 
 namespace Madam {
+
 	namespace Rendering {
 		struct MADAM_API CameraData {
 			struct Perspective {
@@ -42,63 +43,55 @@ namespace Madam {
 			Perspective perspective;
 			Orthographic orthographic;
 
-			CameraData() {
-				projectionType = ProjectionType::None;
-			}
 		};
 
 		class MADAM_API CameraHandle {
 		public:
-			CameraHandle(CameraData _cameraData) : cameraData{ _cameraData } {
-
+			CameraHandle(CameraData cameraData) : _cameraData{ cameraData } {
+				
 			}
-			//CameraHandle(const CameraHandle& other) = default;
-			//CameraHandle(CameraHandle&& other) = default;
-			//CameraHandle& operator=(const CameraHandle& other) = default;
-			//CameraHandle& operator=(CameraHandle&& other) = default;
-			~CameraHandle() = default;
-
-			bool isEmpty = false;
-
-			void setCameraData(CameraData _cameraData) {
-				cameraData = _cameraData;
+			~CameraHandle()
+			{
+				if (IsMain())
+				{
+					MADAM_INFO("Deleting main camera");
+					instance = nullptr;
+					hasInitialized = false;
+				}
 			}
 
-			void setMain() {
+			void SetCameraData(CameraData cameraData) {
+				_cameraData = cameraData;
+			}
+
+			void SetMain() {
 				hasInitialized = true;
 				instance = this;
-				MADAM_CORE_INFO("Main Camera set");
 			}
 
-			CameraData getCameraData() {
-				return cameraData;
+			CameraData GetCameraData() {
+				return _cameraData;
 			}
 
-			CameraData& CameraData() {
-				return cameraData;
+			CameraData& GetMutableCameraData() {
+				return _cameraData;
 			}
 
-			CameraHandle& get() {
+			CameraHandle& Get() {
 				return *this;
 			}
 
-			static CameraHandle& getMain() {
-				if (!hasInitialized) {
-					MADAM_CORE_INFO("Get Main called, instance not initialized!");
-					if (!instance->isEmpty) {
-						instance = new CameraHandle();
-					}
-					//MADAM_CORE_ERROR("Trying to get Main Camera when not initialized");
-				}
-				return *instance;
+			static void SetDefaultCameraData(CameraData cameraData) {
+				defaultCameraData = cameraData;
 			}
 
-			//ONLY FOR FAST ACCESS!! SKIPS CHECKS!!! COULD CRASH ENGINE IF USED INCORRECTLY!!!
-			static CameraHandle& fastGetMain() {
-				return *instance;
+			static CameraData GetDefaultCameraData() {
+				return defaultCameraData;
 			}
 
-			bool isMain() {
+			static CameraHandle& GetMain();
+
+			bool IsMain() {
 				if (instance == this) {
 					return true;
 				}
@@ -107,27 +100,25 @@ namespace Madam {
 				}
 			}
 
-			void cameraBehaviour();
-
-			const glm::mat4& getProjection() const {
+			const glm::mat4& GetProjection() const {
 				return projectionMatrix;
 			}
 
-			const glm::mat4& getView() const {
+			const glm::mat4& GetView() const {
 				return viewMatrix;
 			}
 
-			const glm::mat4& getInverseView() const {
+			const glm::mat4& GetInverseView() const {
 				return inverseViewMatrix;
 			}
 
-			const glm::vec3 getPosition() const {
+			const glm::vec3 GetPosition() const {
 				return glm::vec3(inverseViewMatrix[3]);
 			}
 
-			void setProjection();
+			void SetProjection();
 
-			void setViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up = glm::vec3{ 0.f, -1.f, 0.f }) {
+			void SetViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up = glm::vec3{ 0.f, -1.f, 0.f }) {
 				const glm::vec3 w{ glm::normalize(direction) };
 				const glm::vec3 u{ glm::normalize(glm::cross(w, up)) };
 				const glm::vec3 v{ glm::cross(w, u) };
@@ -161,12 +152,12 @@ namespace Madam {
 				inverseViewMatrix[3][2] = position.z;
 			}
 
-			void setViewTarget(glm::vec3 position, glm::vec3 target, glm::vec3 up = glm::vec3{ 0.f, -1.f, 0.f }) {
+			void SetViewTarget(glm::vec3 position, glm::vec3 target, glm::vec3 up = glm::vec3{ 0.f, -1.f, 0.f }) {
 				MADAM_CORE_ASSERT(((target - position).x != .0f && (target - position).y != .0f && (target - position).z != .0f), "Direction provided is zero!");
-				setViewDirection(position, target - position, up);
+				SetViewDirection(position, target - position, up);
 			}
 
-			void setViewYXZ(glm::vec3 position, glm::vec3 rotation) {
+			void SetViewYXZ(glm::vec3 position, glm::vec3 rotation) {
 				const float c3 = glm::cos(rotation.z);
 				const float s3 = glm::sin(rotation.z);
 				const float c2 = glm::cos(rotation.x);
@@ -211,11 +202,12 @@ namespace Madam {
 
 		private:
 			CameraHandle() {
-				isEmpty = true;
+
 			}
 			static CameraHandle* instance; //for main camera
 			static bool hasInitialized;
-			Rendering::CameraData cameraData;
+			static CameraData defaultCameraData;
+			Rendering::CameraData _cameraData;
 
 			glm::mat4 viewMatrix{ 1.f };
 			glm::mat4 projectionMatrix{ 1.f };

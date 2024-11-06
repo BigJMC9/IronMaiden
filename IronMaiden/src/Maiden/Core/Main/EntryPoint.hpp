@@ -12,6 +12,7 @@ int main(int argc, char** argv)
 	auto app = Madam::CreateApplication();
 	app->run();
 	delete app;
+	return 0;
 }
 
 #endif // MADAM_PLATFORM_WINDOWS
