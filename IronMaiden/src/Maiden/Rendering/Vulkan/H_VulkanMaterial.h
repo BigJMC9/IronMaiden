@@ -1,6 +1,7 @@
 #pragma once
 #include "../H_Material.h"
 #include "H_VulkanShader.h"
+#include "../H_Pipeline.hpp"
 
 namespace Madam
 {
@@ -20,5 +21,6 @@ namespace Madam
 
 	private:
 		Ref<VulkanShader> _shader;
+		Pipeline* pipeline = nullptr;
 	};
 }

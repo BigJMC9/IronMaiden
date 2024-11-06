@@ -151,9 +151,6 @@
     <ClInclude Include="src\Maiden\Rendering\H_Mesh.h">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Rendering\H_MeshPrimatives.h">
-      <Filter>src\Maiden\Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="src\Maiden\Rendering\H_Pipeline.hpp">
       <Filter>src\Maiden\Rendering</Filter>
     </ClInclude>
@@ -217,6 +214,9 @@
     <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h">
       <Filter>vendors\ImGuizmo</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShaderResources.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderCompiler.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderPreprocessor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
@@ -340,5 +340,7 @@
     <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">
       <Filter>vendors\ImGuizmo</Filter>
     </ClCompile>
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderPreprocessor.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderCompiler.cpp" />
   </ItemGroup>
 </Project>

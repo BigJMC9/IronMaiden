@@ -180,7 +180,6 @@
     <ClInclude Include="src\Maiden\Rendering\H_Image.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_Material.h" />
     <ClInclude Include="src\Maiden\Rendering\H_Mesh.h" />
-    <ClInclude Include="src\Maiden\Rendering\H_MeshPrimatives.h" />
     <ClInclude Include="src\Maiden\Rendering\H_Pipeline.hpp" />
     <ClInclude Include="src\Maiden\Rendering\H_RIResource.h" />
     <ClInclude Include="src\Maiden\Rendering\H_RenderSystems.hpp" />
@@ -195,7 +194,10 @@
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMaterial.h" />
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanMesh.h" />
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShader.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanShaderResources.h" />
     <ClInclude Include="src\Maiden\Rendering\Vulkan\H_VulkanTexture.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderCompiler.h" />
+    <ClInclude Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\H_VulkanShaderPreprocessor.h" />
     <ClInclude Include="src\Maiden\Scene\Components.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_Entity.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_Scene.hpp" />
@@ -237,6 +239,8 @@
     <ClCompile Include="src\Maiden\Rendering\SwapChain.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Texture.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Vulkan\DescriptorManager.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderCompiler.cpp" />
+    <ClCompile Include="src\Maiden\Rendering\Vulkan\ShaderCompilation\VulkanShaderPreprocessor.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanDevice.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanImage.cpp" />
     <ClCompile Include="src\Maiden\Rendering\Vulkan\VulkanMaterial.cpp" />

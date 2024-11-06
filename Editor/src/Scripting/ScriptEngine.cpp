@@ -57,8 +57,8 @@ namespace Madam
 				return false;
 			}
 
-			entity.AddComponent<NativeScriptComponent>();
-			entity.GetComponent<NativeScriptComponent>() = getScript("gamemanager");
+			entity.AddComponent<CNativeScript>();
+			entity.GetComponent<CNativeScript>() = getScript("gamemanager");
 
 			isImported = true;
 			return true;

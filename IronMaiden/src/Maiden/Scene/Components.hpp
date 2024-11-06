@@ -1,7 +1,8 @@
 #pragma once
+#ifndef H_COMPONENTS
+#define H_COMPONENTS
 
 #include "maidenpch.hpp"
-#include "../Core/H_Utils.hpp"
 #include "../Rendering/H_Mesh.h"
 #include "../Rendering/H_Texture.h"
 #include "ScriptableEntity.hpp"
@@ -21,87 +22,92 @@
 #undef near
 #endif
 
+/*#define GENERATE_COMPONENT(...) Entity entity; \
+void SetComponentParams(Entity _entity) { entity = _entity; }*/
+
+
 
 namespace Madam {
 
-	struct Camera {
-		//Shared pointer to camera data?
-		//Rendering::CameraData cameraData = Rendering::CameraData();
-		Ref<Rendering::CameraHandle> cameraHandle;
-
-		const glm::mat4& getProjection() const {
-			return cameraHandle->getProjection();
-		}
-
-		const glm::mat4& getView() const {
-			return cameraHandle->getView();
-		}
-
-		const glm::mat4& getInverseView() const {
-			return cameraHandle->getInverseView();
-		}
-
-		const glm::vec3 getPosition() const {
-			return glm::vec3(cameraHandle->getInverseView()[3]);
-		}
-
-		//Returns reference to camera data
-		Rendering::CameraData& CameraData() {
-			return cameraHandle->CameraData();
-		}
-
-		//Returns copy of camera data
-		Rendering::CameraData getCameraData() {
-			return cameraHandle->CameraData();
-		}
-
-		void pushCameraData(Rendering::CameraData cameraData) {
-			cameraHandle->setCameraData(cameraData);
-		}
-
-		void setAsMainCamera() {
-			cameraHandle->setMain();
-		}
-
-		Camera(Rendering::CameraData _cameraData) {
-			cameraHandle = std::make_shared<Rendering::CameraHandle>(_cameraData);
-		};
-		Camera() {
-			Rendering::CameraData cameraData;
-			cameraHandle = std::make_shared<Rendering::CameraHandle>(cameraData);
-		};
-		//Camera(Camera&) = default;
-		Camera(const Camera& source) {
-			cameraHandle = std::make_shared<Rendering::CameraHandle>(source.cameraHandle->CameraData());
-		};
-	};
-
-	struct UniqueIdentifier {
+	struct CUniqueIdentifier {
+		//GENERATE_COMPONENT()
 		UUID uuid = UUID();
 
-		UniqueIdentifier() = default;
-		UniqueIdentifier(UUID _uuid) {
+		CUniqueIdentifier() = default;
+		CUniqueIdentifier(UUID _uuid) {
 			uuid = _uuid;
 		};
 	};
 
-	struct Tag {
+	struct CCamera {
+		//GENERATE_COMPONENT()
+		CCamera() {
+			Rendering::CameraData _cameraData = Rendering::CameraHandle::GetDefaultCameraData();
+			cameraHandle = CreateRef<Rendering::CameraHandle>(_cameraData);
+		};
+		CCamera(Rendering::CameraData _cameraData) {
+			cameraHandle = CreateRef<Rendering::CameraHandle>(_cameraData);
+		};
+		CCamera(const CCamera& source) {
+			cameraHandle = CreateRef<Rendering::CameraHandle>(source.cameraHandle->GetCameraData());
+		};
+
+		const glm::mat4& GetProjection() const {
+			return cameraHandle->GetProjection();
+		}
+
+		const glm::mat4& GetView() const {
+			return cameraHandle->GetView();
+		}
+
+		const glm::mat4& GetInverseView() const {
+			return cameraHandle->GetInverseView();
+		}
+
+		const glm::vec3 GetPosition() const {
+			return glm::vec3(cameraHandle->GetInverseView()[3]);
+		}
+
+		//Returns reference to camera data
+		Rendering::CameraData& GetMutableCameraData() {
+			return cameraHandle->GetMutableCameraData();
+		}
+
+		//Returns copy of camera data
+		Rendering::CameraData GetCameraData() {
+			return cameraHandle->GetCameraData();
+		}
+
+		void PushCameraData(Rendering::CameraData cameraData) {
+			cameraHandle->SetCameraData(cameraData);
+		}
+
+		void SetAsMainCamera() {
+			cameraHandle->SetMain();
+		}
+
+		Ref<Rendering::CameraHandle> cameraHandle = nullptr;
+	};
+
+	struct CTag {
+		//GENERATE_COMPONENT()
 		std::string tag = "Untagged";
 
-		Tag() = default;
-		Tag(const Tag& other) = default;
-		Tag(const std::string& _tag)
+		CTag() = default;
+		CTag(const CTag& other) = default;
+		CTag(const std::string& _tag)
 			: tag(_tag) {}
 
 		operator std::string& () { return tag; }
 		operator const std::string& () const { return tag; }
 	};
 
-	struct GameObject {
+	struct CMetadata {
+		//GENERATE_COMPONENT()
 		std::string name = "Object";
-		GameObject() = default;
-		GameObject(const GameObject&) = default;
-		GameObject(std::string _name) {
+		CMetadata() = default;
+		CMetadata(const CMetadata&) = default;
+		CMetadata(std::string _name) {
 			name = _name;
 		}
 		//Parent
@@ -111,56 +117,58 @@ namespace Madam {
 	};
 
 	//Not Component, needs to be moved
-	struct ShaderComponent {
+	struct CShader {
 		std::string vertShaderPath;
 		std::string fragShaderPath;
 
-		ShaderComponent() = default;
+		CShader() = default;
 		//Shader(Shader&) = default;
-		ShaderComponent(const ShaderComponent&) = default;
+		CShader(const CShader&) = default;
 	};
 	//Remove
-	struct MaterialComponent {
-		Ref<ShaderComponent> shader = nullptr;
+	struct CMaterial {
+		Ref<CShader> shader = nullptr;
 
 		Ref<Texture> diffuseMap = nullptr;
 		Ref<Texture> normalMap = nullptr;
 		Ref<Texture> ambientOcclusionMap = nullptr;
 		Ref<Texture> glossMap = nullptr;
 
-		MaterialComponent() = default;
+		CMaterial() = default;
 		//Material(Material&) = default;
-		MaterialComponent(const MaterialComponent&) = default;
+		CMaterial(const CMaterial&) = default;
 	};
 
-	struct MeshRenderer {
+	struct CMeshRenderer {
+		//GENERATE_COMPONENT()
+
+		CMeshRenderer() = default;
 
 		Ref<StaticMesh> mesh = nullptr;
-		Ref<MaterialComponent> material = nullptr;
-
-		MeshRenderer() = default;
-		MeshRenderer(const MeshRenderer&) = default;
+		Ref<CMaterial> material = nullptr;
 
 		Ref<StaticMesh> GetMesh() {
 			return mesh;
 		}
 
-		Ref<MaterialComponent> GetMaterial() {
+		Ref<CMaterial> GetMaterial() {
 			return material;
 		}
 	};
 
-	struct PointLight {
+	struct CPointLight {
+		//GENERATE_COMPONENT()
 		glm::vec3 color;
 		float radius = 5.0f;
 		float intensity = 1.0f;
 
-		PointLight() = default;
+		CPointLight() = default;
 		//PointLight(PointLight&) = default;
-		PointLight(const PointLight&) = default;
+		CPointLight(const CPointLight&) = default;
 	};
 
-	struct Transform {
+	struct CTransform {
+		//GENERATE_COMPONENT()
 		glm::vec3 translation{}; // (position offset)
 		glm::vec3 scale{ 1.f, 1.f, 1.f };
 		glm::vec3 rotation{};
@@ -168,7 +176,7 @@ namespace Madam {
 		// Matrix corrsponds to Translate * Ry * Rx * Rz * Scale
 		// Rotations correspond to Tait-bryan angles of Y(1), X(2), Z(3)
 		// https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
-		glm::mat4 m_transform() {
+		glm::mat4 transform() {
 			const float c3 = glm::cos(rotation.z);
 			const float s3 = glm::sin(rotation.z);
 			const float c2 = glm::cos(rotation.x);
@@ -296,9 +304,9 @@ namespace Madam {
 			return true;
 		}
 
-		Transform() = default;
+		CTransform() = default;
 		//Transform(Transform&) = default;
-		Transform(const Transform&) = default;
+		CTransform(const CTransform&) = default;
 		//Transform(const glm::mat4& transform) : m_transform(transform) {}
 
 		operator glm::mat4() {
@@ -334,14 +342,14 @@ namespace Madam {
 	};
 
 	//Maybe set default functions? virtual functions may need to be avoided
-	struct NativeScriptComponent{
-
+	struct CNativeScript{
+		//GENERATE_COMPONENT()
 		ScriptableEntity* Instance = nullptr;
 
 
 		//std::function<void()> InstantiateScript;
 		ScriptableEntity* (*InstantiateScript)();
-		void (*DestroyScript)(NativeScriptComponent*);
+		void (*DestroyScript)(CNativeScript*);
 		//std::function<void()> DestroyScript;
 
 		std::function<void(ScriptableEntity*)> onCreate;
@@ -352,8 +360,8 @@ namespace Madam {
 		std::function<void(ScriptableEntity*)> onDestroy;
 		
 
-		NativeScriptComponent() = default;
-		NativeScriptComponent(const NativeScriptComponent&) = default;
+		CNativeScript() = default;
+		CNativeScript(const CNativeScript&) = default;
 		//NativeScriptComponent(const NativeScriptComponent&) = default;
 
 		//Bind ?!?! How do we work this with dll?
@@ -362,7 +370,7 @@ namespace Madam {
 		template<typename T>
 		void Bind() {
 			InstantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
-			DestroyScript = [](NativeScriptComponent* nsc) { delete (T*)nsc->Instance; nsc->Instance = nullptr; };
+			DestroyScript = [](CNativeScript* nsc) { delete (T*)nsc->Instance; nsc->Instance = nullptr; };
 
 			onCreate = [](ScriptableEntity* Instance) { ((T*)Instance)->Create(); };
 			onDestroy = [](ScriptableEntity* Instance) { ((T*)Instance)->Destroy(); };
@@ -379,5 +387,6 @@ namespace Madam {
 	};
 
 	using AllComponents =
-		ComponentGroup<Transform, MeshRenderer, Camera, PointLight, NativeScriptComponent>;
+		ComponentGroup<CTransform, CMeshRenderer, CCamera, CPointLight, CNativeScript>;
 }
+#endif

@@ -1,9 +1,10 @@
 #pragma once
+#ifndef H_ENTITY
+#define H_ENTITY
 
 #include "maidenpch.hpp"
 #include "../Core/H_Utils.hpp"
 #include "H_Scene.hpp"
-//#include "Components.hpp"
 
 #define MADAM_ENTT_HEADER_FLAG
 
@@ -49,6 +50,7 @@ namespace Madam {
 		void RemoveComponent() {
 			MADAM_CORE_ASSERT(HasComponent<T>(), "GameObject does not have that component!");
 			//assert(HasComponent<T>(), "GameObject does not have that component!");
+			//scene->OnComponentRemoved<T>(*this, component);
 			scene->registry.remove<T>(entityHandle);
 		}
 
@@ -86,3 +88,4 @@ namespace Madam {
 		Scene* scene = nullptr;
 	};
 }
+#endif

@@ -85,8 +85,6 @@ namespace Madam
 		allocInfo.pSetLayouts = &descSet.layout->descriptorSetLayout;
 		allocInfo.descriptorSetCount = 1;
 
-		// Might want to create a "DescriptorPoolManager" class that handles this case, and builds
-		// a new pool whenever an old pool fills up. But this is beyond our current scope
 		if (vkAllocateDescriptorSets(descSet.device->device(), &allocInfo, &descSet.set) != VK_SUCCESS) {
 			return false;
 		}

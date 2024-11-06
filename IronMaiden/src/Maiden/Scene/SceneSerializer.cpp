@@ -135,9 +135,9 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<Ref<Madam::ShaderComponent>>
+	struct convert<Ref<Madam::CShader>>
 	{
-		static Node encode(const Ref<Madam::ShaderComponent>& shader)
+		static Node encode(const Ref<Madam::CShader>& shader)
 		{
 			Node node;
 			node.push_back(shader->vertShaderPath);
@@ -145,7 +145,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, Ref<Madam::ShaderComponent>& shader)
+		static bool decode(const Node& node, Ref<Madam::CShader>& shader)
 		{
 			shader->vertShaderPath = node[0].as<std::string>();
 			shader->fragShaderPath = node[1].as<std::string>();
@@ -154,9 +154,9 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<Madam::ShaderComponent>
+	struct convert<Madam::CShader>
 	{
-		static Node encode(const Madam::ShaderComponent& shader)
+		static Node encode(const Madam::CShader& shader)
 		{
 			Node node;
 			node.push_back(shader.vertShaderPath);
@@ -164,7 +164,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, Madam::ShaderComponent& shader)
+		static bool decode(const Node& node, Madam::CShader& shader)
 		{
 			shader.vertShaderPath = node[0].as<std::string>();
 			shader.fragShaderPath = node[1].as<std::string>();
@@ -242,14 +242,14 @@ namespace Madam {
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const ShaderComponent s)
+	YAML::Emitter& operator<<(YAML::Emitter& out, const CShader s)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << s.vertShaderPath << s.fragShaderPath << YAML::EndSeq;
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const Ref<ShaderComponent> s)
+	YAML::Emitter& operator<<(YAML::Emitter& out, const Ref<CShader> s)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << s->vertShaderPath << s->fragShaderPath << YAML::EndSeq;
@@ -284,13 +284,13 @@ namespace Madam {
 	static void SerializeEntity(YAML::Emitter& out, Entity entity) {
 
 		out << YAML::BeginMap;
-		out << YAML::Key << "Entity" << YAML::Value << entity.GetComponent<UniqueIdentifier>().uuid;
+		out << YAML::Key << "Entity" << YAML::Value << entity.GetComponent<CUniqueIdentifier>().uuid;
 
-		if (entity.HasComponent<Transform>()) {
+		if (entity.HasComponent<CTransform>()) {
 			out << YAML::Key << "Transform";
 			out << YAML::BeginMap;
 
-			Transform& transform = entity.GetComponent<Transform>();
+			CTransform& transform = entity.GetComponent<CTransform>();
 			out << YAML::Key << "Translation" << YAML::Value << transform.translation;
 			out << YAML::Key << "Rotation" << YAML::Value << transform.rotation;
 			out << YAML::Key << "Scale" << YAML::Value << transform.scale;
@@ -298,11 +298,11 @@ namespace Madam {
 			out << YAML::EndMap;
 		}
 
-		if (entity.HasComponent<MaterialComponent>()) {
+		if (entity.HasComponent<CMaterial>()) {
 			out << YAML::Key << "Material";
 			out << YAML::BeginMap;
 
-			MaterialComponent& material = entity.GetComponent<MaterialComponent>();
+			CMaterial& material = entity.GetComponent<CMaterial>();
 			out << YAML::Key << "Shader" << YAML::Value << material.shader;
 			out << YAML::Key << "Diffuse" << YAML::Value << material.diffuseMap->GetUUID();
 			out << YAML::Key << "Normal" << YAML::Value << material.normalMap->GetUUID();
@@ -311,41 +311,41 @@ namespace Madam {
 			out << YAML::EndMap;
 		}
 
-		if (entity.HasComponent<MeshRenderer>()) {
+		if (entity.HasComponent<CMeshRenderer>()) {
 			out << YAML::Key << "MeshRenderer";
 			out << YAML::BeginMap;
 
-			MeshRenderer& meshRenderer = entity.GetComponent<MeshRenderer>();
+			CMeshRenderer& meshRenderer = entity.GetComponent<CMeshRenderer>();
 			out << YAML::Key << "Material" << YAML::Value << "true";
 			out << YAML::Key << "StaticMesh" << YAML::Value << meshRenderer.GetMesh()->GetFilepath().string();
 			out << YAML::EndMap;
 		}
 
-		if (entity.HasComponent<PointLight>()) {
+		if (entity.HasComponent<CPointLight>()) {
 			out << YAML::Key << "PointLight";
 			out << YAML::BeginMap;
 
-			PointLight& pointLight = entity.GetComponent<PointLight>();
+			CPointLight& pointLight = entity.GetComponent<CPointLight>();
 			out << YAML::Key << "Color" << YAML::Value << pointLight.color;
 			out << YAML::Key << "Intensity" << YAML::Value << pointLight.intensity;
 			out << YAML::Key << "Radius" << YAML::Value << pointLight.radius;
 			out << YAML::EndMap;
 		}
 
-		if (entity.HasComponent<Camera>()) {
+		if (entity.HasComponent<CCamera>()) {
 			out << YAML::Key << "Camera";
 			out << YAML::BeginMap;
 
-			Camera& camera = entity.GetComponent<Camera>();
-			if (camera.getCameraData().projectionType == Rendering::CameraData::ProjectionType::Perspective) {
-				out << YAML::Key << "Perspective" << YAML::Value << camera.getCameraData().perspective;
+			CCamera& camera = entity.GetComponent<CCamera>();
+			if (camera.GetCameraData().projectionType == Rendering::CameraData::ProjectionType::Perspective) {
+				out << YAML::Key << "Perspective" << YAML::Value << camera.GetCameraData().perspective;
 			}
-			else if (camera.getCameraData().projectionType == Rendering::CameraData::ProjectionType::Orthographic) {
-				out << YAML::Key << "Orthographic" << YAML::Value << camera.getCameraData().orthographic;
+			else if (camera.GetCameraData().projectionType == Rendering::CameraData::ProjectionType::Orthographic) {
+				out << YAML::Key << "Orthographic" << YAML::Value << camera.GetCameraData().orthographic;
 			}
-			out << YAML::Key << "ViewPosition" << YAML::Value << camera.getPosition();
+			out << YAML::Key << "ViewPosition" << YAML::Value << camera.GetPosition();
 			out << YAML::Key << "ViewDirection" << YAML::Value << glm::vec3(0.f); //temporary solution
-			out << YAML::Key << "Main" << YAML::Value << camera.cameraHandle->isMain();
+			out << YAML::Key << "Main" << YAML::Value << camera.cameraHandle->IsMain();
 			out << YAML::EndMap;
 		}
 
@@ -356,7 +356,7 @@ namespace Madam {
 
 	}
 	
-	void SceneSerializer::Serialize(const std::string& rawfilePath, bool isFullPath) {
+	void SceneSerializer::Serialize(const std::filesystem::path& filePath) {
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -376,14 +376,6 @@ namespace Madam {
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 
-		std::string filePath = "";
-		if (!isFullPath) {
-			filePath = Project::Get().getProjectDirectory().string() + "\\Assets\\" + rawfilePath;
-		}
-		else {
-			filePath = rawfilePath;
-		}
-
 		std::ofstream fout(filePath);
 		fout << out.c_str();
 	}
@@ -392,21 +384,12 @@ namespace Madam {
 		//Not Implemented
 	}
 
-	bool SceneSerializer::Deserialize(const std::string& rawFilePath, bool isFullPath) {
-		std::string defaultFileType = ".scene";
-		std::string fileType = rawFilePath.substr(rawFilePath.size() - defaultFileType.size());
+	bool SceneSerializer::Deserialize(const std::filesystem::path& filePath) {
+		std::string fileType = filePath.extension().string();
 
-		if (fileType != defaultFileType) {
+		if (fileType != ".scene") {
 			MADAM_ERROR("Error loading scene: Parsed scene is wrong file type");
 			return false;
-		}
-
-		std::string filePath = "";
-		if (!isFullPath) {
-			filePath = Project::Get().getProjectDirectory().string() + "\\Assets\\" + rawFilePath;
-		}
-		else {
-			filePath = rawFilePath;
 		}
 
 		std::ifstream file(filePath);
@@ -418,7 +401,7 @@ namespace Madam {
 
 		YAML::Node node;
 		try {
-			node = YAML::LoadFile(filePath);
+			node = YAML::LoadFile(filePath.string().c_str());
 		}
 		catch (YAML::ParserException e) {
 			std::stringstream ss;
@@ -440,12 +423,12 @@ namespace Madam {
 				
 				Entity deserializedEntity = newScene.CreateEntity(entity["Entity"].as<UUID>());
 
-				std::cout << deserializedEntity.GetComponent<UniqueIdentifier>().uuid << ", Handle: " << (uint32_t)deserializedEntity.GetHandle() << std::endl;
+				std::cout << deserializedEntity.GetComponent<CUniqueIdentifier>().uuid << ", Handle: " << (uint32_t)deserializedEntity.GetHandle() << std::endl;
 
 				auto transformNode = entity["Transform"];
 				if (transformNode) 
 				{
-					Transform& transform = deserializedEntity.GetComponent<Transform>();
+					CTransform& transform = deserializedEntity.GetComponent<CTransform>();
 					transform.translation = transformNode["Translation"].as<glm::vec3>();
 					transform.rotation = transformNode["Rotation"].as<glm::vec3>();
 					transform.scale = transformNode["Scale"].as<glm::vec3>();;
@@ -453,9 +436,9 @@ namespace Madam {
 
 				auto materialNode = entity["Material"];
 				if (materialNode) {
-					MaterialComponent& material = deserializedEntity.AddComponent<MaterialComponent>();
-					ShaderComponent shader = materialNode["Shader"].as<ShaderComponent>();
-					material.shader = std::make_shared<ShaderComponent>(shader);
+					CMaterial& material = deserializedEntity.AddComponent<CMaterial>();
+					CShader shader = materialNode["Shader"].as<CShader>();
+					material.shader = std::make_shared<CShader>(shader);
 					UUID uuid = materialNode["Diffuse"].as<UUID>();
 					TextureData textureData;
 					material.diffuseMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
@@ -469,7 +452,7 @@ namespace Madam {
 
 				auto pointLightNode = entity["PointLight"];
 				if (pointLightNode) {
-					PointLight& pointLight = deserializedEntity.AddComponent<PointLight>();
+					CPointLight& pointLight = deserializedEntity.AddComponent<CPointLight>();
 					pointLight.color = pointLightNode["Color"].as<glm::vec3>();
 					pointLight.intensity = pointLightNode["Intensity"].as<float>();
 					pointLight.radius = pointLightNode["Radius"].as<float>();
@@ -478,13 +461,13 @@ namespace Madam {
 				auto meshRendererNode = entity["MeshRenderer"];
 				if (meshRendererNode) {
 					std::string material = meshRendererNode["Material"].as<std::string>();
-					MeshRenderer& meshRenderer = deserializedEntity.AddComponent<MeshRenderer>();
+					CMeshRenderer& meshRenderer = deserializedEntity.AddComponent<CMeshRenderer>();
 					std::filesystem::path filepath = meshRendererNode["StaticMesh"].as<std::filesystem::path>();
-					deserializedEntity.GetComponent<MeshRenderer>().mesh = StaticMesh::Create(Project::Get().getProjectDirectory() / std::filesystem::u8path("Assets") / filepath);
+					deserializedEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(Project::Get().getProjectDirectory() / std::filesystem::u8path("Assets") / filepath);
 					if (material == "true") {
 						
-						if (deserializedEntity.HasComponent<MaterialComponent>()) {
-							deserializedEntity.GetComponent<MeshRenderer>().material = std::make_shared<MaterialComponent>(deserializedEntity.GetComponent<MaterialComponent>());
+						if (deserializedEntity.HasComponent<CMaterial>()) {
+							deserializedEntity.GetComponent<CMeshRenderer>().material = std::make_shared<CMaterial>(deserializedEntity.GetComponent<CMaterial>());
 						}
 						
 					}
@@ -506,13 +489,13 @@ namespace Madam {
 					else {
 						cameraData.projectionType = Rendering::CameraData::ProjectionType::None;
 					}
-					Camera& camera = deserializedEntity.AddComponent<Camera>(cameraData);
-					camera.cameraHandle->setProjection();
+					CCamera& camera = deserializedEntity.AddComponent<CCamera>(cameraData);
+					camera.cameraHandle->SetProjection();
 					
-					camera.cameraHandle->setViewDirection(cameraNode["ViewPosition"].as<glm::vec3>(), cameraNode["ViewDirection"].as<glm::vec3>());
+					camera.cameraHandle->SetViewDirection(cameraNode["ViewPosition"].as<glm::vec3>(), cameraNode["ViewDirection"].as<glm::vec3>());
 					if (cameraNode["Main"].as<bool>()) {
 						MADAM_CORE_INFO("Is Main Camera");
-						camera.cameraHandle->setMain();
+						camera.cameraHandle->SetMain();
 						isMain = true;
 					}
 					else {
@@ -523,21 +506,20 @@ namespace Madam {
 		}
 
 		//Will need to be updated for runtime
-		if (!isMain) {
+		/*if (!isMain) {
 			Entity camera = newScene.CreateEntity();
-			camera.GetComponent<GameObject>().name = "Editor Camera";
+			camera.GetComponent<Metadata>().name = "Editor Camera";
 			camera.GetComponent<Transform>().translation.z = -2.5f;
 			Rendering::CameraData cameraData;
 			cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
 			cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().getAspectRatio(), 0.1f, 1000.0f);
 			camera.AddComponent<Camera>(cameraData);
-			camera.GetComponent<Camera>().cameraHandle->setViewDirection(glm::vec3(0.f, 2.0f, 0.f), glm::vec3(0.f, 0.f, 0.f));
-			camera.GetComponent<Camera>().cameraHandle->setMain();
-		}
+			camera.GetComponent<Camera>().cameraHandle->SetViewDirection(glm::vec3(0.f, 2.0f, 0.f), glm::vec3(0.f, 0.f, 0.f));
+			camera.GetComponent<Camera>().cameraHandle->SetMain();
+		}*/
 
 		m_Scene = std::make_shared<Scene>(std::move(newScene));
-		Application::Get().PrimeReserve(m_Scene);
-		Application::Get().SwitchScenes(true);
+		Application::Get().SwitchScenes(m_Scene);
 
 		return true;
 	}

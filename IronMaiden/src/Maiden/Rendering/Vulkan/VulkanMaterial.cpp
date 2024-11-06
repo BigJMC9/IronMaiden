@@ -5,7 +5,7 @@ namespace Madam
 {
 	VulkanMaterial::VulkanMaterial(const Ref<Shader>& shader)
 	{
-		_shader = std::dynamic_pointer_cast<VulkanShader>(shader);
+		_shader = std::static_pointer_cast<VulkanShader>(shader);
 	}
 
 	VulkanMaterial::~VulkanMaterial()

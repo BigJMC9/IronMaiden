@@ -1,7 +1,6 @@
 #include "maidenpch.hpp"
 #include "H_VulkanMesh.h"
 #include "../H_Renderer.hpp"
-#include "../H_MeshPrimatives.h"
 
 
 //libs
@@ -128,34 +127,8 @@ namespace Madam
 
 	void VulkanStaticMesh::LoadPrimative(const MeshPrimatives primative)
 	{
-		std::vector<glm::vec3> verticesPos;
-		std::vector<Vertex> vertices;
-		std::vector<uint32_t> indices;
-		std::vector<glm::vec2> shape;
-
-		switch (primative)
-		{
-		case Madam::MeshPrimatives::Quad:
-			verticesPos = Primative::Quad::GetVertices();
-			indices = Primative::Quad::GetIndices();
-			break;
-		case Madam::MeshPrimatives::Cube:
-			verticesPos = Primative::Cube::GetVertices();
-			indices = Primative::Cube::GetIndices();
-			break;
-		default:
-			break;
-		}
-
-		for (size_t i = 0; i < verticesPos.size(); i++)
-		{
-			Vertex vertex;
-			vertex.position = verticesPos[i];
-			vertices.push_back(vertex);
-		}
-
-		CreateVertexBuffers(vertices);
-		CreateIndexBuffers(indices);
+		_filepath = meshPrimativeFilepaths[(uint32_t)primative];
+		LoadOBJ();
 	}
 
 	void VulkanStaticMesh::CreateVertexBuffers(const std::vector<Vertex>& vertices)

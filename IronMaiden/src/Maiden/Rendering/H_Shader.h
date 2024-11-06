@@ -5,6 +5,7 @@ namespace Madam
 {
 	enum class PipelineStage
 	{
+		None = -1,
 		Vert,
 		TessCS,
 		TessES,
@@ -12,6 +13,36 @@ namespace Madam
 		Frag,
 		Comp
 	};
+
+	template<typename T>
+	PipelineStage StringToPipelineStage(T str)
+	{
+		if (str == "vert")
+		{
+			return PipelineStage::Vert;
+		}
+		else if (str == "frag")
+		{
+			return PipelineStage::Frag;
+		}
+		else if (str == "comp")
+		{
+			return PipelineStage::Comp;
+		}
+		else if (str == "tess")
+		{
+			return PipelineStage::TessES;
+		}
+		else if (str == "geo")
+		{
+			return PipelineStage::Geo;
+		}
+		else
+		{
+			return PipelineStage::None;
+		}
+	}
+
 	class Shader
 	{
 	public:
@@ -22,7 +53,6 @@ namespace Madam
 
 		virtual void Load() = 0;
 	protected:
-		std::vector<uint32_t> _code;
 		std::filesystem::path _filepath;
 	};
 }

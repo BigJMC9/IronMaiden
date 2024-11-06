@@ -16,7 +16,7 @@ namespace Madam {
 
 		}
 		void Update() {
-			if (GetComponent<Camera>().cameraHandle->isMain()) {
+			if (GetComponent<CCamera>().cameraHandle->IsMain()) {
 				GLFWwindow* window = Application::Get().getWindow().getGLFWwindow();
 
 				glm::vec3 rotate{ 0 };
@@ -26,13 +26,13 @@ namespace Madam {
 				if (Input::Get().IsKeyDown(KeyCode::LEFT)) rotate.y -= 1.f;
 
 				if (glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()) {
-					GetComponent<Transform>().rotation += lookSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(rotate);
+					GetComponent<CTransform>().rotation += lookSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(rotate);
 				}
 
-				GetComponent<Transform>().rotation.x = glm::clamp(GetComponent<Transform>().rotation.x, -1.5f, 1.5f);
-				GetComponent<Transform>().rotation.y = glm::mod(GetComponent<Transform>().rotation.y, glm::two_pi<float>());
+				GetComponent<CTransform>().rotation.x = glm::clamp(GetComponent<CTransform>().rotation.x, -1.5f, 1.5f);
+				GetComponent<CTransform>().rotation.y = glm::mod(GetComponent<CTransform>().rotation.y, glm::two_pi<float>());
 
-				float yaw = GetComponent<Transform>().rotation.y;
+				float yaw = GetComponent<CTransform>().rotation.y;
 				const glm::vec3 forwardDir{ sin(yaw), 0.f, cos(yaw) };
 				const glm::vec3 rightDir{ forwardDir.z, 0.f, -forwardDir.x };
 				const glm::vec3 upDir{ 0.f, -1.f, 0.f };
@@ -46,7 +46,7 @@ namespace Madam {
 				if (Input::Get().IsKeyDown(KeyCode::Q)) moveDir -= upDir;
 
 				if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
-					GetComponent<Transform>().translation += moveSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(moveDir);
+					GetComponent<CTransform>().translation += moveSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(moveDir);
 				}
 			}
 		}
@@ -66,31 +66,17 @@ namespace Madam {
 	void EditorLayer::OnAttach()
 	{
 		MADAM_INFO("Editor Server Attached");
-		scriptEngine = std::make_shared<Scripting::ScriptEngine>();
+		scriptEngine = CreateRef<Scripting::ScriptEngine>();
 		Rendering::CameraData cameraData;
 		cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
 		cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().getAspectRatio(), 0.1f, 1000.0f);
-		Entity& obj = Application::Get().getScene().CreateEntity();
-		obj.GetComponent<GameObject>().name = "Editor Camera";
-		obj.GetComponent<Transform>().translation.z = -2.5f;
-		//obj.AddComponent<MaidenInternal>().name = "Editor Camera";
-		obj.AddComponent<Camera>(cameraData);
-		viewerObject = Entity(obj);
-		viewerObject.GetComponent<Camera>().cameraHandle->setViewDirection(obj.GetComponent<Transform>().translation, glm::vec3(0.f, 0.f, 0.f));
-		viewerObject.GetComponent<Camera>().cameraHandle->setMain();
-		if (viewerObject.GetComponent<Camera>().cameraHandle->isMain()) {
-			MADAM_INFO("Camera is main camera");
-		}
-		else {
-			MADAM_INFO("Camera is not main camera");
-		}
-		entt::entity& entityID = obj.GetHandleAsRef();
-		MADAM_CORE_INFO("Entity ID: {0} at: {1}", (uint32_t)entityID, obj.GetHandleMemoryLocation());
+		
+		Rendering::CameraHandle::SetDefaultCameraData(cameraData);
 
 		SetUpEvents();
 
-		//Pain（πーπ）
-		viewerObject.AddComponent<NativeScriptComponent>().Bind<CameraController>();
+		Rendering::CameraHandle::GetMain();
+		Application::Get().getScene().GetMainCameraEntity().AddComponent<CNativeScript>().Bind<CameraController>();
 	}
 
 	void EditorLayer::SetUpEvents() {
@@ -111,18 +97,6 @@ namespace Madam {
 			});
 			MADAM_INFO(debugStr);
 			isFirst = false;
-			entt::entity& entityID = viewerObject.GetHandleAsRef();
-
-			if (viewerObject.GetComponent<Camera>().cameraHandle->isMain()) {
-				MADAM_INFO("Camera is main camera");
-			}
-			else {
-				MADAM_INFO("Camera is not main camera");
-			}
-
-			if (Madam::Rendering::CameraHandle::getMain().isMain()) {
-				MADAM_INFO("Is main function is working");
-			}
 		}
 		
 		std::string scriptPath = Application::Get().CreateScript();
@@ -131,26 +105,25 @@ namespace Madam {
 			scriptEngine->OnCreateScript(scriptPath);
 		}
 
-		//Fix in future plz, have scene load after dll loaded
+		//Fix in future please, have scene load after dll loaded
 		if (Application::Get().isRuntimeFlag()) {
 			MADAM_INFO("Starting Game");
 			std::shared_ptr<Scene> runtimeScene = Application::Get().getScene().Copy();
-			Application::Get().PrimeReserve(runtimeScene);
-			Application::Get().SwitchScenes();
+			Application::Get().SwitchScenes(runtimeScene);
 			Entity& gameManager = Application::Get().getScene().CreateEntity();
 			if (scriptEngine->Runtime(gameManager)) {
 				Application::Get().RuntimeStart();
 			}
 			else {
 				MADAM_INFO("Runtime failed");
-				viewerObject.GetComponent<Camera>().setAsMainCamera();
-				MADAM_INFO("CameraHandle use count: {0}", viewerObject.GetComponent<Camera>().cameraHandle.use_count());
+				//viewerObject.GetComponent<Camera>().SetAsMainCamera();
+				//MADAM_INFO("CameraHandle use count: {0}", viewerObject.GetComponent<Camera>().cameraHandle.use_count());
 			}
 		}
 		if (Application::Get().isRuntimeStopFlag()) {
 			MADAM_INFO("Runtime stopped");
-			viewerObject.GetComponent<Camera>().setAsMainCamera();
-			MADAM_INFO("CameraHandle use count: {0}", viewerObject.GetComponent<Camera>().cameraHandle.use_count());
+			//viewerObject.GetComponent<Camera>().SetAsMainCamera();
+			//MADAM_INFO("CameraHandle use count: {0}", viewerObject.GetComponent<Camera>().cameraHandle.use_count());
 		}
 		if (Application::Get().isUpdate()) {
 			MADAM_INFO("Updating scripts");
@@ -161,33 +134,15 @@ namespace Madam {
 			scriptEngine->ShowScripts();
 		}
 
-		Entity& obj = viewerObject;
-		Camera& camera = viewerObject.GetComponent<Camera>();
-		camera.cameraHandle->setViewYXZ(viewerObject.GetComponent<Transform>().translation, viewerObject.GetComponent<Transform>().rotation);
+		Rendering::CameraHandle& handle = Rendering::CameraHandle::GetMain();
+		handle.SetViewYXZ(Application::Get().getScene().GetMainCameraEntity().GetComponent<CTransform>().translation, Application::Get().getScene().GetMainCameraEntity().GetComponent<CTransform>().rotation);
 		float aspect = Application::Get().getAspectRatio();
-		camera.cameraHandle->setProjection();
+		handle.SetProjection();
 		//MADAM_INFO("EditorSurface Updated");
 	}
 
 	//Tag component could fix camera issue?
-	//Should be handled as an event
 	void EditorLayer::OnSceneChangeEvent(SceneChangeEvent* e) {
-		MADAM_INFO("Scene Loaded");
-		Application::Get().getScene().Reg().view<entt::entity>().each([&](auto entityID) {
-			Entity entity = { entityID, &Application::Get().getScene() };
-			if (!entity) return;
-			if (entity.HasComponent<Camera>()) {
-				if (entity.GetComponent<Camera>().cameraHandle->isMain())
-				{
-					MADAM_INFO("Camera is main camera");
-					viewerObject = Entity(entity);
-					viewerObject.AddComponent<NativeScriptComponent>().Bind<CameraController>();
-				}
-				else {
-					MADAM_INFO("Camera is not main camera");
-				}
-			}
-		});
 
 	}
 }

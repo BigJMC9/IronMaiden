@@ -32,7 +32,6 @@ namespace Madam
         auto mesh = std::dynamic_pointer_cast<StaticMesh>(asset);
         if (mesh)
         {
-            //bool result = texture->loaded();
             return true;
         }
         else

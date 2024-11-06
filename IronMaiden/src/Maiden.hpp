@@ -4,7 +4,6 @@
 #include "Maiden/Core/H_Application.hpp"
 #include "Maiden/Interfaces/H_Interface.h"
 #include "Maiden/Events/H_EventSystem.h"
-#include "Maiden/Core/H_Logger.hpp"
 #include "Maiden/Project/H_Project.h"
 
 #include "Maiden/Core/H_Time.hpp"

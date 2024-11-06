@@ -1,5 +1,6 @@
 #include "maidenpch.hpp"
 #include "H_VulkanShader.h"
+#include "ShaderCompilation/H_VulkanShaderCompiler.h"
 
 namespace Madam
 {
@@ -10,8 +11,8 @@ namespace Madam
 
 	VulkanShader::VulkanShader(const std::vector<uint32_t> code)
 	{
-		_code = code;
-		useFilepath = false;
+		//_code = code;
+		//useFilepath = false;
 	}
 
 	VulkanShader::~VulkanShader()
@@ -29,30 +30,36 @@ namespace Madam
 
 	void VulkanShader::Load()
 	{
-		VkShaderModuleCreateInfo createInfo{};
-		if (useFilepath)
-		{
-			std::vector<char> codeBuffer(LoadFile());
-			const uint32_t* code = reinterpret_cast<const uint32_t*>(codeBuffer.data());
-			size_t numElements = codeBuffer.size() / sizeof(uint32_t);
-			_code = std::vector<uint32_t>(code, code + numElements);
-		}
+		std::map<VkShaderStageFlagBits, std::vector<uint32_t>> shaderStagesCode;
+		shaderStagesCode = VulkanShaderCompiler::Compile(_filepath);
 
-		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		createInfo.codeSize = _code.size();
-		createInfo.pCode = reinterpret_cast<const uint32_t*>(_code.data());
 
-		VkShaderModule shader;
-		shaderModules.emplace(PipelineStage::Vert, shader);
+		for (auto pair : shaderStagesCode) {
+			VkShaderModuleCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			createInfo.codeSize = pair.second.size() * sizeof(int32_t);
+			createInfo.pCode = (uint32_t*)(pair.second.data());
 
-		if (vkCreateShaderModule(_device->device(), &createInfo, nullptr, &shaderModules[PipelineStage::Vert]) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create shader module");
+			VkShaderModule shader;
+			if (pair.first == VK_SHADER_STAGE_VERTEX_BIT) {
+				shaderModules.emplace(PipelineStage::Vert, shader);
+			}
+			else if (pair.first == VK_SHADER_STAGE_FRAGMENT_BIT) {
+				shaderModules.emplace(PipelineStage::Frag, shader);
+			}
+			else if (pair.first == VK_SHADER_STAGE_COMPUTE_BIT) {
+				shaderModules.emplace(PipelineStage::Comp, shader);
+			}
+
+			if (vkCreateShaderModule(_device->device(), &createInfo, nullptr, &shader) != VK_SUCCESS) {
+				throw std::runtime_error("Failed to create shader module");
+			}
 		}
 	}
 
-	std::vector<char> VulkanShader::LoadFile()
+	std::vector<uint32_t> VulkanShader::LoadFile()
 	{
-		std::ifstream file{ _filepath.string(), std::ios::ate | std::ios::binary};
+		/*::ifstream file{_filepath.string(), std::ios::ate | std::ios::binary};
 
 		if (!file.is_open()) {
 			throw std::runtime_error("failed to open file: " + _filepath.string());
@@ -65,6 +72,7 @@ namespace Madam
 		file.read(buffer.data(), fileSize);
 
 		file.close();
-		return buffer;
+		return buffer;*/
+		return std::vector<uint32_t>();
 	}
 }

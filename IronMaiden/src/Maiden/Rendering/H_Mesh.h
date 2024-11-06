@@ -17,7 +17,15 @@ namespace Madam {
 	enum class MeshPrimatives
 	{
 		Quad = 0,
-		Cube = 1
+		Cube = 1,
+		Sphere = 2
+	};
+
+	static std::filesystem::path meshPrimativeFilepaths[3] =
+	{
+		"resources\\models\\plane.obj",
+		"resources\\models\\cube.obj",
+		"resources\\models\\sphere.obj"
 	};
 
 	class StaticMesh : public RenderResource 
@@ -39,7 +47,7 @@ namespace Madam {
 		std::filesystem::path GetFilepath() const { return _filepath; }
 
 		static AssetType GetStaticType() { return AssetType::MESH; }
-		virtual AssetType GetAssetType() const { return AssetType::MESH; }
+		virtual AssetType GetAssetType() const override { return GetStaticType(); }
 
 	protected:
 

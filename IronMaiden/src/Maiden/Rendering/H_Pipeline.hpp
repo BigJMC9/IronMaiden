@@ -128,6 +128,7 @@ namespace Madam {
 	public:
 		Pipeline(Device& device, const std::string& rawVertFilepath, const std::string& rawFragFilepath, const PipelineConfigInfo& configInfo);
 		Pipeline(Device& device, const std::vector<uint32_t>& rawVert, const std::vector<uint32_t>& rawFrag, const PipelineConfigInfo& configInfo);
+		Pipeline(Device& device, const PipelineConfigInfo& configInfo);
 		~Pipeline();
 
 		Pipeline(const Pipeline&) = delete;

@@ -8,8 +8,8 @@
 namespace Madam {
 	//In future seperate the Pipeline and config part
 	Pipeline::Pipeline(Device& device, const std::string& rawVertFilepath, const std::string& rawFragFilepath, const PipelineConfigInfo& configInfo) : device{ device } {
-		std::string vertFilepath = "Internal\\" + rawVertFilepath;
-		std::string fragFilepath = "Internal\\" + rawFragFilepath;
+		std::string vertFilepath = "resources\\" + rawVertFilepath;
+		std::string fragFilepath = "resources\\" + rawFragFilepath;
 		createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
 	}
 

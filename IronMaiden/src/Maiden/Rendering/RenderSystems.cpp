@@ -70,10 +70,10 @@ namespace Madam {
 				0,
 				nullptr);
 			entt::registry& entities = frameInfo.scene->Reg();
-			auto group = entities.view<Transform, MeshRenderer>();
+			auto group = entities.view<CTransform, CMeshRenderer>();
 			for (auto entity : group)
 			{
-				auto [transform, meshRenderer] = group.get<Transform, MeshRenderer>(entity);
+				auto [transform, meshRenderer] = group.get<CTransform, CMeshRenderer>(entity);
 
 				if (!entities.valid(entity)) {
 					std::cerr << "Error, entity is not valid" << std::endl;
@@ -81,11 +81,11 @@ namespace Madam {
 				}
 				if (meshRenderer.GetMesh() == nullptr) continue;
 
-				Ref<MaterialComponent> material = meshRenderer.GetMaterial();
+				Ref<CMaterial> material = meshRenderer.GetMaterial();
 				if (material != nullptr) continue;
 
 				DefaultPushConstantData push{};
-				push.modelMatrix = transform.m_transform();
+				push.modelMatrix = transform.transform();
 				push.normalMatrix = transform.normalMatrix();
 
 				vkCmdPushConstants(
@@ -175,8 +175,8 @@ namespace Madam {
 				nullptr);
 
 			GridPushConstants push{};
-			push.nearPlane = CameraHandle::getMain().getCameraData().perspective.near;
-			push.farPlane = CameraHandle::getMain().getCameraData().perspective.far;
+			push.nearPlane = CameraHandle::GetMain().GetCameraData().perspective.near;
+			push.farPlane = CameraHandle::GetMain().GetCameraData().perspective.far;
 			vkCmdPushConstants(
 				frameInfo.commandBuffer,
 				pipelineLayout,
@@ -195,7 +195,7 @@ namespace Madam {
 		SkyboxRenderLayer::SkyboxRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
 			: RenderLayer(device, renderPass, globalSetLayout, _name) {
 			TextureData textureData;
-			noiseTexture = Texture::Create(textureData, std::filesystem::u8path("Internal\\textures\\noise.png"));
+			noiseTexture = Texture::Create(textureData, std::filesystem::u8path("resources\\textures\\noise.png"));
 			createPipelineLayout(globalSetLayout);
 			createPipeline(renderPass);
 		}
@@ -372,11 +372,11 @@ namespace Madam {
 				nullptr);
 
 			entt::registry& entities = frameInfo.scene->Reg();
-			auto group = entities.view<Transform, MeshRenderer>();
+			auto group = entities.view<CTransform, CMeshRenderer>();
 
 			for (auto entity : group) {
 
-				auto [transform, meshRenderer] = group.get<Transform, MeshRenderer>(entity);
+				auto [transform, meshRenderer] = group.get<CTransform, CMeshRenderer>(entity);
 
 				if (!entities.valid(entity)) {
 					std::cerr << "Error, entity is not valid" << std::endl;
@@ -385,7 +385,7 @@ namespace Madam {
 				// skip objects that don't have both a model and texture
 				//JcvbMeshRenderer* meshRenderer = obj.getComponent<JcvbMeshRenderer>();
 				//if (meshRenderer == nullptr) continue;
-				Ref<MaterialComponent> material = meshRenderer.GetMaterial();
+				Ref<CMaterial> material = meshRenderer.GetMaterial();
 				if (material == nullptr) continue;
 				if (material->diffuseMap == nullptr) continue;
 
@@ -415,7 +415,7 @@ namespace Madam {
 					nullptr);
 
 				DefaultPushConstantData push{};
-				push.modelMatrix = transform.m_transform();
+				push.modelMatrix = transform.transform();
 				push.normalMatrix = transform.normalMatrix();
 
 				vkCmdPushConstants(
@@ -517,10 +517,10 @@ namespace Madam {
 			entt::registry& entities = frameInfo.scene->Reg();
 
 			//This could absolutely be speed up if put on another thread and done before the rendering call
-			auto group = entities.view<Transform, PointLight>();
+			auto group = entities.view<CTransform, CPointLight>();
 			for (auto entity : group) {
-				auto [transform, pointLight] = group.get<Transform, PointLight>(entity);
-				auto offset = Rendering::CameraHandle::getMain().getPosition() - transform.translation;
+				auto [transform, pointLight] = group.get<CTransform, CPointLight>(entity);
+				auto offset = Rendering::CameraHandle::GetMain().GetPosition() - transform.translation;
 				float disSquared = glm::dot(offset, offset);
 				sorted[disSquared] = entity;
 			}
@@ -540,7 +540,7 @@ namespace Madam {
 			for (auto it = sorted.rbegin(); it != sorted.rend(); ++it)
 			{
 				entt::entity entity = it->second;
-				auto [transform, pointLight] = entities.get<Transform, PointLight>(entity);
+				auto [transform, pointLight] = entities.get<CTransform, CPointLight>(entity);
 				PointLightPushConstants push{};
 				push.position = glm::vec4(transform.translation, 1.f);
 				push.color = glm::vec4(pointLight.color, pointLight.intensity);

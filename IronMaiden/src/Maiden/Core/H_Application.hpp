@@ -1,6 +1,6 @@
 #pragma once
 
-//Fix these headers, only essential headers are needed, the rest can reside in the implementation
+// Fix these headers, only essential headers are needed, the rest can reside in the implementation
 #include "maidenpch.hpp"
 #include "Main/core.hpp"
 #include "H_Utils.hpp"
@@ -20,7 +20,7 @@ namespace Madam {
 	class SceneSerializer;
 	class Project;
 
-	//Should be passed in when App is created
+	// Should be passed in when App is created
 	struct ApplicationInfo
 	{
 		std::string name = "IronMaidenEngine";
@@ -76,7 +76,7 @@ namespace Madam {
 		//Depreciated
 		const std::vector<Ref<Rendering::RenderLayer>>& getRenderLayers() const;
 
-		Scene& getScene() { return *scene; }
+		Scene& getScene() { return *_scene; }
 		const Time& getTime() const { return time; }
 		ApplicationInfo getConfig() {
 			return config;
@@ -141,29 +141,13 @@ namespace Madam {
 		void RuntimeStop() {
 			if (runtime) {
 				runtime = false;
-				SwitchScenes(true);
+				//SwitchScenes(true); //Fix this
 			}
 		}
 
-		//Temp solution. Need to move to Scene Management class and needs to be safer
-		void PrimeReserve(Ref<Scene> _scene) {
-			reservedScene = _scene;
-		}
-
-		void SwitchScenes(bool drop = true) {
-			if (reservedScene == nullptr) {
-				MADAM_CORE_ERROR("Scene has not been primed into reserve");
-			}
-			else {
-				Ref<Scene> temp = scene;
-				scene = reservedScene;
-				if (drop) {
-					reservedScene = nullptr;
-				}
-				else {
-					reservedScene = temp;
-				}
-			}
+		void SwitchScenes(Ref<Scene> scene)
+		{
+			_scene = scene;
 			SceneChangeEvent e;
 			Events::EventSystem::Get().PushEvent(&e, true);
 		}
@@ -229,8 +213,8 @@ namespace Madam {
 		bool isUpdating = false;
 		
 		//Need Scene Management class
-		Ref<Scene> scene = nullptr;
-		Ref<Scene> reservedScene = nullptr;
+		Ref<Scene> _scene = nullptr;
+		Ref<Scene> runtimeScene = nullptr;
 		SceneSerializer* pSceneSerializer = nullptr;
 	protected:
 		

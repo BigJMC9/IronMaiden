@@ -48,8 +48,8 @@ namespace Madam {
 			 framePools.emplace_back(std::move(framePool));
 		}
 		
-		scene = std::make_shared<Scene>();
-		pSceneSerializer = new SceneSerializer(scene, device);
+		_scene = std::make_shared<Scene>();
+		pSceneSerializer = new SceneSerializer(_scene, device);
 	}
 
 	Application::~Application() {
@@ -131,7 +131,7 @@ namespace Madam {
 			
 			pSurface->OnUpdate();
 			pGUI->OnUpdate();
-			scene->Update();
+			_scene->Update();
 
 			if (renderer.beginFrame()) {
 				auto commandBuffer = renderer.beginCommandBuffer();
@@ -144,21 +144,21 @@ namespace Madam {
 					commandBuffer,
 					globalDescriptorSets[frameIndex],
 					* framePools[frameIndex],
-					scene,
+					_scene,
 					ubo};
 
 				//Should be done in renderer
-				Rendering::CameraHandle& camera = Rendering::CameraHandle::getMain();
-				frameInfo.ubo.projection = camera.getProjection();
-				frameInfo.ubo.view = camera.getView();
-				frameInfo.ubo.inverseView = camera.getInverseView();
+				Rendering::CameraHandle& camera = Rendering::CameraHandle::GetMain();
+				frameInfo.ubo.projection = camera.GetProjection();
+				frameInfo.ubo.view = camera.GetView();
+				frameInfo.ubo.inverseView = camera.GetInverseView();
 				
 				//This Specific Behaviour should be done by a proper render system obj (after renderstack and layers are refactored)
-				auto group = scene->Reg().view<Transform, PointLight>();
+				auto group = _scene->Reg().view<CTransform, CPointLight>();
 				int lightIndex = 0;
 				for (auto entity : group)
 				{
-					auto [transform, pointLight] = group.get<Transform, PointLight>(entity);
+					auto [transform, pointLight] = group.get<CTransform, CPointLight>(entity);
 
 					//copy light to ubo
 					frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(transform.translation, 1.f);
@@ -171,7 +171,7 @@ namespace Madam {
 				uboBuffers[frameIndex]->flush();
 
 				// render
-				scene->Render();
+				_scene->Render();
 				renderer.beginRenderPass(commandBuffer, 0);
 				renderStack.render(frameInfo);
 				renderer.endRenderPass(commandBuffer);

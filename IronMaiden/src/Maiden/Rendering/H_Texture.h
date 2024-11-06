@@ -104,7 +104,7 @@ namespace Madam {
 		virtual void SetFlags(uint32_t flags) { _flags |= flags; }
 
 		static AssetType GetStaticType() { return AssetType::TEXTURE; }
-		virtual AssetType GetAssetType() const { return AssetType::TEXTURE; }
+		AssetType GetAssetType() const override { return GetStaticType(); }
 
 	protected:
 		TextureFlags _flags = TextureFlags::NONE;

@@ -17,10 +17,10 @@ namespace Madam
 		void Load() override;
 
 	private:
-		std::vector<char> LoadFile();
-
+		std::vector<uint32_t> LoadFile();
+		
 		std::unordered_map<PipelineStage, VkShaderModule> shaderModules;
-		bool useFilepath = true;
+		//bool useFilepath = true;
 
 		DescSet descriptorSet;
 

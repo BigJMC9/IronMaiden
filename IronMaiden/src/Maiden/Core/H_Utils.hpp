@@ -61,6 +61,30 @@ namespace Madam {
 	}
 
 #define BIT(x) (1u << x)
+
+	inline std::vector<std::string> SplitString(std::string str, bool keepDelimeters = false)
+	{
+		if (keepDelimeters)
+		{
+			const static std::regex re(R"((^\W|^\w+)|(\w+)|[:()])", std::regex_constants::optimize);
+
+			std::regex_iterator<std::string::iterator> rit(str.begin(), str.end(), re);
+			std::regex_iterator<std::string::iterator> rend;
+			std::vector<std::string> result;
+
+			while (rit != rend)
+			{
+				result.emplace_back(rit->str());
+				++rit;
+			}
+			return result;
+		}
+		else
+		{
+			std::vector<std::string> str;
+			return str;
+		}
+	}
 }
 
 namespace std {

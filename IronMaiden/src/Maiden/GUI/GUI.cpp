@@ -483,16 +483,25 @@ namespace Madam::UI {
 	}
 
 	void GUI::MenuBar() {
-		if (ImGui::BeginMainMenuBar())
-		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::MenuItem("New Scene")) {}
-				if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
-				{
-					std::filesystem::path filePath;
-					if (OpenFileDialog(filePath, L"scene", L"scene")) {
-						Application::GetSceneSerializer()->Deserialize(filePath.string(), true);
+		if (ImGui::BeginMainMenuBar()) {
+			if (ImGui::BeginMenu("File")) {
+				if (ImGui::MenuItem("New Scene")) {
+					//Move this behaviour somewhere else (probably scene class)
+					Scene newScene{};
+					Entity camera = newScene.CreateEntity();
+					camera.GetComponent<CMetadata>().name = "Editor Camera";
+					camera.GetComponent<CTransform>().translation.z = -2.5f;
+					Rendering::CameraData cameraData;
+					cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
+					cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().getAspectRatio(), 0.1f, 1000.0f);
+					camera.AddComponent<CCamera>(cameraData);
+					camera.GetComponent<CCamera>().cameraHandle->SetViewDirection(glm::vec3(0.f, 2.0f, 0.f), glm::vec3(0.f, 0.f, 0.f));
+					camera.GetComponent<CCamera>().cameraHandle->SetMain();
+					Application::Get().SwitchScenes(CreateRef<Scene>(std::move(newScene)));
+				}
+				if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {
+					if (OpenFileDialog(sceneDir, L"scene", L"scene")) {
+						Application::GetSceneSerializer()->Deserialize(sceneDir);
 					}
 					else {
 						// User cancelled or error occurred
@@ -501,13 +510,21 @@ namespace Madam::UI {
 				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Save", "Ctrl+S")) {
+					if (sceneDir.empty())
+					{
+						if (SaveFileDialog(sceneDir, L"scene", L"scene")) {
+							Application::GetSceneSerializer()->Serialize(sceneDir);
+						}
+						else {
+							// User canceled or error occurred
+							ShowMessageBox(L"Could not save scene.", L"Info", MB_OK | MB_ICONINFORMATION);
+						}
+					}
 					Application::GetSceneSerializer()->Serialize("temp.scene");
 				}
 				if (ImGui::MenuItem("Save As..")) {
-					
-					std::filesystem::path filePath;
-					if (SaveFileDialog(filePath, L"scene", L"scene")) {
-						Application::GetSceneSerializer()->Serialize(filePath.string(), true);
+					if (SaveFileDialog(sceneDir, L"scene", L"scene")) {
+						Application::GetSceneSerializer()->Serialize(sceneDir);
 					}
 					else {
 						// User canceled or error occurred
@@ -618,7 +635,7 @@ namespace Madam::UI {
 					std::string path = ConvertWideToUtf8(wPath);
 
 					MADAM_CORE_INFO("Opening scene: " + path);
-					Application::GetSceneSerializer()->Deserialize(path, true);
+					Application::GetSceneSerializer()->Deserialize(path);
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -631,7 +648,7 @@ namespace Madam::UI {
 			//imGuizmo
 			DrawViewportGizmoButtons();
 			if (selectedEntity) {
-				if (Rendering::CameraHandle::getMain().CameraData().projectionType == Rendering::CameraData::ProjectionType::Orthographic) {
+				if (Rendering::CameraHandle::GetMain().GetCameraData().projectionType == Rendering::CameraData::ProjectionType::Orthographic) {
 					ImGuizmo::SetOrthographic(true);
 				}
 				else {
@@ -642,24 +659,24 @@ namespace Madam::UI {
 				float windowHeight = (float)ImGui::GetWindowHeight();
 				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, displaySize.x, displaySize.y);
 
-				auto& cameraHandle = Rendering::CameraHandle::getMain();
-				glm::mat4 cameraProjection = cameraHandle.getProjection();
+				auto& cameraHandle = Rendering::CameraHandle::GetMain();
+				glm::mat4 cameraProjection = cameraHandle.GetProjection();
 				cameraProjection[1][1] *= -1;
 
-				glm::mat4 cameraView = cameraHandle.getView();
+				glm::mat4 cameraView = cameraHandle.GetView();
 
-				glm::mat4 transform = selectedEntity->GetComponent<Transform>();
+				glm::mat4 transform = selectedEntity->GetComponent<CTransform>();
 
 				
 				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)ImGuizmoType,
 					ImGuizmo::LOCAL, glm::value_ptr(transform));
 
 				if (ImGuizmo::IsUsing()) {
-					glm::vec3 rotation = selectedEntity->GetComponent<Transform>().rotation;
+					glm::vec3 rotation = selectedEntity->GetComponent<CTransform>().rotation;
 
-					selectedEntity->GetComponent<Transform>().UpdateTransform(transform);
-					glm::vec3 deltaRotation = selectedEntity->GetComponent<Transform>().rotation - rotation;
-					selectedEntity->GetComponent<Transform>().rotation = rotation + deltaRotation;
+					selectedEntity->GetComponent<CTransform>().UpdateTransform(transform);
+					glm::vec3 deltaRotation = selectedEntity->GetComponent<CTransform>().rotation - rotation;
+					selectedEntity->GetComponent<CTransform>().rotation = rotation + deltaRotation;
 				}
 			}
 		}
@@ -669,7 +686,7 @@ namespace Madam::UI {
 	void GUI::Hierarchy() {
 
 		if (ImGui::Begin("Hierarchy")) {
-			Application::Get().getScene().GetAllEntitiesWith<GameObject>().each([&](auto entityId, auto& gameObject)
+			Application::Get().getScene().GetAllEntitiesWith<CMetadata>().each([&](auto entityId, auto& gameObject)
 			{
 				Entity entity {entityId, &Application::Get().getScene()};
 				DrawEntityNode(entity);
@@ -687,17 +704,31 @@ namespace Madam::UI {
 			if (ImGui::BeginMenu("3D")) {
 				if (ImGui::MenuItem("Quad"))
 				{
-					auto entity = Application::Get().getScene().CreateEntity();
-					entity.AddComponent<MeshRenderer>();
-					entity.GetComponent<MeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Quad);
+					auto entity = Application::Get().getScene().CreateEntity("Quad");
+					entity.AddComponent<CMeshRenderer>();
+					entity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Quad);
 				}
 				if (ImGui::MenuItem("Cube"))
 				{
-					auto entity = Application::Get().getScene().CreateEntity();
-					entity.AddComponent<MeshRenderer>();
-					entity.GetComponent<MeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Cube);
+					auto entity = Application::Get().getScene().CreateEntity("Cube");
+					entity.AddComponent<CMeshRenderer>();
+					entity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Cube);
 				}
-				//auto entity = Application::Get().getScene().CreateEntity(); 
+				if (ImGui::MenuItem("Sphere"))
+				{
+					auto entity = Application::Get().getScene().CreateEntity("Sphere");
+					entity.AddComponent<CMeshRenderer>();
+					entity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Sphere);
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Lights"))
+			{
+				if (ImGui::MenuItem("Point Light"))
+				{
+					auto entity = Application::Get().getScene().CreateEntity("Point Light");
+					entity.AddComponent<CPointLight>();
+				}
 				ImGui::EndMenu();
 			}
 			ImGui::EndPopup();
@@ -717,15 +748,15 @@ namespace Madam::UI {
 				if (ImGui::BeginPopup("AddComponent")) 
 				{
 					if (ImGui::MenuItem("Camera")) {
-						selectedEntity->AddComponent<Camera>();
+						selectedEntity->AddComponent<CCamera>();
 						ImGui::CloseCurrentPopup();
 					}
 					if (ImGui::MenuItem("Mesh Renderer")) {
-						selectedEntity->AddComponent<MeshRenderer>();
+						selectedEntity->AddComponent<CMeshRenderer>();
 						ImGui::CloseCurrentPopup();
 					}
 					if (ImGui::MenuItem("Point Light")) {
-						selectedEntity->AddComponent<PointLight>();
+						selectedEntity->AddComponent<CPointLight>();
 						ImGui::CloseCurrentPopup();
 					}
 					ImGui::EndPopup();
@@ -737,7 +768,7 @@ namespace Madam::UI {
 		}
 		ImGui::End();
 
-		if (ImGui::Begin("Inspector")) {
+		if (ImGui::Begin("Asset")) {
 			if (selectedAsset) {
 				DrawAssetInfo(selectedAsset);
 			}
@@ -951,7 +982,8 @@ namespace Madam::UI {
 					}
 					if (ImGui::MenuItem("Scene"))
 					{
-
+						//Update this
+						Application::GetSceneSerializer()->Serialize(activeDir);
 					}
 					if (ImGui::MenuItem("Script"))
 					{
@@ -1127,7 +1159,7 @@ namespace Madam::UI {
 	}
 
 	void GUI::DrawEntityNode(Entity entity) {
-		auto name = entity.GetComponent<GameObject>().name;
+		auto name = entity.GetComponent<CMetadata>().name;
 
 		ImGuiTreeNodeFlags flags = ((selectedEntity != nullptr && *selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0 ) | ImGuiTreeNodeFlags_OpenOnArrow;
 		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, name.c_str());
@@ -1156,8 +1188,8 @@ namespace Madam::UI {
 	}
 
 	void GUI::DrawEntityComponents(Entity entity) {
-		if (entity.HasComponent<GameObject>()) {
-			auto& gameObject = entity.GetComponent<GameObject>();
+		if (entity.HasComponent<CMetadata>()) {
+			auto& gameObject = entity.GetComponent<CMetadata>();
 
 			char buffer[256];
 			memset(buffer, 0, sizeof(buffer));
@@ -1165,7 +1197,7 @@ namespace Madam::UI {
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
 			if (ImGui::InputText("##Name", buffer, sizeof(buffer))) {
-				entity.GetComponent<GameObject>().name = std::string(buffer);
+				entity.GetComponent<CMetadata>().name = std::string(buffer);
 			}
 			ImGui::PopStyleVar();
 		}
@@ -1173,11 +1205,11 @@ namespace Madam::UI {
 		const ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth;
 
 
-		if (entity.HasComponent<Transform>()) {
+		if (entity.HasComponent<CTransform>()) {
 
-			auto& transform = entity.GetComponent<Transform>();
+			auto& transform = entity.GetComponent<CTransform>();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(Transform).hash_code(), headerFlags, "Transform");
+			bool open = ImGui::TreeNodeEx((void*)typeid(CTransform).hash_code(), headerFlags, "Transform");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
 			float lineHeight = ImGui::GetFontSize() + 8;
@@ -1205,10 +1237,10 @@ namespace Madam::UI {
 			}
 		}
 
-		if (entity.HasComponent<Camera>()) {
-			auto& camera = entity.GetComponent<Camera>();
+		if (entity.HasComponent<CCamera>()) {
+			auto& camera = entity.GetComponent<CCamera>();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(Camera).hash_code(), headerFlags, "Camera");
+			bool open = ImGui::TreeNodeEx((void*)typeid(CCamera).hash_code(), headerFlags, "Camera");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
 			float lineHeight = ImGui::GetFontSize() + 8;
@@ -1228,7 +1260,7 @@ namespace Madam::UI {
 			if (open) {
 				//ImGui::Checkbox("Primary", &camera.primary);
 				const char* items[] = { "None", "Perspective", "Orthographic"};
-				Rendering::CameraData& cameraData = camera.cameraHandle->CameraData();
+				Rendering::CameraData& cameraData = camera.cameraHandle->GetCameraData();
 				int currentItem = (int)cameraData.projectionType;
 				if (ImGui::BeginCombo("Projection", items[currentItem])) {
 					for (int i = 0; i < 3; i++) {
@@ -1265,14 +1297,14 @@ namespace Madam::UI {
 			}
 
 			if (removeComponent) {
-				entity.RemoveComponent<Camera>();
+				entity.RemoveComponent<CCamera>();
 			}
 		}
 
-		if (entity.HasComponent<MeshRenderer>()) {
-			auto& meshRenderer = entity.GetComponent<MeshRenderer>();
+		if (entity.HasComponent<CMeshRenderer>()) {
+			auto& meshRenderer = entity.GetComponent<CMeshRenderer>();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(MeshRenderer).hash_code(), headerFlags, "Mesh Renderer");
+			bool open = ImGui::TreeNodeEx((void*)typeid(CMeshRenderer).hash_code(), headerFlags, "Mesh Renderer");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
 			float lineHeight = ImGui::GetFontSize() + 8;
@@ -1295,14 +1327,14 @@ namespace Madam::UI {
 			}
 
 			if (removeComponent) {
-				entity.RemoveComponent<MeshRenderer>();
+				entity.RemoveComponent<CMeshRenderer>();
 			}
 		}
 
-		if (entity.HasComponent<PointLight>()) {
-			auto& pointLight = entity.GetComponent<PointLight>();
+		if (entity.HasComponent<CPointLight>()) {
+			auto& pointLight = entity.GetComponent<CPointLight>();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(PointLight).hash_code(), headerFlags, "Point Light");
+			bool open = ImGui::TreeNodeEx((void*)typeid(CPointLight).hash_code(), headerFlags, "Point Light");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
 			float lineHeight = ImGui::GetFontSize() + 8;
@@ -1328,14 +1360,14 @@ namespace Madam::UI {
 			}
 
 			if (removeComponent) {
-				entity.RemoveComponent<PointLight>();
+				entity.RemoveComponent<CPointLight>();
 			}
 		}
 
-		if (entity.HasComponent<MaterialComponent>()) {
-			auto& material = entity.GetComponent<MaterialComponent>();
+		if (entity.HasComponent<CMaterial>()) {
+			auto& material = entity.GetComponent<CMaterial>();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
-			bool open = ImGui::TreeNodeEx((void*)typeid(MaterialComponent).hash_code(), headerFlags, "Material");
+			bool open = ImGui::TreeNodeEx((void*)typeid(CMaterial).hash_code(), headerFlags, "Material");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
 
 			float lineHeight = ImGui::GetFontSize() + 8;
@@ -1358,7 +1390,7 @@ namespace Madam::UI {
 			}
 
 			if (removeComponent) {
-				entity.RemoveComponent<MaterialComponent>();
+				entity.RemoveComponent<CMaterial>();
 			}
 		}
 	}

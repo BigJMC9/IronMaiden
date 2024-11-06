@@ -112,6 +112,8 @@ namespace Madam::UI {
 		int ImGuizmoType = -1;
 
 		std::filesystem::path curDir = ASSET_DIR;
+		std::filesystem::path sceneDir = "";
+
 		Ref<Asset> selectedAsset = nullptr;
 		bool isSRGB = false;
 
