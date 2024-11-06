@@ -380,3 +380,5 @@ IronMaiden/vendors/yaml-cpp/ImGui.vcxproj
 IronMaiden/vendors/yaml-cpp/ImGui.vcxproj.filters
 
 
+/Editor/Editor.vcxproj
+/IronMaiden.sln
