@@ -75,8 +75,8 @@ The engine is currently in an early development phase, and we are aware of sever
     Setup.bat uses **git** to pull in required submodules. Ensure that **git** is correctly configured in your environment path.
 
     **Alternative Options**
-    - Download dependencies using Git: [see more](download-dependencies-using-git)
-    - Download dependencies manually: [see more](download-dependencies-manually)
+    - Download dependencies using Git: [see more](#download-dependencies-using-git)
+    - Download dependencies manually: [see more](#download-dependencies-manually)
 
 5. Run CompileProject.bat to build the project
 
