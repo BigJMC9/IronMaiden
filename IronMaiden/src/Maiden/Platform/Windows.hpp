@@ -249,7 +249,7 @@ namespace Madam {
 				return true;
 			}
 			else {
-				MADAM_CORE_ERROR("Failed to create directory: {0}", path.string());
+				MADAM_CORE_ERROR("Failed to create directory (no specific reason provided): {0}", path.string());
 				return false;
 			}
 		}

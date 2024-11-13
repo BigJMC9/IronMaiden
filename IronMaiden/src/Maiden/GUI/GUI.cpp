@@ -603,7 +603,7 @@ namespace Madam::UI {
 
 	void GUI::Viewport() {
 
-		//update in future to scale with window size
+		//Update in future to scale with window size
 		if (ImGui::Begin("Viewport")) {
 
 			ImVec2 windowSize = ImGui::GetContentRegionAvail();

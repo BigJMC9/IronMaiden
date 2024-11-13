@@ -37,7 +37,7 @@ namespace Madam {
 		// build frame descriptor pools
 		// ???
 		// Should be in descriptor Manager
-		//framePools.resize(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT); //Maximun number of frames being rendered
+		// framePools.resize(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT); //Maximun number of frames being rendered
 		auto framePoolBuilder = DescriptorPool::Builder(device)
 			.setMaxSets(1000) //Storage allocation
 			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
@@ -221,6 +221,7 @@ namespace Madam {
 			if (key == "ProjectsDirectory")
 			{
 				config.projectsDirectory = std::filesystem::u8path(value);
+				MADAM_CORE_INFO("Directory: {0}", config.projectsDirectory);
 			}
 			else if (key == "WindowWidth")
 			{

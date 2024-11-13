@@ -1,0 +1,12 @@
+Scene: Untitled
+Entities:
+  - Entity: 49057c4600bd751f-07641d88b456e638
+    Transform:
+      Translation: [0, -2.27285957, -2.5]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    Camera:
+      Perspective: {Fov: 0.87266463, Aspect: 1.81646168, Near: 0.100000001, Far: 1000}
+      ViewPosition: [0, -2.27285957, -2.5]
+      ViewDirection: [0, 0, 0]
+      Main: true
