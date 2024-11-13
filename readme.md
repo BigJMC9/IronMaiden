@@ -124,14 +124,14 @@ As of October 21st, we are excited to announce the formation of the Iron Maiden 
 BigJMC9 - Jacob Crosbie
 
 ### Core Team
-**Lead Engineer** - BigJMC9 - Jacob Crosbie
-**Software Engineer** - luisadrias111 - Luis Adrias
-**Software Engineer** - What-Kins - Josh Watkins
+**Lead Engineer** - BigJMC9 - Jacob Crosbie<br />
+**Software Engineer** - luisadrias111 - Luis Adrias<br />
+**Software Engineer** - What-Kins - Josh Watkins<br />
 
 ### Quality Assurance Team
-**Lead Engineer** - BigJMC9 - Jacob Crosbie
-**Software Engineer** - What-Kins - Josh Watkins
-**Quality Assurance Tester** - Jack Absalom
+**Lead Engineer** - BigJMC9 - Jacob Crosbie<br />
+**Software Engineer** - What-Kins - Josh Watkins<br />
+**Quality Assurance Tester** - Jack Absalom<br />
 
 ## License
 
