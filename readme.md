@@ -125,12 +125,12 @@ BigJMC9 - Jacob Crosbie
 
 ### Core Team
 **Lead Engineer** - BigJMC9 - Jacob Crosbie
-**Software Engineer** - Luis Adrias
-**Software Engineer** - Josh Watkins
+**Software Engineer** - luisadrias111 - Luis Adrias
+**Software Engineer** - What-Kins - Josh Watkins
 
 ### Quality Assurance Team
 **Lead Engineer** - BigJMC9 - Jacob Crosbie
-**Software Engineer** - Josh Watkins
+**Software Engineer** - What-Kins - Josh Watkins
 **Quality Assurance Tester** - Jack Absalom
 
 ## License
