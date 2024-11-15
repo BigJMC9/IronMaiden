@@ -351,8 +351,11 @@ namespace Madam::UI {
 		EventSystem::Get().AddListener(this, &GUI::OnResizeEvent);
 		EventSystem::Get().AddListener(this, &GUI::OnRenderPassEvent);
 		EventSystem::Get().AddListener(this, &GUI::OnSceneChangeEvent);
+		EventSystem::Get().AddListener(this, &GUI::OnMouseMoveRawEvent);
+		EventSystem::Get().AddListener(this, &GUI::OnMouseScrollEvent);
 	}
 
+	//Events
 	void GUI::OnSceneChangeEvent(SceneChangeEvent* e) {
 		selectedEntity = nullptr;
 	}
@@ -374,6 +377,19 @@ namespace Madam::UI {
 		ImGui_ImplVulkan_Init(init_info);
 		viewportSet = ImGui_ImplVulkan_AddTexture(viewportSampler, Rendering::Renderer::Get().getImageView(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		CreateViewportPipeline();
+	}
+
+	void GUI::OnMouseMoveRawEvent(MouseMoveRawEvent* e)
+	{
+		if (!isMovingViewportCamera)
+		{
+			ImGui_ImplGlfw_CursorPosCallback(Application::Get().getWindow().getGLFWwindow(), e->x, e->y);
+		}
+	}
+
+	void GUI::OnMouseScrollEvent(MouseScrollEvent* e)
+	{
+		ImGui_ImplGlfw_ScrollCallback(Application::Get().getWindow().getGLFWwindow(), e->x, e->y);
 	}
 
 	void GUI::OnDetach() {
@@ -602,8 +618,6 @@ namespace Madam::UI {
 	}
 
 	void GUI::Viewport() {
-
-		//Update in future to scale with window size
 		if (ImGui::Begin("Viewport")) {
 
 			ImVec2 windowSize = ImGui::GetContentRegionAvail();
@@ -664,21 +678,38 @@ namespace Madam::UI {
 				cameraProjection[1][1] *= -1;
 
 				glm::mat4 cameraView = cameraHandle.GetView();
-
 				glm::mat4 transform = selectedEntity->GetComponent<CTransform>();
 
-				
 				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)ImGuizmoType,
 					ImGuizmo::LOCAL, glm::value_ptr(transform));
 
 				if (ImGuizmo::IsUsing()) {
-					glm::vec3 rotation = selectedEntity->GetComponent<CTransform>().rotation;
-
 					selectedEntity->GetComponent<CTransform>().UpdateTransform(transform);
-					glm::vec3 deltaRotation = selectedEntity->GetComponent<CTransform>().rotation - rotation;
-					selectedEntity->GetComponent<CTransform>().rotation = rotation + deltaRotation;
 				}
 			}
+		}
+		if (ImGui::IsWindowHovered() || isMovingViewportCamera)
+		{
+			if (Input::Get().IsMouseButtonPress(MouseCode::RIGHTMOUSEBUTTON))
+			{
+				Application::Get().getWindow().SetCursorState(CursorState::DISABLED);
+				isMovingViewportCamera = true;
+			}
+			else
+			{
+				if (isMovingViewportCamera)
+				{
+					isMovingViewportCamera = false;
+					Application::Get().getWindow().PopCursorPosition();
+				}
+				Application::Get().getWindow().SetCursorState(CursorState::NORMAL);
+				Application::Get().getWindow().SetCursorIcon(CursorType::CROSSHAIR);
+			}
+		}
+		else
+		{
+			Application::Get().getWindow().SetCursorState(CursorState::NORMAL);
+			Application::Get().getWindow().SetCursorIcon(CursorType::ARROW);
 		}
 		ImGui::End();
 	}
@@ -1223,16 +1254,16 @@ namespace Madam::UI {
 			}
 
 			if (open) {
-				//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
 				DrawVec3("Translation", transform.translation);
-				//ImGui::DragFloat3("Position", glm::value_ptr(transform.translation), 0.5f);
-				glm::vec3 rotation = glm::degrees(transform.rotation);
+				glm::vec3 rotation = glm::degrees(glm::eulerAngles(transform.rotation));
 				DrawVec3("Rotation", rotation);
-				transform.rotation = glm::radians(rotation);
+				if (glm::degrees(glm::eulerAngles(transform.rotation)) != rotation)
+				{
+					transform.rotation = glm::quat(rotation);
+				}
 				DrawVec3("Scale", transform.scale);
 				ImGui::PopStyleVar();
-				//ImGui::PopStyleVar();
 				ImGui::TreePop();
 			}
 		}

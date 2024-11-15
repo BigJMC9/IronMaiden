@@ -33,12 +33,6 @@ namespace Madam {
             float farPlane;
         };
 
-        struct SkyboxBuffer {
-            glm::vec3 resolution;
-            float time;
-            glm::vec3 textureResolution;
-        };
-
 
         //Update this!!
 		class MADAM_API RenderLayer {
@@ -93,7 +87,7 @@ namespace Madam {
             Scope<DescriptorSetLayout> skyboxRenderSystemLayout;
             Scope<Buffer> skyboxBuffer;
             Ref<Texture> noiseTexture;
-            SkyboxBuffer skyboxBufferData;
+            Ref<StaticMesh> skybox = StaticMesh::Create("resources\\models\\skybox.obj");
         };
 
         class MADAM_API TextureRenderLayer : public RenderLayer {

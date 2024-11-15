@@ -55,7 +55,7 @@ namespace Madam {
 				Entity entity = Application::Get().getScene().CreateEntity("Editor Camera");
 				entity.GetComponent<CTransform>().translation.z = -2.5f;
 				entity.AddComponent<CCamera>(defaultCameraData);
-				entity.GetComponent<CCamera>().cameraHandle->SetViewYXZ(entity.GetComponent<CTransform>().translation, glm::vec3(0.f, 0.f, 0.f));
+				entity.GetComponent<CCamera>().cameraHandle->SetViewYXZ(entity.GetComponent<CTransform>().translation, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 				entity.GetComponent<CCamera>().cameraHandle->SetProjection();
 				entity.GetComponent<CCamera>().cameraHandle->SetMain();
 			}

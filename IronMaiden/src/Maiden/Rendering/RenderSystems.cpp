@@ -195,7 +195,7 @@ namespace Madam {
 		SkyboxRenderLayer::SkyboxRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
 			: RenderLayer(device, renderPass, globalSetLayout, _name) {
 			TextureData textureData;
-			noiseTexture = Texture::Create(textureData, std::filesystem::u8path("resources\\textures\\noise.png"));
+			noiseTexture = Texture::Create(textureData, std::filesystem::u8path("resources\\textures\\skybox.png"));
 			createPipelineLayout(globalSetLayout);
 			createPipeline(renderPass);
 		}
@@ -206,18 +206,9 @@ namespace Madam {
 
 		void SkyboxRenderLayer::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
 
-			skyboxBuffer = std::make_unique<Buffer>(
-				device,
-				sizeof(SkyboxBuffer),
-				1,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-			skyboxBuffer->map();
-
 			skyboxRenderSystemLayout =
 				DescriptorSetLayout::Builder(device)
-				.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
-				.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+				.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 				.build();
 
 			//Change for different layout
@@ -247,8 +238,6 @@ namespace Madam {
 			//Pipeline::enableAlphaBlending(pipelineConfig);
 
 			//pipelineConfig.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-			pipelineConfig.attributeDescriptions.clear();
-			pipelineConfig.bindingDescriptions.clear();
 			pipelineConfig.renderPass = renderPass;
 			pipelineConfig.pipelineLayout = pipelineLayout;
 			pipelineConfig.depthStencilInfo.depthTestEnable = VK_TRUE;
@@ -257,11 +246,11 @@ namespace Madam {
 			pipelineConfig.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
 			pipelineConfig.depthStencilInfo.stencilTestEnable = VK_FALSE;
 			//pipelineConfig.rasterizationInfo.depthClampEnable = VK_TRUE;
-			pipeline = std::make_unique<Pipeline>(device, "shaders/skybox_shader_1.1.vert.spv", "shaders/skybox_shader_1.1.frag.spv", pipelineConfig);
+			pipeline = std::make_unique<Pipeline>(device, "shaders/skybox_shader_1.2.vert.spv", "shaders/skybox_shader_1.2.frag.spv", pipelineConfig);
 		}
 
 		void SkyboxRenderLayer::render(FrameInfo& frameInfo) {
-			/*pipeline->bind(frameInfo.commandBuffer);
+			pipeline->bind(frameInfo.commandBuffer);
 
 			vkCmdBindDescriptorSets(
 				frameInfo.commandBuffer,
@@ -273,17 +262,10 @@ namespace Madam {
 				0,
 				nullptr);
 
-			skyboxBufferData.resolution = glm::vec3(Application::Get().getWindow().getWidth(), Application::Get().getWindow().getHeight(), 1);
-			skyboxBufferData.textureResolution = glm::vec3(234, 119, 1);
-			skyboxBufferData.time = Time::GetTimeSinceStart();
-
-			skyboxBuffer->writeToBuffer(&skyboxBufferData);
-			skyboxBuffer->flush();
-			MADAM_CORE_INFO("Skybox Time: {0}", skyboxBufferData.time);
 			VkDescriptorSet descriptorSet1;
 			DescriptorWriter(*skyboxRenderSystemLayout, frameInfo.frameDescriptorPool)
-				.writeBuffer(0, &skyboxBuffer->descriptorInfo())
-				.writeImage(1, &noiseTexture->getImageInfo())
+				//.writeBuffer(0, &skyboxBuffer->descriptorInfo())
+				.writeImage(0, (VkDescriptorImageInfo*)std::static_pointer_cast<VulkanTexture>(noiseTexture)->GetDescriptorInfo())
 				.build(descriptorSet1);
 
 			vkCmdBindDescriptorSets(
@@ -296,8 +278,9 @@ namespace Madam {
 				0,
 				nullptr);
 
-			vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
-			isFirstFrame = false;*/
+			skybox->bind(frameInfo.commandBuffer);
+			skybox->draw(frameInfo.commandBuffer);
+			isFirstFrame = false;
 		}
 
 		/*
