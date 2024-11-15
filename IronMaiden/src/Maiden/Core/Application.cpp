@@ -128,7 +128,7 @@ namespace Madam {
 		while (!window.shouldClose()) {
 			glfwPollEvents();
 			time.UpdateTime();
-			
+
 			pSurface->OnUpdate();
 			pGUI->OnUpdate();
 			_scene->Update();
