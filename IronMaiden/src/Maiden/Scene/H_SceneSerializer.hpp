@@ -1,7 +1,10 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/H_Utils.hpp"
+
+#define INCLUDE_UTILS
+#include "../Utils/H_Utils.h"
+
 #include "../Rendering/Vulkan/H_VulkanDevice.hpp"
 
 #include <filesystem>

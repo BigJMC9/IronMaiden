@@ -2,10 +2,11 @@
 
 #include "maidenpch.hpp"
 #include "Main/Core.hpp"
-#include "H_Utils.hpp"
+#include "../Utils/H_EngineUtils.h"
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
+#include <spdlog/fmt/fmt.h>
 
 namespace Madam
 {
@@ -68,3 +69,116 @@ namespace Madam
                               ::Madam::Logger::GetFileLogger()->error("APP: Error: {}", fmt::format(__VA_ARGS__))
 #define MADAM_FATAL(...)      ::Madam::Logger::GetClientLogger()->critical(__VA_ARGS__); \
                               ::Madam::Logger::GetFileLogger()->fatal("APP: Fatal Error: {}", fmt::format(__VA_ARGS__))
+
+#ifndef H_LOGGER_INCLUDE_GLM_GUARD
+#ifdef INCLUDE_GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/matrix_decompose.hpp>
+
+namespace fmt {
+    template<>
+    struct fmt::formatter<glm::vec2> {
+
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const glm::vec2& vec, FormatContext& ctx) -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "vec2({}, {})", vec.x, vec.y);
+        }
+    };
+
+    template<>
+    struct fmt::formatter<glm::vec3> {
+
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const glm::vec3& vec, FormatContext& ctx) -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "vec3({}, {}, {})", vec.x, vec.y, vec.z);
+        }
+    };
+
+    template<>
+    struct fmt::formatter<glm::vec4> {
+
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const glm::vec4& vec, FormatContext& ctx) -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "vec4({}, {}, {}. {})", vec.x, vec.y, vec.z, vec.w);
+        }
+    };
+
+    template<>
+    struct fmt::formatter<glm::quat> {
+
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const glm::quat& quat, FormatContext& ctx) -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "quat({}, {}, {}. {})", quat.x, quat.y, quat.z, quat.w);
+        }
+    };
+
+    template<>
+    struct fmt::formatter<glm::mat4> {
+
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const glm::mat4& mat4, FormatContext& ctx) -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "Matrix 4x4:\n({}, {}, {}, {})\n({}, {}, {}, {})\n({}, {}, {}, {})\n({}, {}, {}, {})",
+                mat4[0][0], mat4[1][0], mat4[2][0], mat4[3][0],
+                mat4[0][1], mat4[1][1], mat4[2][1], mat4[3][1],
+                mat4[0][2], mat4[1][2], mat4[2][2], mat4[3][2],
+                mat4[0][3], mat4[1][3], mat4[2][3], mat4[3][3]);
+        }
+    };
+
+    template<>
+    struct fmt::formatter<glm::mat3> {
+
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const glm::mat3& mat3, FormatContext& ctx) -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "Matrix 3x3:\n({}, {}, {})\n({}, {}, {})\n({}, {}, {})",
+                mat3[0][0], mat3[1][0], mat3[2][0],
+                mat3[0][1], mat3[1][1], mat3[2][1],
+                mat3[0][2], mat3[1][2], mat3[2][2]);
+        }
+    };
+
+    template<>
+    struct fmt::formatter<glm::mat2> {
+
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const glm::mat2& mat2, FormatContext& ctx) -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "Matrix 2x2:\n({}, {})\n({}, {})",
+                mat2[0][0], mat2[1][0],
+                mat2[0][1], mat2[1][1]);
+        }
+    };
+}
+#define H_LOGGER_INCLUDE_GLM_GUARD
+#endif
+#endif // !H_LOGGER_INCLUDE_GLM_GUARD

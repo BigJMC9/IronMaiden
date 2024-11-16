@@ -1,7 +1,6 @@
 #pragma once
 #include "maidenpch.hpp"
 #include "../H_Renderer.hpp"
-#include "../../Core/H_Utils.hpp"
 #include "../H_Image.hpp"
 
 namespace Madam

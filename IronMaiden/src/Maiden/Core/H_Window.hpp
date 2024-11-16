@@ -1,12 +1,10 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "H_Logger.hpp"
-#define VKB_VALIDATION_LAYERS
-#define GLFW_INCLUDE_VULKAN
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
+
+#define INCLUDE_LOGGER
+#define INCLUDE_GLFW
+#include "../Utils/H_Utils.h"
 
 namespace Madam {
 

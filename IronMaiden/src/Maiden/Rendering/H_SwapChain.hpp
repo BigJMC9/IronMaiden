@@ -2,7 +2,9 @@
 
 #include "maidenpch.hpp"
 #include "Vulkan/H_VulkanDevice.hpp"
-#include "../Core/H_Utils.hpp"
+
+#define INCLUDE_UTILS
+#include "../Utils/H_Utils.h"
 
 // vulkan headers
 #include <vulkan/vulkan.h>
