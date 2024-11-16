@@ -25,3 +25,6 @@
 [submodule "IronMaiden/vendors/ImGuizmo"]
 	path = IronMaiden/vendors/ImGuizmo
 	url = https://github.com/BigJMC9/ImGuizmo
+[submodule "IronMaiden/vendors/OpenFBX"]
+	path = IronMaiden/vendors/OpenFBX
+	url = https://github.com/nem0/OpenFBX
