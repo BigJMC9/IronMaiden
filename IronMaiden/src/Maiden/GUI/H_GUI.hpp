@@ -65,8 +65,6 @@ namespace Madam::UI {
 		void OnRenderPassEvent(NextRenderPassEvent* e);
 		void OnResizeEvent(WindowResizeEvent* e);
 		void OnSceneChangeEvent(SceneChangeEvent* e);
-		void OnMouseMoveRawEvent(MouseMoveRawEvent* e);
-		void OnMouseScrollEvent(MouseScrollEvent* e);
 
 		void SetupEvents();
 		void SetupIcons();
@@ -120,8 +118,6 @@ namespace Madam::UI {
 
 		Ref<Asset> selectedAsset = nullptr;
 		bool isSRGB = false;
-
-		bool isMovingViewportCamera = false;
 
 		Ref<Entity> selectedEntity = nullptr;
 		Ref<Entity> pendingEntityDeletion;

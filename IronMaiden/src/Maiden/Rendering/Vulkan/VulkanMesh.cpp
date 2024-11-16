@@ -203,7 +203,7 @@ namespace Madam
 	}
 
 	//Move to render system and change to get the VertexBuffer
-	void VulkanStaticMesh::bind(void* commandBuffer)
+	void VulkanStaticMesh::bind(void* commandBuffer) 
 	{
 
 		VkCommandBuffer cmdBuffer = static_cast<VkCommandBuffer>(commandBuffer);

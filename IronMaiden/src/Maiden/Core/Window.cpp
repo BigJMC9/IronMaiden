@@ -55,28 +55,4 @@ namespace Madam {
 		window->data.width = width;
 		window->data.height = height;
 	}
-
-	void Window::SetCursorState(CursorState cursorState)
-	{
-		CursorState cursorMode = (CursorState)glfwGetInputMode(window, GLFW_CURSOR);
-		if (cursorMode != cursorState)
-		{
-			glfwSetInputMode(window, GLFW_CURSOR, (int32_t)cursorState);
-			glfwGetCursorPos(window, &cursorX, &cursorY);
-		}
-	}
-
-	void Window::SetCursorIcon(CursorType cursorType)
-	{
-		if (currentCursorType != cursorType)
-		{
-			glfwSetCursor(window, glfwCreateStandardCursor((int32_t)cursorType));
-			currentCursorType = cursorType;
-		}
-	}
-
-	void Window::PopCursorPosition()
-	{
-		glfwSetCursorPos(window, cursorX, cursorY);
-	}
 }

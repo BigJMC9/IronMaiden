@@ -36,27 +36,21 @@ vec3 gridPlane[6] = vec3[](
     vec3(-1, -1, 0), vec3(1, 1, 0), vec3(1, -1, 0)
 );
 
-vec3 UnprojectPoint(float x, float y, float z, mat4 invView) {
-    vec4 clipSpacePos = vec4(x, y, z, 1.0);
-    vec4 worldSpacePos = invView * clipSpacePos;
-    return worldSpacePos.xyz / worldSpacePos.w;
+vec3 UnprojectPoint(float x, float y, float z, mat4 view, mat4 invView, mat4 projection) {
+    mat4 projInv = inverse(projection);
+    vec4 unprojectedPoint =  invView * projInv * vec4(x, y, z, 1.0);
+    return unprojectedPoint.xyz / unprojectedPoint.w;
 }
 
 // normal vertice projection
 void main() {
-     // Precompute the inverse of the view-projection matrix for unprojection
-    mat4 invViewProj = inverse(ubo.projection * ubo.view);
-    
     vec3 p = gridPlane[gl_VertexIndex].xyz;
-    nearPoint = UnprojectPoint(p.x, p.y, 0.0, invViewProj); // unprojecting on the near plane
-    farPoint = UnprojectPoint(p.x, p.y, 1.0, invViewProj); // unprojecting on the far plane
+    nearPoint = UnprojectPoint(p.x, p.y, 0.0, ubo.view, ubo.invView, ubo.projection).xyz; // unprojecting on the near plane
+    farPoint = UnprojectPoint(p.x, p.y, 1.0, ubo.view, ubo.invView, ubo.projection).xyz; // unprojecting on the far plane
     near = push.nearPlane;
     far = push.farPlane;
 
-    // Pass the view and projection matrices as outputs for later stages
     fragView = ubo.view;
     fragProj = ubo.projection;
-    
-    // Set the vertex position directly in clip space
-    gl_Position = vec4(p, 1.0);
+    gl_Position = vec4(p, 1.0); // using directly the clipped coordinates
 }

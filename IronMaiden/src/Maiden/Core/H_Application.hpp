@@ -217,7 +217,6 @@ namespace Madam {
 		Ref<Scene> _scene = nullptr;
 		Ref<Scene> runtimeScene = nullptr;
 		SceneSerializer* pSceneSerializer = nullptr;
-
 	protected:
 		
 	};

@@ -6,122 +6,48 @@ namespace Madam {
 	public:
 		float moveSpeed{ 3.f };
 		float lookSpeed{ 1.5f };
-		float scrollSensitivity = 30.0f;
-		float mouseSensitivity = 0.5f;
-		float speedStep = 2.0f;
-		glm::vec2 mouseDelta{ 0.0f };
-		glm::vec2 mouseScroll{ 0.0f };
-
-
 		void Create() {
-			Events::EventSystem::Get().AddListener(this, &CameraController::OnMouseMoveEvent);
-			Events::EventSystem::Get().AddListener(this, &CameraController::OnMouseScrollEvent);
+
 		}
 		void Destroy() {
-			Events::EventSystem::Get().RemoveListener(this, &CameraController::OnMouseMoveEvent);
-			Events::EventSystem::Get().RemoveListener(this, &CameraController::OnMouseScrollEvent);
+
 		}
 		void Start() {
-			
+
 		}
 		void Update() {
 			if (GetComponent<CCamera>().cameraHandle->IsMain()) {
 				GLFWwindow* window = Application::Get().getWindow().getGLFWwindow();
-				glm::vec2 rotate = (mouseDelta * mouseSensitivity);
-				rotate.x = -rotate.x;
-				mouseDelta = { 0.0f, 0.0f };
+
+				glm::vec3 rotate{ 0 };
+				if (Input::Get().IsKeyDown(KeyCode::UP)) rotate.x += 1.f;
+				if (Input::Get().IsKeyDown(KeyCode::DOWN)) rotate.x -= 1.f;
+				if (Input::Get().IsKeyDown(KeyCode::RIGHT)) rotate.y += 1.f;
+				if (Input::Get().IsKeyDown(KeyCode::LEFT)) rotate.y -= 1.f;
 
 				if (glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()) {
-
-					glm::quat currentRotation = GetComponent<CTransform>().rotation;
-					glm::quat deltaYaw = glm::angleAxis(rotate.y * lookSpeed * Application::Get().getTime().GetDeltaTime(), glm::vec3(0, -1, 0));
-
-					currentRotation = deltaYaw * currentRotation;
-					float divideSpeedBy = 1.0f;
-					bool tryPitch = true;
-
-					while (tryPitch)
-					{
-						glm::quat deltaPitch = glm::quat(glm::vec3(rotate.x, 0.f, 0.f) * (-lookSpeed / divideSpeedBy) * Application::Get().getTime().GetDeltaTime());
-
-						glm::quat pitchRotation = currentRotation * deltaPitch;
-
-						glm::vec3 pitchEuler = glm::eulerAngles(pitchRotation);
-
-						float limit = glm::half_pi<float>();
-
-						if (glm::abs(pitchEuler.z) > glm::radians(179.0f))
-						{
-							if (glm::abs(pitchEuler.x) > limit)
-							{
-								currentRotation = pitchRotation;
-								tryPitch = false;
-							}
-							else if (divideSpeedBy > 1000.0f)
-							{
-								tryPitch = false;
-							}
-							else
-							{
-								divideSpeedBy *= 10.0f;
-							}
-						}
-						else
-						{
-							if (glm::abs(pitchEuler.x) < limit)
-							{
-								currentRotation = pitchRotation;
-								tryPitch = false;
-							}
-							else if (divideSpeedBy > 1000.0f)
-							{
-								tryPitch = false;
-							}
-							else
-							{
-								divideSpeedBy *= 10.0f;
-							}
-						}
-					}
-					GetComponent<CTransform>().rotation = glm::normalize(currentRotation);
+					GetComponent<CTransform>().rotation += lookSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(rotate);
 				}
 
-				glm::quat rotation = GetComponent<CTransform>().rotation;
-				glm::vec3 forwardDir = rotation * glm::vec3(0.f, 0.f, 1.f);
-				glm::vec3 rightDir = rotation * glm::vec3(1.f, 0.f, 0.f);
-				glm::vec3 upDir = rotation * glm::vec3(0.f, -1.f, 0.f);
+				GetComponent<CTransform>().rotation.x = glm::clamp(GetComponent<CTransform>().rotation.x, -1.5f, 1.5f);
+				GetComponent<CTransform>().rotation.y = glm::mod(GetComponent<CTransform>().rotation.y, glm::two_pi<float>());
+
+				float yaw = GetComponent<CTransform>().rotation.y;
+				const glm::vec3 forwardDir{ sin(yaw), 0.f, cos(yaw) };
+				const glm::vec3 rightDir{ forwardDir.z, 0.f, -forwardDir.x };
+				const glm::vec3 upDir{ 0.f, -1.f, 0.f };
 
 				glm::vec3 moveDir{ 0.f };
-				if (Input::Get().IsMouseButtonPress(MouseCode::RIGHTMOUSEBUTTON))
-				{
-					if (Input::Get().IsKeyPress(KeyCode::W)) moveDir += forwardDir;
-					if (Input::Get().IsKeyPress(KeyCode::S)) moveDir -= forwardDir;
-					if (Input::Get().IsKeyPress(KeyCode::A)) moveDir -= rightDir;
-					if (Input::Get().IsKeyPress(KeyCode::D)) moveDir += rightDir;
-					if (Input::Get().IsKeyPress(KeyCode::E)) moveDir += upDir;
-					if (Input::Get().IsKeyPress(KeyCode::Q)) moveDir -= upDir;
+				if (Input::Get().IsKeyDown(KeyCode::W)) moveDir += forwardDir;
+				if (Input::Get().IsKeyDown(KeyCode::S)) moveDir -= forwardDir;
+				if (Input::Get().IsKeyDown(KeyCode::A)) moveDir -= rightDir;
+				if (Input::Get().IsKeyDown(KeyCode::D)) moveDir += rightDir;
+				if (Input::Get().IsKeyDown(KeyCode::E)) moveDir += upDir;
+				if (Input::Get().IsKeyDown(KeyCode::Q)) moveDir -= upDir;
 
-					moveSpeed += mouseScroll.y * speedStep;
-					if (moveSpeed < 0)
-					{
-						moveSpeed = 0.1f;
-					}
-
-					if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())
-					{
-						GetComponent<CTransform>().translation += moveSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(moveDir);
-					}
+				if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
+					GetComponent<CTransform>().translation += moveSpeed * Application::Get().getTime().GetDeltaTime() * glm::normalize(moveDir);
 				}
-				else
-				{
-					glm::vec3 scrollDir = mouseScroll.y * forwardDir;
-
-					if (glm::dot(scrollDir, scrollDir) > std::numeric_limits<float>::epsilon())
-					{
-						GetComponent<CTransform>().translation += scrollSensitivity * Application::Get().getTime().GetDeltaTime() * glm::normalize(scrollDir);
-					}
-				}
-				mouseScroll = glm::vec2{ 0.0f };
 			}
 		}
 		void LateUpdate() {
@@ -129,19 +55,6 @@ namespace Madam {
 		}
 		void Render() {
 
-		}
-
-		void OnMouseMoveEvent(MouseMoveEvent* e)
-		{
-			if (Input::Get().IsMouseButtonPress(MouseCode::RIGHTMOUSEBUTTON))
-			{
-				mouseDelta = e->mouseDelta;
-			}
-		}
-
-		void OnMouseScrollEvent(MouseScrollEvent* e)
-		{
-			mouseScroll = glm::vec2((float)e->x, (float)e->y);
 		}
 	};
 
@@ -164,7 +77,6 @@ namespace Madam {
 
 		Rendering::CameraHandle::GetMain();
 		Application::Get().getScene().GetMainCameraEntity().AddComponent<CNativeScript>().Bind<CameraController>();
-		Application::Get().getScene().GetMainCameraEntity().GetComponent<CTransform>().translation = glm::vec3(0.0f, -2.0f, -2.0f);
 	}
 
 	void EditorLayer::SetUpEvents() {
@@ -231,7 +143,6 @@ namespace Madam {
 
 	//Tag component could fix camera issue?
 	void EditorLayer::OnSceneChangeEvent(SceneChangeEvent* e) {
-		Rendering::CameraHandle::GetMain();
-		Application::Get().getScene().GetMainCameraEntity().AddComponent<CNativeScript>().Bind<CameraController>();
+
 	}
 }

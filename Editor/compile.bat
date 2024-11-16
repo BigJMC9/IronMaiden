@@ -13,6 +13,4 @@ glslc.exe "%current_dir%\resources\shaders\skybox_shader.vert" -o "%current_dir%
 glslc.exe "%current_dir%\resources\shaders\skybox_shader.frag" -o "%current_dir%\resources\shaders\skybox_shader.frag.spv"
 glslc.exe "%current_dir%\resources\shaders\skybox_shader_1.1.vert" -o "%current_dir%\resources\shaders\skybox_shader_1.1.vert.spv"
 glslc.exe "%current_dir%\resources\shaders\skybox_shader_1.1.frag" -o "%current_dir%\resources\shaders\skybox_shader_1.1.frag.spv"
-glslc.exe "%current_dir%\resources\shaders\skybox_shader_1.2.vert" -o "%current_dir%\resources\shaders\skybox_shader_1.2.vert.spv"
-glslc.exe "%current_dir%\resources\shaders\skybox_shader_1.2.frag" -o "%current_dir%\resources\shaders\skybox_shader_1.2.frag.spv"
 pause

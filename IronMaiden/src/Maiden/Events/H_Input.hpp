@@ -1,16 +1,22 @@
 #pragma once
 
 #include "maidenpch.hpp"
+<<<<<<< HEAD
 
 //libs
 #define INCLUDE_GLM
 #include "../Utils/H_Utils.h"
+=======
+#include "../Scene/H_Entity.hpp"
+>>>>>>> parent of d44d5be (Added Skybox.)
 
 namespace Madam {
 
+    class SceneSerializer;
+
     //Human interface device (see pg 53)
 
-    enum KeyCode : uint16_t {
+    enum class KeyCode {
         Q = GLFW_KEY_Q,
         W = GLFW_KEY_W,
         E = GLFW_KEY_E,
@@ -70,30 +76,12 @@ namespace Madam {
         F12 = GLFW_KEY_F12,
     };
 
-    enum MouseCode : uint16_t {
-        LEFTMOUSEBUTTON = GLFW_MOUSE_BUTTON_1,
-        BUTTON0 = GLFW_MOUSE_BUTTON_1,
-        RIGHTMOUSEBUTTON = GLFW_MOUSE_BUTTON_2,
-        BUTTON1 = GLFW_MOUSE_BUTTON_2,
-        MIDDLEMOUSEBUTTON = GLFW_MOUSE_BUTTON_3,
-        BUTTON3 = GLFW_MOUSE_BUTTON_3,
-        BUTTON4 = GLFW_MOUSE_BUTTON_4,
-        BUTTON5 = GLFW_MOUSE_BUTTON_5,
-        BUTTON6 = GLFW_MOUSE_BUTTON_6,
-        BUTTON7 = GLFW_MOUSE_BUTTON_7,
-        BUTTON8 = GLFW_MOUSE_BUTTON_8,
-    };
-
 	class MADAM_API Input{
 
 	public:
         
-        bool IsKeyPress(KeyCode key);
-        bool IsKeyRelease(KeyCode key);
-        bool IsKeyHeld(KeyCode key);
-        bool IsMouseButtonPress(MouseCode button);
-        bool IsMouseButtonRelease(MouseCode button);
-        glm::vec2 GetMousePosition();
+        bool IsKeyDown(KeyCode key);
+        bool IsKeyUp(KeyCode key);
         
         Input(const Input&) = delete;
         Input& operator=(const Input&) = delete;
@@ -104,12 +92,6 @@ namespace Madam {
 		}
 
     private:
-        float mouseThreshold = 0.1f;
-        float frameTime = 0.0f;
-        glm::vec2 mousePosition;
-        static void CursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
-        static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
-        static void KeyStateChangeCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-        Input();
+        Input() {}
 	};
 }

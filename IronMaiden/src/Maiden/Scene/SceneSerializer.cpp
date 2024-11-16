@@ -101,47 +101,6 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<glm::quat>
-	{
-		static Node encode(const glm::quat& rhs)
-		{
-			Node node;
-			node.push_back(rhs.x);
-			node.push_back(rhs.y);
-			node.push_back(rhs.z);
-			node.push_back(rhs.w);
-			node.SetStyle(EmitterStyle::Flow);
-			return node;
-		}
-
-		static bool decode(const Node& node, glm::quat& rhs)
-		{
-			if (!node.IsSequence() || node.size() > 4 || node.size() < 3)
-			{
-				return false;
-			}
-			
-			if (node.size() == 3)
-			{
-				glm::vec3 angles;
-				angles.x = node[0].as<float>();
-				angles.y = node[1].as<float>();
-				angles.z = node[2].as<float>();
-				rhs = glm::quat(angles);
-				return true;
-			}
-			else
-			{
-				rhs.x = node[0].as<float>();
-				rhs.y = node[1].as<float>();
-				rhs.z = node[2].as<float>();
-				rhs.w = node[3].as<float>();
-				return true;
-			}
-		}
-	};
-
-	template<>
 	struct convert<std::filesystem::path>
 	{
 		static Node encode(const std::filesystem::path& rhs)
@@ -277,13 +236,6 @@ namespace Madam {
 	}
 
 	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec4& v)
-	{
-		out << YAML::Flow;
-		out << YAML::BeginSeq << v.x << v.y << v.z << v.w << YAML::EndSeq;
-		return out;
-	}
-
-	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::quat& v)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << v.z << v.w << YAML::EndSeq;
@@ -478,8 +430,8 @@ namespace Madam {
 				{
 					CTransform& transform = deserializedEntity.GetComponent<CTransform>();
 					transform.translation = transformNode["Translation"].as<glm::vec3>();
-					transform.rotation = transformNode["Rotation"].as<glm::quat>();
-					transform.scale = transformNode["Scale"].as<glm::vec3>();
+					transform.rotation = transformNode["Rotation"].as<glm::vec3>();
+					transform.scale = transformNode["Scale"].as<glm::vec3>();;
 				}
 
 				auto materialNode = entity["Material"];
