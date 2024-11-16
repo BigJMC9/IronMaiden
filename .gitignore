@@ -364,14 +364,14 @@ FodyWeavers.xsd
 
 # Directories
 .vs/
-bin-int/*
-bin/*
-*/bin-int/*
-*/bin/*
+bin-int/
+bin/
+*/bin-int/
+*/bin/
 *.sln
-*.vcxproj
-*.filters
-*.user
+#*.vcxproj
+#*.filters
+#*.user
 Editor/logs/
 Editor/session.ini
 Editor/pref.conf
