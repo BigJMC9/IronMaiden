@@ -11,3 +11,5 @@
 		#define MADAM_API
 	#endif
 #endif
+
+#define PRINT_WARNING(msg)  _Pragma("message(\"Warning: " msg "\")")

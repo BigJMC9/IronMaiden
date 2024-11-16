@@ -74,7 +74,7 @@ namespace Madam {
 		bool framebufferResized = false;
 
 		WindowData data;
-		GLFWwindow* window;
+		GLFWwindow* window = nullptr;
 		CursorType currentCursorType = CursorType::ARROW;
 
 		bool isRunning = false;

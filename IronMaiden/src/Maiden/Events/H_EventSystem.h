@@ -48,7 +48,7 @@ namespace Madam::Events {
 			eventType = typeid(EventType);
 		}
 		std::type_index eventType = typeid(Event);
-		Event* _event;
+		Event* _event = nullptr;
 	};
 
 	typedef std::vector<ListenerHandler*> ListenerHandlers;

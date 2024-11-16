@@ -36,7 +36,7 @@ namespace Madam {
         : device{ device }, bindings{ bindings } {
 
         std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
-        for (auto kv : bindings) {
+        for (const auto& kv : bindings) {
             setLayoutBindings.push_back(kv.second);
         }
 

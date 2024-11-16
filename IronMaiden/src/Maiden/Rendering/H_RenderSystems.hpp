@@ -9,7 +9,7 @@
 #include "../Scene/H_Entity.hpp"
 #include "H_Pipeline.hpp"
 #include "H_Renderer.hpp"
-#include "../Core/H_Utils.hpp"
+#include "../Core/H_CoreUtils.hpp"
 
 namespace Madam {
     //Create solution that don't involve using virtual functions.

@@ -46,8 +46,8 @@ namespace Madam
 		Scope<Buffer> indexBuffer = nullptr;
 		uint32_t indexCount = 0;
 
-		VkDescriptorSetAllocateInfo info;
+		VkDescriptorSetAllocateInfo info{};
 
-		bool hasIndexBuffer;
+		bool hasIndexBuffer = false;
 	};
 }

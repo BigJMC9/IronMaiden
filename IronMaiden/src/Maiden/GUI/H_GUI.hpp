@@ -1,11 +1,11 @@
 #pragma once
 #include "maidenpch.hpp"
 #include "../Interfaces/H_Interface.h"
-#include "../Platform/Platforms.hpp"
 #include "../Events/H_EventSystem.h"
 #include "../Rendering/Vulkan/H_DescriptorManager.h"
 #include "../Rendering/Vulkan/H_VulkanTexture.h"
 
+#include <filesystem>
 
 #define IMGUI_ENABLE_DOCKING
 #define IMGUI_ENABLE_VIEWPORTS
@@ -107,8 +107,8 @@ namespace Madam::UI {
 
 		void CreateViewportPipeline();
 
-		ImGui_ImplVulkan_InitInfo* init_info;
-		Ref<DescriptorPool> guiPool;
+		ImGui_ImplVulkan_InitInfo* init_info = nullptr;
+		Ref<DescriptorPool> guiPool = nullptr;
 		
 		float uiTime = 0.0f;
 		int ImGuizmoType = -1;
@@ -124,7 +124,7 @@ namespace Madam::UI {
 		Ref<Entity> selectedEntity = nullptr;
 		Ref<Entity> pendingEntityDeletion;
 		std::pair<Ref<Rendering::RenderLayer>, int> selectedPipeline = { nullptr, -1 };
-		std::array<bool, 3> gizmoButtonStates;
+		std::array<bool, 3> gizmoButtonStates = {false, false, false};
 
 		std::vector<ImFont*> fonts;
 		ImGuiStyle style;
@@ -133,8 +133,8 @@ namespace Madam::UI {
 		ImDrawCallback viewportCallback = nullptr;
 
 		//Descriptors
-		VkDescriptorSet viewportSet;
-		VkSampler viewportSampler;
+		VkDescriptorSet viewportSet = nullptr;
+		VkSampler viewportSampler = nullptr;
 
 		std::unordered_map<std::string, IconInfo> icons;
 		std::unordered_map<UUID, IconInfo> loadedIconTextures;

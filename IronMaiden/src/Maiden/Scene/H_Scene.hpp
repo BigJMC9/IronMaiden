@@ -18,7 +18,7 @@ namespace Madam {
 	struct MaterialComponent;
 
 	class Entity;
-	class UUID;
+	struct UUID;
 
 	//Needs special Asset Serialization and Deserialization. (Don't want to load scene when loading asset details)
 	class MADAM_API Scene : public Asset

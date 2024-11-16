@@ -156,7 +156,7 @@ namespace Madam {
 			Scope<SwapChain> swapChain = nullptr;
 			std::vector<VkCommandBuffer> commandBuffers;
 
-			uint32_t currentImageIndex;
+			uint32_t currentImageIndex = 0;
 			int currentFrameIndex = 0;
 			uint32_t currentCommandBufferIndex = 0;
 			int renderpassIndex = -1;

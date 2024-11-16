@@ -18,6 +18,7 @@ include("dpc.lua")
 group("Dependencies")
     include("IronMaiden/vendors/yaml-cpp")
     include("IronMaiden/vendors/imgui")
+    include("IronMaiden/vendors/spdlog")
 
 group("")
 
@@ -34,7 +35,7 @@ project "IronMaiden"
     pchheader "maidenpch.hpp"
     pchsource "%{prj.name}/maidenpch.cpp"
     
-    dependson{"ImGui", "yaml-cpp"}
+    dependson{"ImGui", "yaml-cpp", "spdlog"}
 
 
     files 

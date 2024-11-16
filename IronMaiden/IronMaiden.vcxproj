@@ -83,6 +83,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -158,7 +159,7 @@
     <ClInclude Include="src\Maiden\Core\H_Application.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Time.hpp" />
-    <ClInclude Include="src\Maiden\Core\H_Utils.hpp" />
+    <ClInclude Include="src\Maiden\Core\H_CoreUtils.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Window.hpp" />
     <ClInclude Include="src\Maiden\Core\Main\Core.hpp" />
     <ClInclude Include="src\Maiden\Core\Main\EntryPoint.hpp" />
@@ -203,6 +204,7 @@
     <ClInclude Include="src\Maiden\Scene\H_Scene.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_SceneSerializer.hpp" />
     <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp" />
+    <ClInclude Include="src\Maiden\Utils\H_Logger_Utils.h" />
     <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h" />
   </ItemGroup>
   <ItemGroup>
@@ -216,7 +218,7 @@
     <ClCompile Include="src\Maiden\Core\Application.cpp" />
     <ClCompile Include="src\Maiden\Core\Logger.cpp" />
     <ClCompile Include="src\Maiden\Core\Time.cpp" />
-    <ClCompile Include="src\Maiden\Core\Utils.cpp" />
+    <ClCompile Include="src\Maiden\Core\CoreUtils.cpp" />
     <ClCompile Include="src\Maiden\Core\Window.cpp" />
     <ClCompile Include="src\Maiden\Events\EventSystem.cpp" />
     <ClCompile Include="src\Maiden\Events\Events.cpp" />

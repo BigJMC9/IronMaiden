@@ -2,8 +2,8 @@
 
 // Fix these headers, only essential headers are needed, the rest can reside in the implementation
 #include "maidenpch.hpp"
-#include "Main/core.hpp"
-#include "H_Utils.hpp"
+#include "Main/Core.hpp"
+#include "H_CoreUtils.hpp"
 #include "H_Logger.hpp"
 #include "../Rendering/H_Renderer.hpp"
 #include "../Rendering/H_RenderSystems.hpp"

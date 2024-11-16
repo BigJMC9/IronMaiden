@@ -8,6 +8,9 @@
 #include "ScriptableEntity.hpp"
 #include "../Rendering/H_Camera.hpp"
 
+#define INCLUDE_GLM_UTILS
+#include "../Core/H_Logger.hpp"
+
 //libs
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -158,7 +161,7 @@ namespace Madam {
 
 	struct CPointLight {
 		//GENERATE_COMPONENT()
-		glm::vec3 color;
+		glm::vec3 color{ 1.0f, 1.0f, 1.0f };
 		float radius = 5.0f;
 		float intensity = 1.0f;
 
@@ -170,7 +173,7 @@ namespace Madam {
 	struct CTransform {
 		glm::vec3 translation{};
 		glm::vec3 scale{ 1.f, 1.f, 1.f };
-		glm::quat rotation{};
+		glm::quat rotation{ 1.f, 0.0f, 0.0f, 0.0f };
 
 		glm::mat4 transform() {
 
@@ -209,7 +212,7 @@ namespace Madam {
 			transformationMatrix[3] = glm::vec4(translation, transformationMatrix[3][3]);
 
 			glm::quat quad = glm::quat_cast(rotationMatrix);
-			MADAM_CORE_INFO("\nOriginal Quat: ({0}, {1}, {2}, {3})\nGenerated Quat: ({4}, {5}, {6}, {7})", rotation.x, rotation.y, rotation.z, rotation.w, quad.x, quad.y, quad.z, quad.w);
+			MADAM_CORE_INFO("\nOriginal Quat: ({0})\nGenerated Quat: ({1})", rotation, quad);
 			return transformationMatrix;
 		}
 

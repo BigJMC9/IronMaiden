@@ -2,6 +2,7 @@
 #include "H_Project.h"
 #include "../Asset/H_AssetSystem.h"
 #include "../Core/H_Logger.hpp"
+#include "../Platform/Platforms.hpp"
 #include <fstream>
 
 namespace Madam

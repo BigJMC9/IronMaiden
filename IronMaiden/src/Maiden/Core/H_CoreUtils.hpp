@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Main/Core.hpp"
 #include "maidenpch.hpp"
 
 namespace Madam {
@@ -16,7 +16,7 @@ namespace Madam {
 	using id_t = unsigned int;
 	using Map = std::unordered_map<id_t, Entity>;
 
-	class UUID {
+	struct UUID {
 
 	public:
 		UUID();

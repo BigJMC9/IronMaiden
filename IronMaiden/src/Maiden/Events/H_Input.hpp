@@ -109,7 +109,7 @@ namespace Madam {
     private:
         float mouseThreshold = 0.1f;
         float frameTime = 0.0f;
-        glm::vec2 mousePosition;
+        glm::vec2 mousePosition {0.0f, 0.0f};
         static void CursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
         static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
         static void KeyStateChangeCallback(GLFWwindow* window, int key, int scancode, int action, int mods);

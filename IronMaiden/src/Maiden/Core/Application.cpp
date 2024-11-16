@@ -5,13 +5,9 @@
 #include "../Rendering/H_Buffer.hpp"
 #include "../GUI/H_GUI.hpp"
 #include "../Project/H_Project.h"
+#include "../Platform/Platforms.hpp"
 
 #include <fstream>
-
-//Define fixes, hacky solution, will fix when headers are restructured
-#ifdef min
-#undef min
-#endif
 
 // libs
 #define GLM_FORCE_RADIANS

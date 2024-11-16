@@ -1,9 +1,13 @@
-#pragma once
-
 #include "maidenpch.hpp"
 #include "Main/Core.hpp"
-#include "H_Utils.hpp"
+#include "H_CoreUtils.hpp"
 
+#ifdef INCLUDE_GLM_UTILS
+#include "../Utils/H_Logger_Utils.h"
+#undef INCLUDE_GLM_UTILS
+#endif
+
+#ifndef H_LOGGER_GUARD
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
@@ -68,3 +72,6 @@ namespace Madam
                               ::Madam::Logger::GetFileLogger()->error("APP: Error: {}", fmt::format(__VA_ARGS__))
 #define MADAM_FATAL(...)      ::Madam::Logger::GetClientLogger()->critical(__VA_ARGS__); \
                               ::Madam::Logger::GetFileLogger()->fatal("APP: Fatal Error: {}", fmt::format(__VA_ARGS__))
+
+#define H_LOGGER_GUARD
+#endif

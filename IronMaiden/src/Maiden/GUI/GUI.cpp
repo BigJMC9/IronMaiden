@@ -8,6 +8,10 @@
 #include "../Project/H_Project.h"
 #include "../Asset/H_AssetSystem.h"
 #include "../Rendering/H_Mesh.h"
+#include "../Platform/Platforms.hpp"
+
+#define INCLUDE_GLM_UTILS
+#include "../Utils/H_Logger_Utils.h"
 
 #include <cwchar>
 #include <cstring>
@@ -1628,6 +1632,10 @@ namespace Madam::UI {
 		configInfo.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 
 		ImGui_ImplVulkan_Data* bd = ImGui::GetCurrentContext() ? (ImGui_ImplVulkan_Data*)ImGui::GetIO().BackendRendererUserData : nullptr;
+		if (bd == nullptr)
+		{
+			MADAM_CORE_ERROR("GUI: Trying to dereference a nullptr");
+		}
 		ImGui_ImplVulkan_InitInfo* v = &bd->VulkanInitInfo;
 
 		VkPushConstantRange push_constants[1] = {};

@@ -9,6 +9,8 @@ namespace Madam {
 		//data.height = h;
 		//data.windowName = name;
 		//initWindow();
+		cursorX = 0.0f;
+		cursorY = 0.0f;
 	}
 
 	Window::~Window() {
