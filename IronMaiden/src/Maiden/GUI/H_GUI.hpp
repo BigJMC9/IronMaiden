@@ -12,10 +12,12 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
-#include <glm/gtc/type_ptr.hpp>
+
+#define INCLUDE_GLM
+#include "../Utils/H_Utils.h"
+
 #include <imgui_internal.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <glm/gtc/type_ptr.hpp>
 #include "ImGuizmo.h"
 
 //Changes made to ImGui

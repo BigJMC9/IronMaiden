@@ -1,6 +1,7 @@
 #pragma once
 
 #include "maidenpch.hpp"
+#include <filesystem>
 
 namespace Madam {
 

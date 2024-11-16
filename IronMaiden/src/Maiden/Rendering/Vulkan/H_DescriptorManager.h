@@ -1,8 +1,9 @@
 #pragma once
 #include "maidenpch.hpp"
-#include "../../Core/H_Utils.hpp"
 #include "../../Core/Main/Core.hpp"
 #include "H_VulkanDevice.hpp"
+#define INCLUDE_UTILS
+#include "../../Utils/H_Utils.h"
 
 namespace Madam
 {

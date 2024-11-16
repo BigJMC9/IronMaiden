@@ -22,8 +22,4 @@ namespace Madam {
 	protected:
 		std::string interfaceName;
 	};
-
 }
-
-
-

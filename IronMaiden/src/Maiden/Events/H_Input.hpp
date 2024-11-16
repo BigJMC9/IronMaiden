@@ -4,11 +4,8 @@
 <<<<<<< HEAD
 
 //libs
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/matrix_decompose.hpp>
+#define INCLUDE_GLM
+#include "../Utils/H_Utils.h"
 
 namespace Madam {
 

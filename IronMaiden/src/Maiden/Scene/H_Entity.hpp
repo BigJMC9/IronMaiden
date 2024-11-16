@@ -3,8 +3,10 @@
 #define H_ENTITY
 
 #include "maidenpch.hpp"
-#include "../Core/H_Utils.hpp"
 #include "H_Scene.hpp"
+
+#define INCLUDE_UTILS
+#include "../Utils/H_Utils.h"
 
 #define MADAM_ENTT_HEADER_FLAG
 

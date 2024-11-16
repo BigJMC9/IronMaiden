@@ -3,8 +3,11 @@
 // Fix these headers, only essential headers are needed, the rest can reside in the implementation
 #include "maidenpch.hpp"
 #include "Main/core.hpp"
-#include "H_Utils.hpp"
-#include "H_Logger.hpp"
+
+#define INCLUDE_UTILS
+#define INCLUDE_LOGGER
+#include "../Utils/H_Utils.h"
+
 #include "../Rendering/H_Renderer.hpp"
 #include "../Rendering/H_RenderSystems.hpp"
 #include "../Rendering/H_DescriptorSetLayout.hpp"
@@ -12,8 +15,6 @@
 #include "H_Time.hpp"
 #include "../Interfaces/H_Interface.h"
 #include "../Events/H_EventSystem.h"
-
-#include <filesystem>
 
 namespace Madam {
 	

@@ -1,6 +1,8 @@
 #pragma once
-#include "../Core/H_Utils.hpp"
-#include <filesystem>
+
+#define INCLUDE_UTILS
+#include "../Utils/H_Utils.h"
+
 namespace Madam
 {
 	enum class PipelineStage

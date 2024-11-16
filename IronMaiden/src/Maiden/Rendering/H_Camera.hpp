@@ -1,13 +1,12 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/H_Utils.hpp"
-#include "../Core/H_Logger.hpp"
 
-#include "glm/glm.hpp"
-#include <glm/gtc/matrix_transform.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/matrix_decompose.hpp>
+#define INCLUDE_UTILS
+#define INCLUDE_LOGGER
+#define INCLUDE_GLM
+#include "../Utils/H_Utils.h"
+
 #ifdef near
 	#undef near
 #endif
