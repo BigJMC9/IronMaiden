@@ -79,6 +79,15 @@ project "IronMaiden"
         "%{LibDir.VulkanSDK}",
         "%{LibDir.glfw}",
         "%{LibDir.imgui}",
+        "%{LibDir.spdlog}"
+    }
+
+    links
+    {
+        "%{Lib.Vulkan}",
+        "%{Lib.glfw}",
+        "%{Lib.imgui}",
+        "%{Lib.spdlog}"
     }
 
     filter "files:IronMaiden/vendors/ImGuizmo/**.cpp"
@@ -92,40 +101,23 @@ project "IronMaiden"
             "_CRT_SECURE_NO_WARNINGS";
             "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
             "MADAM_PLATFORM_WINDOWS";
+            "SPDLOG_COMPILED_LIB";
         }
         
     filter "configurations:Debug"
         defines "MADAM_DEBUG"
         symbols "on"
         runtime "debug"
-        links
-        {
-            "%{Lib.Vulkan}",
-            "%{Lib.glfw}",
-            "%{Lib.imgui}"
-        }
 
     filter "configurations:Release"
         defines "MADAM_RELEASE"
         optimize "on"
         runtime "release"
-        links
-        {
-            "%{Lib.Vulkan}",
-            "%{Lib.glfw}",
-            "%{Lib.imgui}"
-        }
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
         optimize "on"
-        runtime "release"
-        links
-        {
-            "%{Lib.Vulkan}",
-            "%{Lib.glfw}",
-            "%{Lib.imgui}"
-        }  
+        runtime "release" 
 
 project "Editor"
     location "Editor"
@@ -182,7 +174,7 @@ project "Editor"
         {
             "_CRT_SECURE_NO_WARNINGS";
             "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
-            "MADAM_PLATFORM_WINDOWS"; 
+            "MADAM_PLATFORM_WINDOWS";
         }
 
         postbuildcommands
