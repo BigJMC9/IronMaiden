@@ -364,21 +364,15 @@ FodyWeavers.xsd
 
 # Directories
 .vs/
-bin-int/
-bin/
+bin-int/*
+bin/*
+*/bin-int/*
+*/bin/*
+*.sln
+*.vcxproj
+*.filters
+*.user
 Editor/logs/
 Editor/session.ini
 Editor/pref.conf
 Editor/Internal/shaders/temp/
-IronMaiden/vendors/imgui/bin/
-IronMaiden/vendors/imgui/bin-int/
-IronMaiden/vendors/imgui/ImGui.vcxproj
-IronMaiden/vendors/imgui/ImGui.vcxproj.filters
-IronMaiden/vendors/yaml-cpp/bin/
-IronMaiden/vendors/yaml-cpp/bin-int/
-IronMaiden/vendors/yaml-cpp/ImGui.vcxproj
-IronMaiden/vendors/yaml-cpp/ImGui.vcxproj.filters
-
-
-/Editor/Editor.vcxproj
-/IronMaiden.sln
