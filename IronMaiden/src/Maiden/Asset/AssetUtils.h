@@ -1,8 +1,6 @@
 #pragma once
 #include "maidenpch.hpp"
-
-#define INCLUDE_UTILS
-#include "../Utils/H_Utils.h"
+#include "../Core/H_Utils.hpp"
 
 namespace Madam
 {

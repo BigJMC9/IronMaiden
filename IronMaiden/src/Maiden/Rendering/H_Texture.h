@@ -9,9 +9,10 @@
 
 //libs
 #include <vulkan/vulkan.h>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
 
-#define INCLUDE_GLM
-#include "../Utils/H_Utils.h"
+#include <filesystem>
 
 
 namespace Madam {

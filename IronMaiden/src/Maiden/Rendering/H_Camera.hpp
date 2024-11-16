@@ -1,16 +1,13 @@
 #pragma once
 
 #include "maidenpch.hpp"
+#include "../Core/H_Utils.hpp"
+#include "../Core/H_Logger.hpp"
 
-<<<<<<< HEAD
-#define INCLUDE_UTILS
-#define INCLUDE_LOGGER
-#define INCLUDE_GLM
-#include "../Utils/H_Utils.h"
-
-=======
 #include "glm/glm.hpp"
->>>>>>> parent of d44d5be (Added Skybox.)
+#include <glm/gtc/matrix_transform.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/matrix_decompose.hpp>
 #ifdef near
 	#undef near
 #endif

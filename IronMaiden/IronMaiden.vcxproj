@@ -158,6 +158,7 @@
     <ClInclude Include="src\Maiden\Core\H_Application.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Logger.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Time.hpp" />
+    <ClInclude Include="src\Maiden\Core\H_Utils.hpp" />
     <ClInclude Include="src\Maiden\Core\H_Window.hpp" />
     <ClInclude Include="src\Maiden\Core\Main\Core.hpp" />
     <ClInclude Include="src\Maiden\Core\Main\EntryPoint.hpp" />
@@ -202,10 +203,6 @@
     <ClInclude Include="src\Maiden\Scene\H_Scene.hpp" />
     <ClInclude Include="src\Maiden\Scene\H_SceneSerializer.hpp" />
     <ClInclude Include="src\Maiden\Scene\ScriptableEntity.hpp" />
-    <ClInclude Include="src\Maiden\Utils\H_EngineUtils.h" />
-    <ClInclude Include="src\Maiden\Utils\H_UtilsMacros.h" />
-    <ClInclude Include="src\Maiden\Utils\H_YamlUtils.h" />
-    <ClInclude Include="src\Maiden\Utils\H_Utils.h" />
     <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h" />
   </ItemGroup>
   <ItemGroup>
@@ -219,6 +216,7 @@
     <ClCompile Include="src\Maiden\Core\Application.cpp" />
     <ClCompile Include="src\Maiden\Core\Logger.cpp" />
     <ClCompile Include="src\Maiden\Core\Time.cpp" />
+    <ClCompile Include="src\Maiden\Core\Utils.cpp" />
     <ClCompile Include="src\Maiden\Core\Window.cpp" />
     <ClCompile Include="src\Maiden\Events\EventSystem.cpp" />
     <ClCompile Include="src\Maiden\Events\Events.cpp" />
@@ -252,7 +250,6 @@
     <ClCompile Include="src\Maiden\Scene\Entity.cpp" />
     <ClCompile Include="src\Maiden\Scene\Scene.cpp" />
     <ClCompile Include="src\Maiden\Scene\SceneSerializer.cpp" />
-    <ClCompile Include="src\Maiden\Utils\EngineUtils.cpp" />
     <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

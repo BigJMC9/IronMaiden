@@ -3,6 +3,7 @@
 #include "H_Mesh.h"
 #include "../Project/H_Project.h"
 #include "Vulkan/H_VulkanMesh.h"
+#include "../Core/H_Utils.hpp"
 
 
 namespace Madam {

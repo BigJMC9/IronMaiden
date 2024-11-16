@@ -85,6 +85,9 @@
     <ClInclude Include="src\Maiden\Core\H_Time.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
+    <ClInclude Include="src\Maiden\Core\H_Utils.hpp">
+      <Filter>src\Maiden\Core</Filter>
+    </ClInclude>
     <ClInclude Include="src\Maiden\Core\H_Window.hpp">
       <Filter>src\Maiden\Core</Filter>
     </ClInclude>
@@ -220,10 +223,6 @@
     <ClInclude Include="vendors\ImGuizmo\ImGuizmo.h">
       <Filter>vendors\ImGuizmo</Filter>
     </ClInclude>
-    <ClInclude Include="src\Maiden\Utils\H_EngineUtils.h" />
-    <ClInclude Include="src\Maiden\Utils\H_YamlUtils.h" />
-    <ClInclude Include="src\Maiden\Utils\H_UtilsMacros.h" />
-    <ClInclude Include="src\Maiden\Utils\H_Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="maidenpch.cpp" />
@@ -246,6 +245,9 @@
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Time.cpp">
+      <Filter>src\Maiden\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Maiden\Core\Utils.cpp">
       <Filter>src\Maiden\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Maiden\Core\Window.cpp">
@@ -350,6 +352,5 @@
     <ClCompile Include="vendors\ImGuizmo\ImGuizmo.cpp">
       <Filter>vendors\ImGuizmo</Filter>
     </ClCompile>
-    <ClCompile Include="src\Maiden\Utils\EngineUtils.cpp" />
   </ItemGroup>
 </Project>

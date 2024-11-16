@@ -1,8 +1,8 @@
 #include "maidenpch.hpp"
 #include "H_Time.hpp"
 
-#define INCLUDE_GLM
-#include "../Utils/H_Utils.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
 
 namespace Madam {
 

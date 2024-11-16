@@ -4,11 +4,11 @@
 <<<<<<< HEAD
 
 //libs
-#define INCLUDE_GLM
-#include "../Utils/H_Utils.h"
-=======
-#include "../Scene/H_Entity.hpp"
->>>>>>> parent of d44d5be (Added Skybox.)
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/matrix_decompose.hpp>
 
 namespace Madam {
 
