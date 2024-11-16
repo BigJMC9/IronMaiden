@@ -1,9 +1,6 @@
 #pragma once
 #include "maidenpch.hpp"
-
-#define INCLUDE_UTILS
-#include "../Utils/H_Utils.h"
-
+#include "../Core/H_Utils.hpp"
 #include "../Core/Main/Core.hpp"
 #include "H_Metadata.h"
 

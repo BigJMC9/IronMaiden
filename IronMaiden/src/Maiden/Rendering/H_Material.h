@@ -1,8 +1,5 @@
 #pragma once
-
-#define INCLUDE_UTILS
-#include "../Utils/H_Utils.h"
-
+#include "../Core/H_Utils.hpp"
 #include "H_Shader.h"
 namespace Madam
 {

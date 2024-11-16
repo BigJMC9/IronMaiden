@@ -7,10 +7,8 @@
 //#include "H_Game_Object.hpp"
 
 //lib
-
-#define INCLUDE_GLM
-#define INCLUDE_VULKAN
-#include "../Utils/H_Utils.h"
+#include <glm/glm.hpp>
+#include <vulkan/vulkan.h>
 #include <entt/entt.hpp>
 
 //Will remove in future

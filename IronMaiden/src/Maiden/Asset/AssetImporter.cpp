@@ -1,8 +1,6 @@
 #include "maidenpch.hpp"
 #include "H_AssetImporter.h"
-
-#define INCLUDE_LOGGER
-#include "../Utils/H_Utils.h"
+#include "../Core/H_Logger.hpp"
 
 namespace Madam
 {

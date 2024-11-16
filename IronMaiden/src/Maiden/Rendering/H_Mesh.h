@@ -10,9 +10,7 @@
 // libs
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define INCLUDE_GLM
-#define INCLUDE_UTILS
-#include "../Utils/H_Utils.h"
+#include <glm/glm.hpp>
 
 namespace Madam {
 

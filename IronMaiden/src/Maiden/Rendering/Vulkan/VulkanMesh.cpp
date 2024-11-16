@@ -6,10 +6,8 @@
 //libs
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
-
-#define INCLUDE_GLM
-#include "../../Utils/H_Utils.h"
-
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 #include <ofbx.h>
 
 namespace std {

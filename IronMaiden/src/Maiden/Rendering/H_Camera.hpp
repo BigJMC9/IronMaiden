@@ -1,11 +1,8 @@
 #pragma once
 
 #include "maidenpch.hpp"
-
-#define INCLUDE_UTILS
-#define INCLUDE_LOGGER
-#define INCLUDE_GLM
-#include "../Utils/H_Utils.h"
+#include "../Core/H_Utils.hpp"
+#include "../Core/H_Logger.hpp"
 
 #include "glm/glm.hpp"
 #include <glm/gtc/matrix_transform.hpp>
