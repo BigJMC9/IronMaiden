@@ -175,6 +175,7 @@ project "Editor"
             "_CRT_SECURE_NO_WARNINGS";
             "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
             "MADAM_PLATFORM_WINDOWS";
+            "SPDLOG_COMPILED_LIB";
         }
 
         postbuildcommands

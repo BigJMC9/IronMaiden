@@ -10,6 +10,49 @@
 #ifndef H_LOGGER_GUARD
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
+#include <filesystem>
+
+namespace fmt {
+
+    template<>
+    struct fmt::formatter<std::filesystem::path> {
+
+        constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const std::filesystem::path& path, FormatContext& ctx) const -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "File Directory: {}", path.u8string());
+        }
+    };
+
+    template<>
+    struct fmt::formatter<Madam::UUID> {
+
+        constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const Madam::UUID& uuid, FormatContext& ctx) const -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "UUID: {}", uuid);
+        }
+    };
+
+    template <typename T>
+    struct fmt::formatter<T, std::enable_if_t<std::is_enum_v<T>, char>> {
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const T& value, FormatContext& ctx) const -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "{}", static_cast<int>(value));
+        }
+    };
+
+}
 
 namespace Madam
 {

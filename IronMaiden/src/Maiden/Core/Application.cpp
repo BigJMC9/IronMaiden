@@ -1,5 +1,6 @@
 #include "maidenpch.hpp"
 #include "H_Application.hpp"
+#include "H_Logger.hpp"
 #include "../Scene/H_SceneSerializer.hpp"
 #include "../Events/H_Input.hpp"
 #include "../Rendering/H_Buffer.hpp"
@@ -72,6 +73,31 @@ namespace Madam {
 		delete pSceneSerializer;
 		isRunning = false;
 	}
+
+	void Application::addSurface(Scope<EngineInterface> _surface)
+	{
+		pSurface = std::move(_surface);
+		MADAM_CORE_INFO("EngineInterface added");
+	}
+
+	Application& Application::Get()
+	{
+		MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
+		return *instance;
+	}
+
+	Application* Application::GetPtr()
+	{
+		MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
+		return instance;
+	}
+
+	SceneSerializer* Application::GetSceneSerializer()
+	{
+		MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
+		return instance->pSceneSerializer;
+	}
+
 
 	const std::vector<Ref<Rendering::RenderLayer>>& Application::getRenderLayers() const {
 		return renderStack.getRenderLayers();

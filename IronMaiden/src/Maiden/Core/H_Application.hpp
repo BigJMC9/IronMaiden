@@ -4,7 +4,6 @@
 #include "maidenpch.hpp"
 #include "Main/Core.hpp"
 #include "H_CoreUtils.hpp"
-#include "H_Logger.hpp"
 #include "../Rendering/H_Renderer.hpp"
 #include "../Rendering/H_RenderSystems.hpp"
 #include "../Rendering/H_DescriptorSetLayout.hpp"
@@ -47,26 +46,13 @@ namespace Madam {
 			return renderer.getAspectRatio();
 		}
 
-		void addSurface(Scope<EngineInterface> _surface) {
-			pSurface = std::move(_surface);
-			MADAM_CORE_INFO("EngineInterface added");
-		}
+		void addSurface(Scope<EngineInterface> _surface);
 
-		static Application& Get() {
-			//static Application instance;
-			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-			return *instance;
-		}
+		static Application& Get();
 
-		static Application* GetPtr() {
-			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-			return instance;
-		}
+		static Application* GetPtr();
 
-		static SceneSerializer* GetSceneSerializer() {
-			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-			return instance->pSceneSerializer;
-		}
+		static SceneSerializer* GetSceneSerializer();
 
 		// Use const func() const {} for readonly vars
 
@@ -89,9 +75,6 @@ namespace Madam {
 
 		std::string CreateScript() {
 			std::string returnVal = createNative;
-			if (returnVal != "") {
-				MADAM_CORE_INFO("Creating Native Script: {0}", returnVal);
-			}
 			createNative = "";
 			return returnVal;
 		}
