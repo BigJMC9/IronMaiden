@@ -35,6 +35,18 @@ namespace Madam {
 			return left._UUID == right._UUID;
 		}
 
+		friend bool operator!=(const UUID& left, const UUID& right) {
+			return left._UUID != right._UUID;
+		}
+		
+		friend bool operator==(const UUID& left, const std::string& right) {
+			return left._UUID == right;
+		}
+
+		friend bool operator!=(const UUID& left, const std::string& right) {
+			return left._UUID != right;
+		}
+
 	private:
 		std::string _UUID;
 	};

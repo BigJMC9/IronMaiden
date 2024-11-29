@@ -36,7 +36,7 @@ namespace fmt {
 
         template <typename FormatContext>
         auto format(const Madam::UUID& uuid, FormatContext& ctx) const -> decltype(ctx.out()) {
-            return fmt::format_to(ctx.out(), "UUID: {}", uuid);
+            return fmt::format_to(ctx.out(), "UUID: {}", static_cast<std::string>(uuid));
         }
     };
 

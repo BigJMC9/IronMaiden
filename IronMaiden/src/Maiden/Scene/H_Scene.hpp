@@ -48,13 +48,13 @@ namespace Madam {
 		Scene& scene() { return *this; }
 
 		Scene(Scene&& other) noexcept : registry(std::move(other.registry)) {
-			// Optionally, perform any additional move-related operations
+			RepopulateEntityMap();
 		}
 
 		Scene& operator=(Scene&& other) noexcept {
 			if (this != &other) {
 				registry = std::move(other.registry);
-				// Optionally, perform any additional move-related operations
+				RepopulateEntityMap();
 			}
 			return *this;
 		}
@@ -74,6 +74,13 @@ namespace Madam {
 			return registry.view<Components...>(std::forward<Args>(args)...);
 		}
 
+		glm::mat4 Scene::GetWorldTransform(UUID entityUUID);
+		glm::mat4 GetWorldTransform(Entity entity);
+
+		Entity GetEntity(UUID uuid);
+
+		void AddEntityRelationship(Entity Parent, Entity Child);
+
 		Entity GetMainCameraEntity();
 
 	private:
@@ -84,7 +91,11 @@ namespace Madam {
 		template<typename T>
 		void OnComponentRemoved(Entity entity, T& component);
 
+		void RepopulateEntityMap();
+
 		entt::registry registry;
+
+		std::unordered_map<UUID, Entity> entityMap;
 
 		friend class Entity;
 		friend class SceneSerializer;

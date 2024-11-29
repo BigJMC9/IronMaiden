@@ -85,8 +85,8 @@ namespace Madam {
 				if (material != nullptr) continue;
 
 				DefaultPushConstantData push{};
-				push.modelMatrix = transform.transform();
-				push.normalMatrix = transform.normalMatrix();
+				push.modelMatrix = frameInfo.scene->GetWorldTransform(frameInfo.scene->Reg().get<CUniqueIdentifier>(entity).uuid);
+				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
 
 				vkCmdPushConstants(
 					frameInfo.commandBuffer,
@@ -398,8 +398,8 @@ namespace Madam {
 					nullptr);
 
 				DefaultPushConstantData push{};
-				push.modelMatrix = transform.transform();
-				push.normalMatrix = transform.normalMatrix();
+				push.modelMatrix = frameInfo.scene->GetWorldTransform(frameInfo.scene->Reg().get<CUniqueIdentifier>(entity).uuid);
+				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
 
 				vkCmdPushConstants(
 					frameInfo.commandBuffer,

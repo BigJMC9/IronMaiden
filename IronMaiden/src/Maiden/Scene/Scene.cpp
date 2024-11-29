@@ -39,6 +39,7 @@ namespace Madam {
 	Scene::~Scene()
 	{
 		registry.clear();
+		entityMap.clear();
 	}
 
 	Ref<Scene> Scene::Copy()
@@ -67,6 +68,8 @@ namespace Madam {
 		entity.AddComponent<CUniqueIdentifier>();
 		entity.AddComponent<CMetadata>();
 		entity.AddComponent<CTransform>();
+		entity.AddComponent<CRelationship>();
+		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
 		return entity;
 	}
 
@@ -75,6 +78,8 @@ namespace Madam {
 		entity.AddComponent<CUniqueIdentifier>();
 		entity.AddComponent<CMetadata>(name);
 		entity.AddComponent<CTransform>();
+		entity.AddComponent<CRelationship>();
+		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
 		return entity;
 	}
 
@@ -84,6 +89,8 @@ namespace Madam {
 		entity.AddComponent<CUniqueIdentifier>();
 		entity.AddComponent<CMetadata>();
 		entity.AddComponent<CTransform>();
+		entity.AddComponent<CRelationship>();
+		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
 		return entity;
 	}
 
@@ -92,6 +99,8 @@ namespace Madam {
 		entity.AddComponent<CUniqueIdentifier>(uuid);
 		entity.AddComponent<CMetadata>();
 		entity.AddComponent<CTransform>();
+		entity.AddComponent<CRelationship>();
+		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
 		return entity;
 	}
 
@@ -100,11 +109,59 @@ namespace Madam {
 		entity.AddComponent<CUniqueIdentifier>(uuid);
 		entity.AddComponent<CMetadata>(name);
 		entity.AddComponent<CTransform>();
+		entity.AddComponent<CRelationship>();
+		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
 		return entity;
 	}
 
 	void Scene::DestroyEntity(Entity entity) {
+		for each (UUID child in entity.GetComponent<CRelationship>().children)
+		{
+			DestroyEntity(entityMap[child]);
+		}
+		UUID parent = entity.GetComponent<CRelationship>().parent;
+		UUID uuid = entity.GetComponent<CUniqueIdentifier>().uuid;
+		if (parent != "")
+		{
+			Entity parentEntity = entityMap[parent];
+			
+			std::vector<UUID> children = parentEntity.GetComponent<CRelationship>().children;
+
+			for (size_t i = 0; i < children.size(); i++)
+			{
+				if (children[i] == uuid)
+				{
+					children.erase(children.begin() + i);
+				}
+			}
+
+			parentEntity.GetComponent<CRelationship>().children = children;
+		}
+		entityMap.erase(uuid);
 		registry.destroy(entity);
+	}
+
+	glm::mat4 Scene::GetWorldTransform(UUID entityUUID)
+	{
+		Entity entity = entityMap[entityUUID];
+		glm::mat4 transform = entity.GetComponent<CTransform>().transform();
+		UUID parent = entity.GetComponent<CRelationship>().parent;
+		if (parent != "")
+		{
+			transform = GetWorldTransform(entityMap[parent]) * transform;
+		}
+		return transform;
+	}
+
+	glm::mat4 Scene::GetWorldTransform(Entity entity)
+	{
+		glm::mat4 transform = entity.GetComponent<CTransform>().transform();
+		UUID parent = entity.GetComponent<CRelationship>().parent;
+		if (parent != "")
+		{
+			transform = GetWorldTransform(entityMap[parent]) * transform;
+		}
+		return transform;
 	}
 
 	void Scene::Start() {
@@ -140,6 +197,28 @@ namespace Madam {
 		registry.view <CNativeScript>().each([=](auto entity, auto& nsc) {
 			nsc.onRender(nsc.Instance);
 		});
+	}
+
+	void Scene::AddEntityRelationship(Entity parent, Entity child)
+	{
+		parent.GetComponent<CRelationship>().children.push_back(child.GetComponent<CUniqueIdentifier>().uuid);
+		child.GetComponent<CRelationship>().parent = parent.GetComponent<CUniqueIdentifier>().uuid;
+	}
+
+	void Scene::RepopulateEntityMap() 
+	{
+		entityMap.clear();
+		auto entities = registry.view<CUniqueIdentifier>();
+		for (auto handle : entities)
+		{
+			Entity entity = Entity(handle, this);
+			entityMap[entities.get<CUniqueIdentifier>(handle).uuid] = entity;
+		}
+	}
+
+	Entity Scene::GetEntity(UUID uuid)
+	{
+		return entityMap[uuid];
 	}
 
 	Entity Scene::GetMainCameraEntity()

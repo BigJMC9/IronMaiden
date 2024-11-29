@@ -724,7 +724,10 @@ namespace Madam::UI {
 			Application::Get().getScene().GetAllEntitiesWith<CMetadata>().each([&](auto entityId, auto& gameObject)
 			{
 				Entity entity {entityId, &Application::Get().getScene()};
-				DrawEntityNode(entity);
+				if (entity.GetComponent<CRelationship>().parent == "")
+				{
+					DrawEntityNode(entity);
+				}
 			});
 		}
 
@@ -1201,9 +1204,46 @@ namespace Madam::UI {
 		if (ImGui::IsItemClicked()) {
 			selectedEntity = CreateRef<Entity>(entity);
 		}
-
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
+			if (ImGui::MenuItem("Create Empty")) {
+				auto childEntity = Application::Get().getScene().CreateEntity();
+				Application::Get().getScene().AddEntityRelationship(entity, childEntity);
+			}
+			if (ImGui::BeginMenu("3D")) {
+				if (ImGui::MenuItem("Quad"))
+				{
+					auto childEntity = Application::Get().getScene().CreateEntity("Quad");
+					childEntity.AddComponent<CMeshRenderer>();
+					childEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Quad);
+					Application::Get().getScene().AddEntityRelationship(entity, childEntity);
+				}
+				if (ImGui::MenuItem("Cube"))
+				{
+					auto childEntity = Application::Get().getScene().CreateEntity("Cube");
+					childEntity.AddComponent<CMeshRenderer>();
+					childEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Cube);
+					Application::Get().getScene().AddEntityRelationship(entity, childEntity);
+				}
+				if (ImGui::MenuItem("Sphere"))
+				{
+					auto childEntity = Application::Get().getScene().CreateEntity("Sphere");
+					childEntity.AddComponent<CMeshRenderer>();
+					childEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Sphere);
+					Application::Get().getScene().AddEntityRelationship(entity, childEntity);
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Lights"))
+			{
+				if (ImGui::MenuItem("Point Light"))
+				{
+					auto childEntity = Application::Get().getScene().CreateEntity("Point Light");
+					childEntity.AddComponent<CPointLight>();
+					Application::Get().getScene().AddEntityRelationship(entity, childEntity);
+				}
+				ImGui::EndMenu();
+			}
 			if (ImGui::MenuItem("Delete Entity")) {
 				entityDeleted = true;
 			}
@@ -1211,6 +1251,13 @@ namespace Madam::UI {
 		}
 
 		if (opened) {
+			if (entity.HasComponent<CRelationship>())
+			{
+				for each (UUID child in entity.GetComponent<CRelationship>().children) {
+					Entity childEntity = Application::Get().getScene().GetEntity(child);
+					DrawEntityNode(childEntity);
+				}
+			}
 			ImGui::TreePop();
 		}
 

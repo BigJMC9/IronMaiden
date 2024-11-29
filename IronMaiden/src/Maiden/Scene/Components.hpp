@@ -170,6 +170,15 @@ namespace Madam {
 		CPointLight(const CPointLight&) = default;
 	};
 
+	struct CRelationship {
+		UUID parent = UUID("");
+		std::vector<UUID> children;
+
+		CRelationship() = default;
+		CRelationship(const CRelationship& other) = default;
+		CRelationship(UUID parent) : parent(parent) {}
+	};
+
 	struct CTransform {
 		glm::vec3 translation{};
 		glm::vec3 scale{ 1.f, 1.f, 1.f };
@@ -212,7 +221,6 @@ namespace Madam {
 			transformationMatrix[3] = glm::vec4(translation, transformationMatrix[3][3]);
 
 			glm::quat quad = glm::quat_cast(rotationMatrix);
-			MADAM_CORE_INFO("\nOriginal Quat: ({0})\nGenerated Quat: ({1})", rotation, quad);
 			return transformationMatrix;
 		}
 

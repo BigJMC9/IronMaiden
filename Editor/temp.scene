@@ -1,12 +1,81 @@
 Scene: Untitled
 Entities:
-  - Entity: 49057c4600bd751f-07641d88b456e638
+  - Entity: 5c6dcf52ab10db5f-72441f7984d32018
     Transform:
-      Translation: [0, -2.27285957, -2.5]
-      Rotation: [0, 0, 0]
+      Translation: [0.666479707, -0.152430296, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [0.470000029, 0.470000029, 0.470000029]
+    CMetadata:
+      Name: Cube
+    CRelationship:
+      Parent: cbe894ec71e4edd0-d29391a950e64f67
+      Children:
+        []
+    MeshRenderer:
+      Material: true
+      StaticMesh: resources\models\cube.obj
+  - Entity: cbe894ec71e4edd0-d29391a950e64f67
+    Transform:
+      Translation: [-4.79699612, 0, 0]
+      Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
+    CMetadata:
+      Name: Quad
+    CRelationship:
+      Parent: ""
+      Children:
+        - 5c6dcf52ab10db5f-72441f7984d32018
+    MeshRenderer:
+      Material: true
+      StaticMesh: resources\models\plane.obj
+  - Entity: 2024f87887c126cb-93bfd7a007e5aa95
+    Transform:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    CMetadata:
+      Name: Object
+    CRelationship:
+      Parent: ""
+      Children:
+        []
+    PointLight:
+      Color: [1, 1, 1]
+      Intensity: 1
+      Radius: 0.200000003
+  - Entity: d4204d15bac09468-1da4f5ed874418e0
+    Transform:
+      Translation: [-7.09139204, -1.961882, -2.62234807]
+      Rotation: [0.185544133, -0.399950296, -0.083034195, -0.893710494]
+      Scale: [1, 1, 1]
+    CMetadata:
+      Name: Object
+    CRelationship:
+      Parent: ""
+      Children:
+        []
     Camera:
-      Perspective: {Fov: 0.87266463, Aspect: 1.81646168, Near: 0.100000001, Far: 1000}
-      ViewPosition: [0, -2.27285957, -2.5]
+      Perspective: {Fov: 0.87266463, Aspect: 2.15989161, Near: 0.100000001, Far: 1000}
+      ViewPosition: [-7.09139156, -1.96188211, -2.62234735]
       ViewDirection: [0, 0, 0]
       Main: true
+  - Entity: fb8a9db6ec3566b1-ba4a7a62cae0764c
+    Transform:
+      Translation: [0, 0.5, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [3, 1, 3]
+    CMetadata:
+      Name: Object
+    CRelationship:
+      Parent: ""
+      Children:
+        []
+    Material:
+      Shader: [shaders/texture_shader.vert.spv, shaders/texture_shader.frag.spv]
+      Diffuse: 527c735b5dd7bacf-efa9ae6a9eecdde1
+      Normal: 0e28b73c80021c60-cf411b735d1392b7
+      AO: 5581fb053ef14431-c3d6e1a85bfc3495
+      Gloss: 5353ce5c21be2afd-dc02fa25df55a205
+    MeshRenderer:
+      Material: true
+      StaticMesh: C:\Users\xbox\Desktop\Files\Development\IronMaiden Projects\NewProject\Assets\models\quad.obj

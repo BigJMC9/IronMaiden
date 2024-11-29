@@ -346,6 +346,27 @@ namespace Madam {
 			out << YAML::EndMap;
 		}
 
+		if (entity.HasComponent<CMetadata>()) {
+			out << YAML::Key << "CMetadata";
+			out << YAML::BeginMap;
+
+			CMetadata& metadata = entity.GetComponent<CMetadata>();
+			out << YAML::Key << "Name" << YAML::Value << metadata.name;
+
+			out << YAML::EndMap;
+		}
+
+		if (entity.HasComponent<CRelationship>()) {
+			out << YAML::Key << "CRelationship";
+			out << YAML::BeginMap;
+
+			CRelationship& relationship = entity.GetComponent<CRelationship>();
+			out << YAML::Key << "Parent" << YAML::Value << relationship.parent;
+			out << YAML::Key << "Children" << YAML::Value << relationship.children;
+
+			out << YAML::EndMap;
+		}
+
 		if (entity.HasComponent<CMaterial>()) {
 			out << YAML::Key << "Material";
 			out << YAML::BeginMap;
@@ -481,7 +502,19 @@ namespace Madam {
 					transform.rotation = transformNode["Rotation"].as<glm::quat>();
 					transform.scale = transformNode["Scale"].as<glm::vec3>();
 				}
-
+				auto metadataNode = entity["Metadata"];
+				if (metadataNode)
+				{
+					CMetadata& metadata = deserializedEntity.GetComponent<CMetadata>();
+					metadata.name = metadataNode["Name"].as<std::string>();
+				}
+				auto relationshipNode = entity["Relationship"];
+				if (relationshipNode)
+				{
+					CRelationship& relationship = deserializedEntity.GetComponent<CRelationship>();
+					relationship.parent = relationshipNode["Parent"].as<UUID>();
+					relationship.children = relationshipNode["Children"].as<std::vector<UUID>>();
+				}
 				auto materialNode = entity["Material"];
 				if (materialNode) {
 					CMaterial& material = deserializedEntity.AddComponent<CMaterial>();

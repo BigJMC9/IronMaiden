@@ -116,8 +116,11 @@ namespace Madam
 			}
 		}
 
-		CreateVertexBuffers(vertices);
-		CreateIndexBuffers(indices);
+		if (vertices.size() != 0 && indices.size() != 0)
+		{
+			CreateVertexBuffers(vertices);
+			CreateIndexBuffers(indices);
+		}
 	}
 
 	void VulkanStaticMesh::LoadFBX()
