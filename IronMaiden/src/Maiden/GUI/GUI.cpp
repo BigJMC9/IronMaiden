@@ -625,11 +625,12 @@ namespace Madam::UI {
 		if (ImGui::Begin("Viewport")) {
 
 			ImVec2 windowSize = ImGui::GetContentRegionAvail();
+			ImVec2 windowMinPoint = ImVec2(ImGui::GetWindowSize().x - ImGui::GetContentRegionAvail().x, ImGui::GetWindowSize().y - ImGui::GetContentRegionAvail().y);
 			ImVec2 imageSize = ImVec2(static_cast<float>(Application::Get().getConfig().windowWidth), static_cast<float>(Application::Get().getConfig().windowHeight));
 			float imageAspectRatio = imageSize.x / imageSize.y;
 
 			ImVec2 displaySize;
-			if (windowSize.x / windowSize.y > imageAspectRatio) {
+			if ((windowSize.x / windowSize.y) > imageAspectRatio) {
 				displaySize.y = windowSize.y;
 				displaySize.x = windowSize.y * imageAspectRatio;
 			}
@@ -639,7 +640,6 @@ namespace Madam::UI {
 			}
 
 			ImVec2 uv0 = ImVec2(0, 0);
-			ImVec2 uv1 = ImVec2(displaySize.x / imageSize.x, displaySize.y / imageSize.y);
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 			drawList->AddCallback(viewportCallback, &viewportPipelineInfo);
 			ImGui::Image(viewportSet, displaySize, uv0, ImVec2(1,1), ImVec4(1, 1, 1, 1));
@@ -675,19 +675,46 @@ namespace Madam::UI {
 				ImGuizmo::SetDrawlist();
 				float windowWidth = (float)ImGui::GetWindowWidth();
 				float windowHeight = (float)ImGui::GetWindowHeight();
-				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, displaySize.x, displaySize.y);
+				ImVec2 padding = ImGui::GetStyle().WindowPadding;
+				ImVec2 rectAreaStartPos = ImVec2(ImGui::GetWindowPos().x + windowMinPoint.x - padding.x, ImGui::GetWindowPos().y + windowMinPoint.y - padding.y);
+
+				ImGuizmo::SetRect(rectAreaStartPos.x, rectAreaStartPos.y , displaySize.x, displaySize.y);
+				
 
 				auto& cameraHandle = Rendering::CameraHandle::GetMain();
 				glm::mat4 cameraProjection = cameraHandle.GetProjection();
 				cameraProjection[1][1] *= -1;
 
 				glm::mat4 cameraView = cameraHandle.GetView();
-				glm::mat4 transform = selectedEntity->GetComponent<CTransform>();
+				
+				UUID parentUUID = selectedEntity->GetComponent<CRelationship>().parent;
+				glm::mat4 parentTransform;
+				glm::mat4 transform = selectedEntity->GetComponent<CTransform>().transform();
+
+				if (parentUUID != null)
+				{
+					parentTransform = Application::Get().getScene().GetWorldTransform(parentUUID);
+				}
+				else
+				{
+					parentTransform = glm::mat4(1.0f);
+				}
+
+				glm::mat4 worldTransform = parentTransform * transform;
 
 				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)ImGuizmoType,
-					ImGuizmo::LOCAL, glm::value_ptr(transform));
+					ImGuizmo::LOCAL, glm::value_ptr(worldTransform));
 
 				if (ImGuizmo::IsUsing()) {
+					if (parentUUID != null)
+					{
+						
+						transform = glm::inverse(parentTransform) * worldTransform;
+					}
+					else
+					{
+						transform = worldTransform;
+					}
 					selectedEntity->GetComponent<CTransform>().UpdateTransform(transform);
 				}
 			}

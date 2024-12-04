@@ -4,6 +4,10 @@
 
 namespace Madam {
 
+	struct null_t {};
+
+	constexpr inline null_t null{};
+
 	// from: https://stackoverflow.com/a/57595105
 	template <typename T, typename... Rest>
 	void hashCombine(std::size_t& seed, const T& v, const Rest&... rest) {
@@ -16,6 +20,18 @@ namespace Madam {
 	using id_t = unsigned int;
 	using Map = std::unordered_map<id_t, Entity>;
 
+	/*
+	The UUID struct will be changed to GUID and will be used only for assets.
+	A new struct for UUID will use a uint64_t for ingame objects for efficiency purposes. - Jacob
+
+	Why not just use a uint64_t for the UUID and have that be used for both assets and game objects? - Luis
+
+	1. uint128 hex string is standard in the industry thus would be familar to developers.
+	2. A Hex string is easier to read and serialize in comparison to a uint64_t.
+	3. A uint128 hex string has enough data to contain certain metadata segments into the string which makes version control
+	more robust and easier.
+	- Jacob
+	*/
 	struct UUID {
 
 	public:
@@ -47,9 +63,35 @@ namespace Madam {
 			return left._UUID != right;
 		}
 
+		bool operator==(const null_t& other) const
+		{
+			if (_UUID == "")
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		bool operator!=(const null_t& other) const
+		{
+			if (_UUID != "")
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
 	private:
 		std::string _UUID;
 	};
+
+	
 
 	//Add Custom Smart Pointer that is shared. When Owner is destroyed and reference is > 0, throw error
 

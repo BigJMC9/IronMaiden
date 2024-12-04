@@ -276,6 +276,35 @@ namespace Madam {
 		return out;
 	}
 
+	YAML::Emitter& operator<<(YAML::Emitter& out, const UUID uuid)
+	{
+		out << (std::string)uuid;
+		return out;
+	}
+
+	template<typename T>
+	YAML::Emitter& operator<<(YAML::Emitter& out, const std::vector<T>& v)
+	{
+		out << YAML::BeginSeq;
+		for (size_t i = 0; i < v.size(); i++)
+		{
+			out << v[i];
+		}
+		out << YAML::EndSeq;
+		return out;
+	}
+
+	YAML::Emitter& operator<<(YAML::Emitter& out, const std::vector<UUID>& v)
+	{
+		out << YAML::BeginSeq;
+		for (size_t i = 0; i < v.size(); i++)
+		{
+			out << v[i];
+		}
+		out << YAML::EndSeq;
+		return out;
+	}
+
 	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec4& v)
 	{
 		out << YAML::Flow;
@@ -347,7 +376,7 @@ namespace Madam {
 		}
 
 		if (entity.HasComponent<CMetadata>()) {
-			out << YAML::Key << "CMetadata";
+			out << YAML::Key << "Metadata";
 			out << YAML::BeginMap;
 
 			CMetadata& metadata = entity.GetComponent<CMetadata>();
@@ -357,7 +386,7 @@ namespace Madam {
 		}
 
 		if (entity.HasComponent<CRelationship>()) {
-			out << YAML::Key << "CRelationship";
+			out << YAML::Key << "Relationship";
 			out << YAML::BeginMap;
 
 			CRelationship& relationship = entity.GetComponent<CRelationship>();
@@ -386,7 +415,16 @@ namespace Madam {
 
 			CMeshRenderer& meshRenderer = entity.GetComponent<CMeshRenderer>();
 			out << YAML::Key << "Material" << YAML::Value << "true";
-			out << YAML::Key << "StaticMesh" << YAML::Value << meshRenderer.GetMesh()->GetFilepath().string();
+			out << YAML::Key << "IsPrimative" << YAML::Value << meshRenderer.GetMesh()->IsPrimative();
+			if (!meshRenderer.GetMesh()->IsPrimative())
+			{
+				out << YAML::Key << "StaticMesh" << YAML::Value << meshRenderer.GetMesh()->GetFilepath().string();
+			}
+			else
+			{
+				out << YAML::Key << "StaticMesh" << YAML::Value << meshRenderer.GetMesh()->GetPrimativeAsString();
+			}
+			MADAM_CORE_INFO(meshRenderer.GetMesh()->GetFilepath().string());
 			out << YAML::EndMap;
 		}
 
@@ -543,8 +581,17 @@ namespace Madam {
 				if (meshRendererNode) {
 					std::string material = meshRendererNode["Material"].as<std::string>();
 					CMeshRenderer& meshRenderer = deserializedEntity.AddComponent<CMeshRenderer>();
-					std::filesystem::path filepath = meshRendererNode["StaticMesh"].as<std::filesystem::path>();
-					deserializedEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(Project::Get().getProjectDirectory() / std::filesystem::u8path("Assets") / filepath);
+					bool isPrimative = meshRendererNode["IsPrimative"].as<bool>();
+					if (!isPrimative)
+					{
+						std::filesystem::path filepath = meshRendererNode["StaticMesh"].as<std::filesystem::path>();
+						deserializedEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(Project::Get().getProjectDirectory() / std::filesystem::u8path("Assets") / filepath);
+					}
+					else
+					{
+						MeshPrimatives primative = static_cast<MeshPrimatives>(meshPrimativesMap[meshRendererNode["StaticMesh"].as<std::string>()]);
+						deserializedEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(primative);
+					}
 					if (material == "true") {
 						
 						if (deserializedEntity.HasComponent<CMaterial>()) {

@@ -72,6 +72,14 @@ namespace Madam {
 			return ss.str();
 		}
 
+		bool isNull()
+		{
+			if (entityHandle == entt::null)
+			{
+
+			}
+		}
+
 		bool operator==(const Entity& other) const
 		{
 			return entityHandle == other.entityHandle && scene == other.scene;
@@ -80,6 +88,30 @@ namespace Madam {
 		bool operator!=(const Entity& other) const
 		{
 			return !(*this == other);
+		}
+
+		bool operator==(const null_t& other) const
+		{
+			if (entityHandle == entt::null)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		bool operator!=(const null_t& other) const
+		{
+			if (entityHandle != entt::null)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		//Transform transform;

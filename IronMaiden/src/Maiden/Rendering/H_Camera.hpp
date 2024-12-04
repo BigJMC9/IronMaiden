@@ -124,14 +124,11 @@ namespace Madam {
 			void SetViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up = glm::vec3{ 0.f, -1.f, 0.f }) {
 				glm::quat rotation = glm::quatLookAt(glm::normalize(direction), up);
 
-				// Create the rotation and translation matrices
 				glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
 				glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), position);
 
-				// Combine them to form the view matrix
 				viewMatrix = glm::inverse(translationMatrix * rotationMatrix);
 
-				// For the inverse view matrix, transpose the view matrix (since it's orthonormal)
 				inverseViewMatrix = glm::inverse(viewMatrix);
 			}
 

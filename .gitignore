@@ -376,3 +376,5 @@ Editor/logs/
 Editor/session.ini
 Editor/pref.conf
 Editor/Internal/shaders/temp/
+VersionControl.py
+IronMaiden/OnBuild.bat

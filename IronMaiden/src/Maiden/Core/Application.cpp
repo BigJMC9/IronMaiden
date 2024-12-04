@@ -269,7 +269,7 @@ namespace Madam {
 				{
 					if (Project::loadProject(std::filesystem::u8path(value))) 
 					{
-						config.windowName += " - " + Project::Get().getProjectInfo().projectName;
+						config.windowName += " - " + config.version + " - " + Project::Get().getProjectInfo().projectName;
 					}
 					else
 					{

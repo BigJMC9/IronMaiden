@@ -86,6 +86,7 @@ namespace Madam {
 
 				DefaultPushConstantData push{};
 				push.modelMatrix = frameInfo.scene->GetWorldTransform(frameInfo.scene->Reg().get<CUniqueIdentifier>(entity).uuid);
+				//push.modelMatrix[3][1] = -push.modelMatrix[3][1];
 				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
 
 				vkCmdPushConstants(
@@ -399,6 +400,7 @@ namespace Madam {
 
 				DefaultPushConstantData push{};
 				push.modelMatrix = frameInfo.scene->GetWorldTransform(frameInfo.scene->Reg().get<CUniqueIdentifier>(entity).uuid);
+				//push.modelMatrix[3][1] = -push.modelMatrix[3][1];
 				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
 
 				vkCmdPushConstants(
@@ -525,6 +527,8 @@ namespace Madam {
 				entt::entity entity = it->second;
 				auto [transform, pointLight] = entities.get<CTransform, CPointLight>(entity);
 				PointLightPushConstants push{};
+				//glm::vec3 adjustedTranslation = transform.translation;
+				//adjustedTranslation.y = -transform.translation.y;
 				push.position = glm::vec4(transform.translation, 1.f);
 				push.color = glm::vec4(pointLight.color, pointLight.intensity);
 				push.radius = pointLight.radius;

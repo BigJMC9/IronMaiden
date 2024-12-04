@@ -6,8 +6,6 @@
 #include "Components.hpp"
 #include "../Rendering/H_Renderer.hpp"
 
-//namespace fs = std::filesystem;
-
 namespace Madam {
 
 	template<typename... Component>
@@ -46,7 +44,7 @@ namespace Madam {
 	{
 		Ref<Scene> newScene = CreateRef<Scene>();
 		std::unordered_map<UUID, entt::entity> enttMap;
-		//Copy all entities
+
 		auto IdView = registry.view<CUniqueIdentifier>();
 		for (entt::entity entity : IdView) {
 			UUID& uuid = registry.get<CUniqueIdentifier>(entity).uuid;
@@ -55,9 +53,6 @@ namespace Madam {
 			enttMap[uuid] = (entt::entity)newEntity;
 		}
 
-
-
-		//Copy all components
 		CopyComponent(AllComponents{}, newScene->Reg(), registry, enttMap);
 
 		return newScene;
@@ -83,7 +78,6 @@ namespace Madam {
 		return entity;
 	}
 
-	//Dangerous?!? Maybe remove?
 	Entity Scene::CreateEntity(entt::entity _entity) {
 		Entity entity = { registry.create(_entity), this };
 		entity.AddComponent<CUniqueIdentifier>();
@@ -144,9 +138,15 @@ namespace Madam {
 	glm::mat4 Scene::GetWorldTransform(UUID entityUUID)
 	{
 		Entity entity = entityMap[entityUUID];
+		if (entity == null)
+		{
+			MADAM_CORE_ERROR("Attempting to get an Entity that does not exist");
+			return glm::mat4(glm::vec4(0), glm::vec4(0), glm::vec4(0), glm::vec4(0));
+		}
+
 		glm::mat4 transform = entity.GetComponent<CTransform>().transform();
 		UUID parent = entity.GetComponent<CRelationship>().parent;
-		if (parent != "")
+		if (parent != null)
 		{
 			transform = GetWorldTransform(entityMap[parent]) * transform;
 		}
@@ -155,9 +155,15 @@ namespace Madam {
 
 	glm::mat4 Scene::GetWorldTransform(Entity entity)
 	{
+		if (entity == null)
+		{
+			MADAM_CORE_ERROR("Attempting to get an Entity that does not exist");
+			return glm::mat4(glm::vec4(0), glm::vec4(0), glm::vec4(0), glm::vec4(0));
+		}
+
 		glm::mat4 transform = entity.GetComponent<CTransform>().transform();
 		UUID parent = entity.GetComponent<CRelationship>().parent;
-		if (parent != "")
+		if (parent != null)
 		{
 			transform = GetWorldTransform(entityMap[parent]) * transform;
 		}

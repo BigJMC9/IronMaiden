@@ -2,6 +2,7 @@
 
 // Fix these headers, only essential headers are needed, the rest can reside in the implementation
 #include "maidenpch.hpp"
+#include "Version.h"
 #include "Main/Core.hpp"
 #include "H_CoreUtils.hpp"
 #include "../Rendering/H_Renderer.hpp"
@@ -23,7 +24,7 @@ namespace Madam {
 	struct ApplicationInfo
 	{
 		std::string name = "IronMaidenEngine";
-		std::string version = "0.08";
+		std::string version = ENGINE_VERSION;
 		std::string windowName = "Iron Maiden Engine";
 		uint32_t windowWidth = 1600, windowHeight = 900;
 		std::filesystem::path projectsDirectory = "Projects";
