@@ -27,7 +27,7 @@ namespace Madam {
 		Scene();
 		~Scene() override;
 
-
+		Entity CreateErrorEntity();
 		Entity CreateEntity();
 		Entity CreateEntity(const std::string& name);
 		Entity CreateEntity(entt::entity _entity);
@@ -79,7 +79,8 @@ namespace Madam {
 
 		Entity GetEntity(UUID uuid);
 
-		void AddEntityRelationship(Entity Parent, Entity Child);
+		void AddEntityRelationship(Entity parent, Entity child);
+		void RemoveParentEntityRelationship(Entity child);
 
 		Entity GetMainCameraEntity();
 

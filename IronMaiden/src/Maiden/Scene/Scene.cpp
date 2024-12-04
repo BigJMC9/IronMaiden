@@ -58,6 +58,18 @@ namespace Madam {
 		return newScene;
 	}
 
+	Entity Scene::CreateErrorEntity()
+	{
+		Entity entity = { registry.create(), this };
+		entity.AddComponent<CUniqueIdentifier>();
+		entity.AddComponent<CMetadata>();
+		CMetadata& entityMetadata = entity.GetComponent<CMetadata>();
+		entityMetadata.name = "ERROR";
+		entityMetadata.isErrorEntity = true;
+		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
+		return entity;
+	}
+
 	Entity Scene::CreateEntity() {
 		Entity entity = { registry.create(), this };
 		entity.AddComponent<CUniqueIdentifier>();
@@ -115,7 +127,7 @@ namespace Madam {
 		}
 		UUID parent = entity.GetComponent<CRelationship>().parent;
 		UUID uuid = entity.GetComponent<CUniqueIdentifier>().uuid;
-		if (parent != "")
+		if (parent != null)
 		{
 			Entity parentEntity = entityMap[parent];
 			
@@ -126,6 +138,7 @@ namespace Madam {
 				if (children[i] == uuid)
 				{
 					children.erase(children.begin() + i);
+					break;
 				}
 			}
 
@@ -207,8 +220,43 @@ namespace Madam {
 
 	void Scene::AddEntityRelationship(Entity parent, Entity child)
 	{
+		if (parent.GetComponent<CUniqueIdentifier>().uuid == child.GetComponent<CUniqueIdentifier>().uuid)
+		{
+			MADAM_ERROR("Cannot add a entity relationship in which the parent and child are the same entity");
+			return;
+		}
+
+		RemoveParentEntityRelationship(child);
 		parent.GetComponent<CRelationship>().children.push_back(child.GetComponent<CUniqueIdentifier>().uuid);
 		child.GetComponent<CRelationship>().parent = parent.GetComponent<CUniqueIdentifier>().uuid;
+	}
+
+	void Scene::RemoveParentEntityRelationship(Entity child)
+	{
+		if (child.GetComponent<CRelationship>().parent != null)
+		{
+			UUID oldParentUUID = child.GetComponent<CRelationship>().parent;
+			Entity oldParent = entityMap[oldParentUUID];
+			if (oldParent != null)
+			{
+				std::vector<UUID> children = oldParent.GetComponent<CRelationship>().children;
+				for (size_t i = 0; i < children.size(); i++)
+				{
+					if (children[i] == child.GetComponent<CUniqueIdentifier>().uuid)
+					{
+						children.erase(children.begin() + i);
+						break;
+					}
+				}
+				oldParent.GetComponent<CRelationship>().children = children;
+			}
+			else
+			{
+				MADAM_CORE_INFO("Old Parrent no longer exists");
+			}
+
+			child.GetComponent<CRelationship>().parent = UUID("");
+		}
 	}
 
 	void Scene::RepopulateEntityMap() 

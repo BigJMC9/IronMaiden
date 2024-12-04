@@ -357,6 +357,75 @@ namespace Madam {
 		return out;
 	}
 
+	static std::optional<YAML::Node> GetNode(const YAML::Node& parentNode, const std::string& nodeName)
+	{
+		try {
+			if (!parentNode[nodeName].IsDefined())
+			{
+				MADAM_ERROR("The node \"{0}\" is not defined in the YAML Parent Node.", nodeName);
+				return std::nullopt;
+			}
+			if (parentNode[nodeName].IsNull())
+			{
+				MADAM_ERROR("The node \"{0}\" is NULL.", nodeName);
+				return std::nullopt;
+			}
+			return parentNode[nodeName];
+		}
+		catch (const YAML::BadConversion& e)
+		{
+			MADAM_ERROR("Failed to convert the node \"{0}\" to the specified type. \n{1}", nodeName, e.what());
+		}
+		catch (const YAML::Exception& e)
+		{
+			MADAM_ERROR("Unable to read the node \"{0}\". \nA YAML exception occurred. \n{1}", nodeName, e.what());
+		}
+		catch (const std::exception& e)
+		{
+			MADAM_ERROR("Unable to read the node \"{0}\". \nA standard exception occurred. \n{1}", nodeName, e.what());
+		}
+		catch (...)
+		{
+			MADAM_ERROR("Unable to read the node \"{0}\". \nAn unknown exception occurred.");
+		}
+		return std::nullopt;
+	}
+
+	template <typename T>
+	static std::optional<T> GetNodeValue(const YAML::Node& parentNode, const std::string& nodeName)
+	{
+		try {
+			if (!parentNode[nodeName].IsDefined())
+			{
+				MADAM_ERROR("The node \"{0}\" is not defined in the YAML Parent Node.", nodeName);
+				return std::nullopt;
+			}
+			if (parentNode[nodeName].IsNull())
+			{
+				MADAM_ERROR("The node \"{0}\" is NULL.", nodeName);
+				return std::nullopt;
+			}
+			return parentNode[nodeName].as<T>();
+		}
+		catch (const YAML::BadConversion& e)
+		{
+			MADAM_ERROR("Failed to convert the node \"{0}\" to the specified type. \n{1}", nodeName, e.what());
+		}
+		catch (const YAML::Exception& e)
+		{
+			MADAM_ERROR("Unable to read the node \"{0}\". \nA YAML exception occurred. \n{1}", nodeName, e.what());
+		}
+		catch (const std::exception& e)
+		{
+			MADAM_ERROR("Unable to read the node \"{0}\". \nA standard exception occurred. \n{1}", nodeName, e.what());
+		}
+		catch (...)
+		{
+			MADAM_ERROR("Unable to read the node \"{0}\". \nAn unknown exception occurred.");
+		}
+		return std::nullopt;
+	}
+
 	//Optimise, Update to be more reference friendly
 	static void SerializeEntity(YAML::Emitter& out, Entity entity) {
 
@@ -465,9 +534,11 @@ namespace Madam {
 	
 	void SceneSerializer::Serialize(const std::filesystem::path& filePath) {
 
+		std::filesystem::path fileName = filePath.stem();
 		YAML::Emitter out;
 		out << YAML::BeginMap;
-		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
+		out << YAML::Key << "Version" << YAML::Value << Application::Get().getConfig().version;
+		out << YAML::Key << "Scene" << YAML::Value << fileName.string();
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		entt::registry& reg = m_Scene->Reg();
 		reg.view<entt::entity>().each([&](auto entityID) {
@@ -495,142 +566,196 @@ namespace Madam {
 		std::string fileType = filePath.extension().string();
 
 		if (fileType != ".scene") {
-			MADAM_ERROR("Error loading scene: Parsed scene is wrong file type");
+			MADAM_ERROR("Failed to load scene: Parsed scene is wrong file type");
 			return false;
 		}
 
 		std::ifstream file(filePath);
 
 		if (!file.good()) {
-			MADAM_ERROR("Error loading scene: Scene file does not exist");
+			MADAM_ERROR("Failed to load scene: Scene file does not exist");
 			return false;
 		}
 
-		YAML::Node node;
+		YAML::Node parentNode;
 		try {
-			node = YAML::LoadFile(filePath.string().c_str());
+			parentNode = YAML::LoadFile(filePath.string().c_str());
 		}
 		catch (YAML::ParserException e) {
 			std::stringstream ss;
 			ss << e.what();
-			std::cout << "Failed to load .scene file: " << ss.str() << std::endl;
+			std::cout << "YAML has failed to load scene file: " << ss.str() << std::endl;
 			return false;
 		}
 
-		if (!node["Scene"]) {
+		if (!parentNode["Scene"]) {
+			MADAM_ERROR("Failed to load scene: Scene Node does not exist.");
 			return false;
 		}
 
 		Scene newScene{};
-		std::string sceneName = node["Scene"].as<std::string>();
+		std::string version = GetNodeValue<std::string>(parentNode, "Version").has_value() ? GetNodeValue<std::string>(parentNode, "Version").value() : "";
+		if (version == null) {
+			MADAM_ERROR("Failed to load scene: Unable to read version of the scene file");
+			return false;
+		}
+
+		size_t buildVersionPos = version.find_last_of('.');
+
+		if (buildVersionPos == std::string::npos) {
+			MADAM_ERROR("Failed to load scene: Unable to read version of the scene file. \nUnable to find build version of the provided version string.");
+			return false;
+		}
+
+		std::string relevantVersion = version.substr(0, buildVersionPos);
+		std::string applicationRelevantVersion = Application::Get().getConfig().version.substr(0, buildVersionPos);
+
+
+		if (applicationRelevantVersion != relevantVersion) {
+			MADAM_CORE_ERROR("Failed to load scene: The Application version and Scene file version do not match\nApplication Version: {0}\nScene Version: {1}", Application::Get().getConfig().version, version);
+			return false;
+		}
+
+		
+		std::string sceneName = GetNodeValue<std::string>(parentNode, "Scene").has_value() ? GetNodeValue<std::string>(parentNode, "Version").value() : "";
+		if (sceneName == null)
+		{
+			MADAM_ERROR("Failed to load scene: Unable to obtain Scene Name");
+			return false;
+		}
+		//Put in a entity serializer
 		bool isMain = false;
-		auto entities = node["Entities"];
+
+		YAML::Node entities = GetNode(parentNode, "Entities").has_value() ? GetNode(parentNode, "Entities").value() : YAML::Node{};
 		if (entities) {
+			MADAM_INFO("Entities size: {0}", entities.size());
 			for (auto entity : entities) {
-				
-				Entity deserializedEntity = newScene.CreateEntity(entity["Entity"].as<UUID>());
-
-				std::cout << deserializedEntity.GetComponent<CUniqueIdentifier>().uuid << ", Handle: " << (uint32_t)deserializedEntity.GetHandle() << std::endl;
-
-				auto transformNode = entity["Transform"];
-				if (transformNode) 
+				try
 				{
-					CTransform& transform = deserializedEntity.GetComponent<CTransform>();
-					transform.translation = transformNode["Translation"].as<glm::vec3>();
-					transform.rotation = transformNode["Rotation"].as<glm::quat>();
-					transform.scale = transformNode["Scale"].as<glm::vec3>();
-				}
-				auto metadataNode = entity["Metadata"];
-				if (metadataNode)
-				{
-					CMetadata& metadata = deserializedEntity.GetComponent<CMetadata>();
-					metadata.name = metadataNode["Name"].as<std::string>();
-				}
-				auto relationshipNode = entity["Relationship"];
-				if (relationshipNode)
-				{
-					CRelationship& relationship = deserializedEntity.GetComponent<CRelationship>();
-					relationship.parent = relationshipNode["Parent"].as<UUID>();
-					relationship.children = relationshipNode["Children"].as<std::vector<UUID>>();
-				}
-				auto materialNode = entity["Material"];
-				if (materialNode) {
-					CMaterial& material = deserializedEntity.AddComponent<CMaterial>();
-					CShader shader = materialNode["Shader"].as<CShader>();
-					material.shader = std::make_shared<CShader>(shader);
-					UUID uuid = materialNode["Diffuse"].as<UUID>();
-					TextureData textureData;
-					material.diffuseMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
-					uuid = materialNode["Normal"].as<UUID>();
-					material.normalMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
-					uuid = materialNode["AO"].as<UUID>();
-					material.ambientOcclusionMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
-					uuid = materialNode["Gloss"].as<UUID>();
-					material.glossMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
-				}
+					Entity deserializedEntity = newScene.CreateEntity(entity["Entity"].as<UUID>());
 
-				auto pointLightNode = entity["PointLight"];
-				if (pointLightNode) {
-					CPointLight& pointLight = deserializedEntity.AddComponent<CPointLight>();
-					pointLight.color = pointLightNode["Color"].as<glm::vec3>();
-					pointLight.intensity = pointLightNode["Intensity"].as<float>();
-					pointLight.radius = pointLightNode["Radius"].as<float>();
-				}
+					std::cout << deserializedEntity.GetComponent<CUniqueIdentifier>().uuid << ", Handle: " << (uint32_t)deserializedEntity.GetHandle() << std::endl;
 
-				auto meshRendererNode = entity["MeshRenderer"];
-				if (meshRendererNode) {
-					std::string material = meshRendererNode["Material"].as<std::string>();
-					CMeshRenderer& meshRenderer = deserializedEntity.AddComponent<CMeshRenderer>();
-					bool isPrimative = meshRendererNode["IsPrimative"].as<bool>();
-					if (!isPrimative)
+					auto transformNode = entity["Transform"];
+					if (transformNode)
 					{
-						std::filesystem::path filepath = meshRendererNode["StaticMesh"].as<std::filesystem::path>();
-						deserializedEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(Project::Get().getProjectDirectory() / std::filesystem::u8path("Assets") / filepath);
+						CTransform& transform = deserializedEntity.GetComponent<CTransform>();
+						transform.translation = transformNode["Translation"].as<glm::vec3>();
+						transform.rotation = transformNode["Rotation"].as<glm::quat>();
+						transform.scale = transformNode["Scale"].as<glm::vec3>();
 					}
-					else
+					auto metadataNode = entity["Metadata"];
+					if (metadataNode)
 					{
-						MeshPrimatives primative = static_cast<MeshPrimatives>(meshPrimativesMap[meshRendererNode["StaticMesh"].as<std::string>()]);
-						deserializedEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(primative);
+						CMetadata& metadata = deserializedEntity.GetComponent<CMetadata>();
+						metadata.name = metadataNode["Name"].as<std::string>();
 					}
-					if (material == "true") {
-						
-						if (deserializedEntity.HasComponent<CMaterial>()) {
-							deserializedEntity.GetComponent<CMeshRenderer>().material = std::make_shared<CMaterial>(deserializedEntity.GetComponent<CMaterial>());
+					auto relationshipNode = entity["Relationship"];
+					if (relationshipNode)
+					{
+						CRelationship& relationship = deserializedEntity.GetComponent<CRelationship>();
+						relationship.parent = relationshipNode["Parent"].as<UUID>();
+						relationship.children = relationshipNode["Children"].as<std::vector<UUID>>();
+					}
+					auto materialNode = entity["Material"];
+					if (materialNode) {
+						CMaterial& material = deserializedEntity.AddComponent<CMaterial>();
+						CShader shader = materialNode["Shader"].as<CShader>();
+						material.shader = std::make_shared<CShader>(shader);
+						UUID uuid = materialNode["Diffuse"].as<UUID>();
+						TextureData textureData;
+						material.diffuseMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+						uuid = materialNode["Normal"].as<UUID>();
+						material.normalMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+						uuid = materialNode["AO"].as<UUID>();
+						material.ambientOcclusionMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+						uuid = materialNode["Gloss"].as<UUID>();
+						material.glossMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+					}
+
+					auto pointLightNode = entity["PointLight"];
+					if (pointLightNode) {
+						CPointLight& pointLight = deserializedEntity.AddComponent<CPointLight>();
+						pointLight.color = pointLightNode["Color"].as<glm::vec3>();
+						pointLight.intensity = pointLightNode["Intensity"].as<float>();
+						pointLight.radius = pointLightNode["Radius"].as<float>();
+					}
+
+					auto meshRendererNode = entity["MeshRenderer"];
+					if (meshRendererNode) {
+						std::string material = meshRendererNode["Material"].as<std::string>();
+						CMeshRenderer& meshRenderer = deserializedEntity.AddComponent<CMeshRenderer>();
+						bool isPrimative = meshRendererNode["IsPrimative"].as<bool>();
+						if (!isPrimative)
+						{
+							std::filesystem::path filepath = meshRendererNode["StaticMesh"].as<std::filesystem::path>();
+							deserializedEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(Project::Get().getProjectDirectory() / std::filesystem::u8path("Assets") / filepath);
 						}
-						
+						else
+						{
+							MeshPrimatives primative = static_cast<MeshPrimatives>(meshPrimativesMap[meshRendererNode["StaticMesh"].as<std::string>()]);
+							deserializedEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(primative);
+						}
+						if (material == "true") {
+
+							if (deserializedEntity.HasComponent<CMaterial>()) {
+								deserializedEntity.GetComponent<CMeshRenderer>().material = std::make_shared<CMaterial>(deserializedEntity.GetComponent<CMaterial>());
+							}
+
+						}
+					}
+
+					auto cameraNode = entity["Camera"];
+					if (cameraNode) {
+						Rendering::CameraData cameraData;
+						auto perspectiveNode = cameraNode["Perspective"];
+						auto orthographicNode = cameraNode["Orthographic"];
+						if (perspectiveNode) {
+							cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
+							cameraData.perspective = Rendering::CameraData::Perspective(perspectiveNode["Fov"].as<float>(), perspectiveNode["Aspect"].as<float>(), perspectiveNode["Near"].as<float>(), perspectiveNode["Far"].as<float>());
+						}
+						else if (orthographicNode) {
+							cameraData.projectionType = Rendering::CameraData::ProjectionType::Orthographic;
+							cameraData.orthographic = Rendering::CameraData::Orthographic(orthographicNode["Size"].as<float>(), orthographicNode["Aspect"].as<float>(), orthographicNode["Near"].as<float>(), orthographicNode["Far"].as<float>());
+						}
+						else {
+							cameraData.projectionType = Rendering::CameraData::ProjectionType::None;
+						}
+						CCamera& camera = deserializedEntity.AddComponent<CCamera>(cameraData);
+						camera.cameraHandle->SetProjection();
+
+						camera.cameraHandle->SetViewDirection(cameraNode["ViewPosition"].as<glm::vec3>(), cameraNode["ViewDirection"].as<glm::vec3>());
+						if (cameraNode["Main"].as<bool>()) {
+							MADAM_CORE_INFO("Is Main Camera");
+							camera.cameraHandle->SetMain();
+							isMain = true;
+						}
+						else {
+							MADAM_CORE_INFO("Is Not Main Camera");
+						}
 					}
 				}
-
-				auto cameraNode = entity["Camera"];
-				if (cameraNode) {
-					Rendering::CameraData cameraData;
-					auto perspectiveNode = cameraNode["Perspective"];
-					auto orthographicNode = cameraNode["Orthographic"];
-					if (perspectiveNode) {
-						cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
-						cameraData.perspective = Rendering::CameraData::Perspective(perspectiveNode["Fov"].as<float>(), perspectiveNode["Aspect"].as<float>(), perspectiveNode["Near"].as<float>(), perspectiveNode["Far"].as<float>());
-					}
-					else if (orthographicNode) {
-						cameraData.projectionType = Rendering::CameraData::ProjectionType::Orthographic;
-						cameraData.orthographic = Rendering::CameraData::Orthographic(orthographicNode["Size"].as<float>(), orthographicNode["Aspect"].as<float>(), orthographicNode["Near"].as<float>(), orthographicNode["Far"].as<float>());
-					}
-					else {
-						cameraData.projectionType = Rendering::CameraData::ProjectionType::None;
-					}
-					CCamera& camera = deserializedEntity.AddComponent<CCamera>(cameraData);
-					camera.cameraHandle->SetProjection();
-					
-					camera.cameraHandle->SetViewDirection(cameraNode["ViewPosition"].as<glm::vec3>(), cameraNode["ViewDirection"].as<glm::vec3>());
-					if (cameraNode["Main"].as<bool>()) {
-						MADAM_CORE_INFO("Is Main Camera");
-						camera.cameraHandle->SetMain();
-						isMain = true;
-					}
-					else {
-						MADAM_CORE_INFO("Is Not Main Camera");
-					}
+				catch (const YAML::BadConversion& e)
+				{
+					MADAM_ERROR("Failed to convert the node \"{0}\" to the specified type. \n{1}", "Entity", e.what());
+				}
+				catch (const YAML::Exception& e)
+				{
+					MADAM_ERROR("Unable to read the node \"{0}\". \nA YAML exception occurred. \n{1}", "Entity", e.what());
+				}
+				catch (const std::exception& e)
+				{
+					MADAM_ERROR("Unable to read the node \"{0}\". \nA standard exception occurred. \n{1}", "Entity", e.what());
+				}
+				catch (...)
+				{
+					MADAM_ERROR("Unable to read the node \"{0}\". \nAn unknown exception occurred.");
 				}
 			}
+		}
+		else
+		{
+			MADAM_ERROR("Failed to load scene: Unable to read the node \"Entities\"");
 		}
 
 		//Will need to be updated for runtime

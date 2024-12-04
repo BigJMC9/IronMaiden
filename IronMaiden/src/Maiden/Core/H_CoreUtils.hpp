@@ -4,7 +4,36 @@
 
 namespace Madam {
 
-	struct null_t {};
+	struct null_t final 
+	{
+		null_t() = default;
+		null_t(const null_t&) = default;
+		null_t& operator=(const null_t&) = default;
+
+		template <typename T>
+		null_t(const T&) = delete;
+
+		template <typename T>
+		null_t& operator=(const T&) = delete;
+
+		constexpr inline bool operator==(const null_t&) const { return true; }
+		constexpr inline bool operator!=(const null_t&) const { return false; }
+		bool operator==(const std::string& s) const 
+		{ 
+			return s == "";
+		}
+		bool operator!=(const std::string& s) const { 
+			return s != "";
+		}
+
+		friend bool operator==(const std::string& left, const null_t& right) {
+			return left == "";
+		}
+
+		friend bool operator!=(const std::string& left, const null_t& right) {
+			return left != "";
+		}
+	};
 
 	constexpr inline null_t null{};
 

@@ -108,6 +108,7 @@ namespace Madam {
 	struct CMetadata {
 		//GENERATE_COMPONENT()
 		std::string name = "Object";
+		bool isErrorEntity = false;
 		CMetadata() = default;
 		CMetadata(const CMetadata&) = default;
 		CMetadata(std::string _name) {

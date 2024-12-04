@@ -521,7 +521,10 @@ namespace Madam::UI {
 				}
 				if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {
 					if (OpenFileDialog(sceneDir, L"scene", L"scene")) {
-						Application::GetSceneSerializer()->Deserialize(sceneDir);
+						if (!Application::GetSceneSerializer()->Deserialize(sceneDir))
+						{
+							MADAM_ERROR("Unable to Load Scene");
+						}
 					}
 					else {
 						// User cancelled or error occurred
@@ -653,7 +656,10 @@ namespace Madam::UI {
 					std::string path = ConvertWideToUtf8(wPath);
 
 					MADAM_CORE_INFO("Opening scene: " + path);
-					Application::GetSceneSerializer()->Deserialize(path);
+					if (!Application::GetSceneSerializer()->Deserialize(path))
+					{
+						MADAM_ERROR("Unable to Load Scene");
+					}
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -751,11 +757,42 @@ namespace Madam::UI {
 			Application::Get().getScene().GetAllEntitiesWith<CMetadata>().each([&](auto entityId, auto& gameObject)
 			{
 				Entity entity {entityId, &Application::Get().getScene()};
-				if (entity.GetComponent<CRelationship>().parent == "")
+				if (entity.GetComponent<CRelationship>().parent == null)
 				{
 					DrawEntityNode(entity);
 				}
 			});
+
+			if (hasEntityRelationshipChanged)
+			{
+				glm::mat4 inverseParentWorldMatrix = glm::inverse(Application::Get().getScene().GetWorldTransform(Application::Get().getScene().GetEntity(newParentEntityUUID)));
+
+				glm::mat4 localMatrixChild = inverseParentWorldMatrix * Application::Get().getScene().GetWorldTransform(Application::Get().getScene().GetEntity(newChildEntityUUID));
+
+				Application::Get().getScene().AddEntityRelationship(Application::Get().getScene().GetEntity(newParentEntityUUID), Application::Get().getScene().GetEntity(newChildEntityUUID));
+
+				Application::Get().getScene().GetEntity(newChildEntityUUID).GetComponent<CTransform>().UpdateTransform(localMatrixChild);
+
+				hasEntityRelationshipChanged = false;
+			}
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY_ITEM"))
+			{
+				UUID uuid = *(UUID*)payload->Data;
+				Entity other = Application::Get().getScene().GetEntity(uuid);
+				if (other != null)
+				{
+					Application::Get().getScene().RemoveParentEntityRelationship(other);
+				}
+				else
+				{
+					MADAM_CORE_ERROR("Entity {0} is NULL", uuid);
+				}
+			}
+			ImGui::EndDragDropTarget();
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
@@ -1231,6 +1268,7 @@ namespace Madam::UI {
 		if (ImGui::IsItemClicked()) {
 			selectedEntity = CreateRef<Entity>(entity);
 		}
+
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
 			if (ImGui::MenuItem("Create Empty")) {
@@ -1275,6 +1313,33 @@ namespace Madam::UI {
 				entityDeleted = true;
 			}
 			ImGui::EndPopup();
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY_ITEM"))
+			{
+				UUID uuid = *(UUID*)payload->Data;
+				Entity other = Application::Get().getScene().GetEntity(uuid);
+				if (other != null)
+				{
+					newParentEntityUUID = entity.GetComponent<CUniqueIdentifier>().uuid;
+					newChildEntityUUID = uuid;
+					hasEntityRelationshipChanged = true;
+				}
+				else
+				{
+					MADAM_CORE_ERROR("Entity {0} is NULL", uuid);
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+		{
+			UUID entityUUID = entity.GetComponent<CUniqueIdentifier>().uuid;
+			ImGui::SetDragDropPayload("ENTITY_ITEM", &entity.GetComponent<CUniqueIdentifier>().uuid, sizeof(UUID));
+			ImGui::EndDragDropSource();
 		}
 
 		if (opened) {

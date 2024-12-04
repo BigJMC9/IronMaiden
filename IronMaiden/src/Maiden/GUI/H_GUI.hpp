@@ -123,6 +123,10 @@ namespace Madam::UI {
 
 		Ref<Entity> selectedEntity = nullptr;
 		Ref<Entity> pendingEntityDeletion;
+		bool hasEntityRelationshipChanged = false;
+		UUID newParentEntityUUID;
+		UUID newChildEntityUUID;
+
 		std::pair<Ref<Rendering::RenderLayer>, int> selectedPipeline = { nullptr, -1 };
 		std::array<bool, 3> gizmoButtonStates = {false, false, false};
 
