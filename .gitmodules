@@ -1,6 +1,6 @@
 [submodule "IronMaiden/vendors/spdlog"]
 	path = IronMaiden/vendors/spdlog
-	url = https://github.com/gabime/spdlog
+	url = https://github.com/BigJMC9/spdlog
 [submodule "IronMaiden/vendors/glm"]
 	path = IronMaiden/vendors/glm
 	url = https://github.com/g-truc/glm
@@ -25,3 +25,6 @@
 [submodule "IronMaiden/vendors/ImGuizmo"]
 	path = IronMaiden/vendors/ImGuizmo
 	url = https://github.com/BigJMC9/ImGuizmo
+[submodule "IronMaiden/vendors/OpenFBX"]
+	path = IronMaiden/vendors/OpenFBX
+	url = https://github.com/nem0/OpenFBX

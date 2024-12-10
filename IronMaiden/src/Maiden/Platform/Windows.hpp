@@ -244,12 +244,22 @@ namespace Madam {
 
 		static bool CreateDirectory(const std::filesystem::path path) 
 		{
-			if (std::filesystem::create_directory(path)) {
-				MADAM_QUIET_INFO("Directory created: {0}", path.string());
-				return true;
+			try {
+				if (std::filesystem::create_directory(path)) {
+					MADAM_QUIET_INFO("Directory created: {0}", path.string());
+					return true;
+				}
+				else {
+					MADAM_CORE_ERROR("Failed to create directory (no specific reason provided): {0}", path.string());
+					return false;
+				}
 			}
-			else {
-				MADAM_CORE_ERROR("Failed to create directory (no specific reason provided): {0}", path.string());
+			catch (const std::filesystem::filesystem_error& e) {
+				MADAM_CORE_ERROR("Error: {0}", e.what());
+				return false;
+			}
+			catch (const std::exception& e) {
+				MADAM_CORE_ERROR("Error: {0}", e.what());
 				return false;
 			}
 		}

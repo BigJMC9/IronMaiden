@@ -28,6 +28,7 @@ namespace Madam
 {
 	VulkanStaticMesh::VulkanStaticMesh(const std::filesystem::path& filepath) : _device{ Rendering::Renderer::GetDevice() }
 	{
+		meshPrimative = MeshPrimatives::None;
 		_filepath = filepath;
 
 		if (filepath.extension().string() == ".obj") {
@@ -43,6 +44,7 @@ namespace Madam
 
 	VulkanStaticMesh::VulkanStaticMesh(const MeshPrimatives primative) : _device{ Rendering::Renderer::GetDevice() }
 	{
+		meshPrimative = primative;
 		LoadPrimative(primative);
 	}
 
@@ -60,9 +62,10 @@ namespace Madam
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
 
-		//when loading unsuccessful engine crashes, ensure that when loading if it is unsuccessful then bail out.
 		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, _filepath.string().c_str())) {
-			throw std::runtime_error(warn + err);
+			MADAM_CORE_ERROR("Could not load: {0}", _filepath.string().c_str());
+			isLoaded = false;
+			return;
 		}
 
 		vertices.clear();
@@ -116,18 +119,28 @@ namespace Madam
 			}
 		}
 
-		CreateVertexBuffers(vertices);
-		CreateIndexBuffers(indices);
+		if (vertices.size() != 0 && indices.size() != 0)
+		{
+			CreateVertexBuffers(vertices);
+			CreateIndexBuffers(indices);
+		}
+
+		isLoaded = true;
 	}
 
 	void VulkanStaticMesh::LoadFBX()
 	{
 		MADAM_CORE_NOT_IMPL("Load FBX file.");
+		isLoaded = true;
 	}
 
 	void VulkanStaticMesh::LoadPrimative(const MeshPrimatives primative)
 	{
-		_filepath = meshPrimativeFilepaths[(uint32_t)primative];
+		if (primative == MeshPrimatives::None)
+		{
+			MADAM_CORE_ERROR("Cannot load a primative that does not exist.");
+		}
+		_filepath = meshPrimativeFilepaths[(uint8_t)primative];
 		LoadOBJ();
 	}
 
@@ -201,9 +214,12 @@ namespace Madam
 	}
 
 	//Move to render system and change to get the VertexBuffer
-	void VulkanStaticMesh::bind(void* commandBuffer) 
+	void VulkanStaticMesh::bind(void* commandBuffer)
 	{
-
+		if (!isLoaded)
+		{
+			return;
+		}
 		VkCommandBuffer cmdBuffer = static_cast<VkCommandBuffer>(commandBuffer);
 
 		VkBuffer buffers[] = { vertexBuffer->getBuffer() };

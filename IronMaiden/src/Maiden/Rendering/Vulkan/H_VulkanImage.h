@@ -1,7 +1,7 @@
 #pragma once
 #include "maidenpch.hpp"
 #include "../H_Renderer.hpp"
-#include "../../Core/H_Utils.hpp"
+#include "../../Core/H_CoreUtils.hpp"
 #include "../H_Image.hpp"
 
 namespace Madam
@@ -230,10 +230,10 @@ namespace Madam
 			}
 
 		protected:
-			VkImageView imageView;
-			VkImage image;
-			VkDeviceMemory imageMemory;
-			VkDescriptorImageInfo imageDescInfo;
+			VkImageView imageView = nullptr;
+			VkImage image = nullptr;
+			VkDeviceMemory imageMemory = nullptr;
+			VkDescriptorImageInfo imageDescInfo{};
 			//VkImageLayout imageLayout;
 			bool isDestroyed = false;
 

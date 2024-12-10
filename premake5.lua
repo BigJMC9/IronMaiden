@@ -18,6 +18,7 @@ include("dpc.lua")
 group("Dependencies")
     include("IronMaiden/vendors/yaml-cpp")
     include("IronMaiden/vendors/imgui")
+    include("IronMaiden/vendors/spdlog")
 
 group("")
 
@@ -34,7 +35,7 @@ project "IronMaiden"
     pchheader "maidenpch.hpp"
     pchsource "%{prj.name}/maidenpch.cpp"
     
-    dependson{"ImGui", "yaml-cpp"}
+    dependson{"ImGui", "yaml-cpp", "spdlog"}
 
 
     files 
@@ -78,7 +79,19 @@ project "IronMaiden"
         "%{LibDir.VulkanSDK}",
         "%{LibDir.glfw}",
         "%{LibDir.imgui}",
+        "%{LibDir.spdlog}"
     }
+
+    links
+    {
+        "%{Lib.Vulkan}",
+        "%{Lib.glfw}",
+        "%{Lib.imgui}",
+        "%{Lib.spdlog}"
+    }
+
+    filter "action:vs*"
+        buildoptions {"/utf-8"}
 
     filter "files:IronMaiden/vendors/ImGuizmo/**.cpp"
     flags{ "NoPCH" }
@@ -91,40 +104,23 @@ project "IronMaiden"
             "_CRT_SECURE_NO_WARNINGS";
             "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
             "MADAM_PLATFORM_WINDOWS";
+            "SPDLOG_COMPILED_LIB";
         }
         
     filter "configurations:Debug"
         defines "MADAM_DEBUG"
         symbols "on"
         runtime "debug"
-        links
-        {
-            "%{Lib.Vulkan}",
-            "%{Lib.glfw}",
-            "%{Lib.imgui}"
-        }
 
     filter "configurations:Release"
         defines "MADAM_RELEASE"
         optimize "on"
         runtime "release"
-        links
-        {
-            "%{Lib.Vulkan}",
-            "%{Lib.glfw}",
-            "%{Lib.imgui}"
-        }
 
     filter "configurations:Dist"
         defines "MADAM_DIST"
         optimize "on"
-        runtime "release"
-        links
-        {
-            "%{Lib.Vulkan}",
-            "%{Lib.glfw}",
-            "%{Lib.imgui}"
-        }  
+        runtime "release" 
 
 project "Editor"
     location "Editor"
@@ -174,6 +170,9 @@ project "Editor"
         "%{Lib.yaml_cpp}"
     }
 
+    filter "action:vs*"
+        buildoptions {"/utf-8"}
+
     filter "system:windows"
         systemversion "latest"
 
@@ -181,14 +180,14 @@ project "Editor"
         {
             "_CRT_SECURE_NO_WARNINGS";
             "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS";
-            "MADAM_PLATFORM_WINDOWS"; 
+            "MADAM_PLATFORM_WINDOWS";
+            "SPDLOG_COMPILED_LIB";
         }
 
         postbuildcommands
         {
             "call \"compile.bat\"",
-            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\resources\\\" \"%{wks.location}bin\\" .. outputdir .. "\\Editor\\resources\\\" /E /I /Y",
-            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\logs\\\" \"%{wks.location}bin\\" .. outputdir .. "\\Editor\\logs\\\" /E /I /Y"
+            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\resources\\\" \"%{wks.location}bin\\" .. outputdir .. "\\Editor\\resources\\\" /E /I /Y"
         }
 
     filter "configurations:Debug"

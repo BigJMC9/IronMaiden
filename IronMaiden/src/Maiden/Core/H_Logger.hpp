@@ -1,11 +1,58 @@
-#pragma once
-
 #include "maidenpch.hpp"
 #include "Main/Core.hpp"
-#include "H_Utils.hpp"
+#include "H_CoreUtils.hpp"
 
+#ifdef INCLUDE_GLM_UTILS
+#include "../Utils/H_Logger_Utils.h"
+#undef INCLUDE_GLM_UTILS
+#endif
+
+#ifndef H_LOGGER_GUARD
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
+#include <filesystem>
+
+namespace fmt {
+
+    template<>
+    struct fmt::formatter<std::filesystem::path> {
+
+        constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const std::filesystem::path& path, FormatContext& ctx) const -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "File Directory: {}", path.u8string());
+        }
+    };
+
+    template<>
+    struct fmt::formatter<Madam::UUID> {
+
+        constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const Madam::UUID& uuid, FormatContext& ctx) const -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "UUID: {}", static_cast<std::string>(uuid));
+        }
+    };
+
+    template <typename T>
+    struct fmt::formatter<T, std::enable_if_t<std::is_enum_v<T>, char>> {
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const T& value, FormatContext& ctx) const -> decltype(ctx.out()) {
+            return fmt::format_to(ctx.out(), "{}", static_cast<int>(value));
+        }
+    };
+
+}
 
 namespace Madam
 {
@@ -68,3 +115,6 @@ namespace Madam
                               ::Madam::Logger::GetFileLogger()->error("APP: Error: {}", fmt::format(__VA_ARGS__))
 #define MADAM_FATAL(...)      ::Madam::Logger::GetClientLogger()->critical(__VA_ARGS__); \
                               ::Madam::Logger::GetFileLogger()->fatal("APP: Fatal Error: {}", fmt::format(__VA_ARGS__))
+
+#define H_LOGGER_GUARD
+#endif

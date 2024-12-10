@@ -2,6 +2,7 @@
 #include "H_Project.h"
 #include "../Asset/H_AssetSystem.h"
 #include "../Core/H_Logger.hpp"
+#include "../Platform/Platforms.hpp"
 #include <fstream>
 
 namespace Madam
@@ -62,7 +63,7 @@ namespace Madam
 		if (!instanceFlag)
 		{
 			clear();
-			new Project(Application::Get().getConfig().projectsDirectory / "temp");
+			new Project(Application::Get().GetConfig().projectsDirectory / "temp");
 		}
 		return *instance;
 	}

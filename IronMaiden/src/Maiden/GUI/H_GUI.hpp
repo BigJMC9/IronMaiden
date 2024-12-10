@@ -1,11 +1,11 @@
 #pragma once
 #include "maidenpch.hpp"
 #include "../Interfaces/H_Interface.h"
-#include "../Platform/Platforms.hpp"
 #include "../Events/H_EventSystem.h"
 #include "../Rendering/Vulkan/H_DescriptorManager.h"
 #include "../Rendering/Vulkan/H_VulkanTexture.h"
 
+#include <filesystem>
 
 #define IMGUI_ENABLE_DOCKING
 #define IMGUI_ENABLE_VIEWPORTS
@@ -63,6 +63,8 @@ namespace Madam::UI {
 		void OnRenderPassEvent(NextRenderPassEvent* e);
 		void OnResizeEvent(WindowResizeEvent* e);
 		void OnSceneChangeEvent(SceneChangeEvent* e);
+		void OnMouseMoveRawEvent(MouseMoveRawEvent* e);
+		void OnMouseScrollEvent(MouseScrollEvent* e);
 
 		void SetupEvents();
 		void SetupIcons();
@@ -105,8 +107,8 @@ namespace Madam::UI {
 
 		void CreateViewportPipeline();
 
-		ImGui_ImplVulkan_InitInfo* init_info;
-		Ref<DescriptorPool> guiPool;
+		ImGui_ImplVulkan_InitInfo* init_info = nullptr;
+		Ref<DescriptorPool> guiPool = nullptr;
 		
 		float uiTime = 0.0f;
 		int ImGuizmoType = -1;
@@ -117,10 +119,16 @@ namespace Madam::UI {
 		Ref<Asset> selectedAsset = nullptr;
 		bool isSRGB = false;
 
+		bool isMovingViewportCamera = false;
+
 		Ref<Entity> selectedEntity = nullptr;
 		Ref<Entity> pendingEntityDeletion;
+		bool hasEntityRelationshipChanged = false;
+		UUID newParentEntityUUID;
+		UUID newChildEntityUUID;
+
 		std::pair<Ref<Rendering::RenderLayer>, int> selectedPipeline = { nullptr, -1 };
-		std::array<bool, 3> gizmoButtonStates;
+		std::array<bool, 3> gizmoButtonStates = {false, false, false};
 
 		std::vector<ImFont*> fonts;
 		ImGuiStyle style;
@@ -129,22 +137,23 @@ namespace Madam::UI {
 		ImDrawCallback viewportCallback = nullptr;
 
 		//Descriptors
-		VkDescriptorSet viewportSet;
-		VkSampler viewportSampler;
+		VkDescriptorSet viewportSet = nullptr;
+		VkSampler viewportSampler = nullptr;
 
 		std::unordered_map<std::string, IconInfo> icons;
 		std::unordered_map<UUID, IconInfo> loadedIconTextures;
 		std::filesystem::path popupContextSelectedItem;
 		bool isPopupContextOpen = false;
 
-#define ICON_SIZE 5
+#define ICON_SIZE 6
 		std::filesystem::path iconFilepaths[ICON_SIZE] =
 		{
 			"resources\\icons\\PlayButton.png",
 			"resources\\icons\\PauseButton.png",
 			"resources\\icons\\StopButton.png",
 			"resources\\icons\\Folder.png",
-			"resources\\icons\\File.png"
+			"resources\\icons\\File.png",
+			"resources\\icons\\Scene.png"
 		};
 
 		template<typename T, typename U>

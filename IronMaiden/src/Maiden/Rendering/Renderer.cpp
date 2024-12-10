@@ -22,24 +22,24 @@ namespace Madam {
 			if (isRunning) 
 			{
 				MADAM_CORE_WARN("Renderer prematurally shutdown");
-				deinit();
+				Deinit();
 			}
 		}
 
-		void Renderer::init() 
+		void Renderer::Init() 
 		{
 			isRunning = true;
 			instance = this;
 			instanceFlag = true;
-			recreateSwapChain();
+			RecreateSwapChain();
 			frames.resize(swapChain->imageCount());
-			createCommandBuffers();
-			createMainRenderPass();
+			CreateCommandBuffers();
+			CreateMainRenderPass();
 		}
 
-		void Renderer::deinit() 
+		void Renderer::Deinit() 
 		{
-			freeCommandBuffers();
+			FreeCommandBuffers();
 			//freeImageBuffers(0);
 			isRunning = false;
 			instance = nullptr;
@@ -47,7 +47,7 @@ namespace Madam {
 		}
 
 		//Recreate swapchain if window is resized
-		void Renderer::recreateSwapChain() 
+		void Renderer::RecreateSwapChain() 
 		{
 			hasSwapChainRecreated = true;
 			MADAM_CORE_INFO("Recreating SwapChain");
@@ -102,7 +102,7 @@ namespace Madam {
 					}
 					frames.clear();
 					frames.resize(swapChain->imageCount());
-					createMainRenderPass();
+					CreateMainRenderPass();
 				}
 				Events::WindowResizeEvent e(windowData);
 				Events::EventSystem::Get().PushEvent(&e, true);
@@ -111,7 +111,7 @@ namespace Madam {
 
 		//Create command buffers from command pool for each frame and render pass
 		//??
-		void Renderer::createCommandBuffers() 
+		void Renderer::CreateCommandBuffers() 
 		{
 			commandBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
@@ -128,13 +128,13 @@ namespace Madam {
 
 		}
 
-		void Renderer::freeCommandBuffers() 
+		void Renderer::FreeCommandBuffers() 
 		{
 			vkFreeCommandBuffers(device.device(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 			commandBuffers.clear();
 		}
 
-		bool Renderer::beginFrame() 
+		bool Renderer::BeginFrame() 
 		{
 			MADAM_CORE_ASSERT(!isFrameStarted, "Can't call beginFrame while already in progress");
 
@@ -142,7 +142,7 @@ namespace Madam {
 			if (result == VK_ERROR_OUT_OF_DATE_KHR) 
 			{
 				MADAM_CORE_INFO("Recreating Swapchain on begin frame");
-				recreateSwapChain();
+				RecreateSwapChain();
 				return false;
 			}
 
@@ -155,11 +155,11 @@ namespace Madam {
 			return true;
 		}
 
-		void Renderer::endFrame() 
+		void Renderer::EndFrame() 
 		{
 			MADAM_CORE_ASSERT(isFrameStarted, "Can't call endFrame while frame is not in progress");
 			//MADAM_CORE_INFO("Ending Frame");
-			auto commandBuffer = getCurrentCommandBuffer();
+			auto commandBuffer = GetCurrentCommandBuffer();
 
 			if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) 
 			{
@@ -171,7 +171,7 @@ namespace Madam {
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized()) 
 			{
 				MADAM_CORE_INFO("Recreating Swapchain on end frame");
-				recreateSwapChain();
+				RecreateSwapChain();
 			}
 			else if (result != VK_SUCCESS) 
 			{
@@ -182,11 +182,11 @@ namespace Madam {
 			currentFrameIndex = (currentFrameIndex + 1) % SwapChain::MAX_FRAMES_IN_FLIGHT;
 		}
 
-		VkCommandBuffer Renderer::beginCommandBuffer() 
+		VkCommandBuffer Renderer::BeginCommandBuffer() const 
 		{
 			MADAM_CORE_ASSERT(isFrameStarted, "Can't call beginCommandBuffer if frame is not in progress");
 
-			auto commandBuffer = getCurrentCommandBuffer();
+			auto commandBuffer = GetCurrentCommandBuffer();
 
 			VkCommandBufferBeginInfo beginInfo{};
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -198,7 +198,7 @@ namespace Madam {
 			return commandBuffer;
 		}
 
-		void Renderer::beginRenderPass(VkCommandBuffer commandBuffer, int renderIndex) 
+		void Renderer::BeginRenderPass(VkCommandBuffer commandBuffer, int renderIndex) 
 		{
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -239,19 +239,19 @@ namespace Madam {
 
 		}
 
-		void Renderer::endRenderPass(VkCommandBuffer commandBuffer) 
+		void Renderer::EndRenderPass(VkCommandBuffer commandBuffer) const 
 		{
 			//saveAsImage(commandBuffer);
 			MADAM_CORE_ASSERT(isFrameStarted, "Can't call endSwapChainRenderPass if frame is not in progress");
-			MADAM_CORE_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't end render pass on command buffer from a different frame");
+			MADAM_CORE_ASSERT(commandBuffer == GetCurrentCommandBuffer(), "Can't end render pass on command buffer from a different frame");
 			vkCmdEndRenderPass(commandBuffer);
 		}
 
 		//Update this
-		void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) 
+		void Renderer::BeginSwapChainRenderPass(VkCommandBuffer commandBuffer) 
 		{
 			MADAM_CORE_ASSERT(isFrameStarted, "Can't call beginSwapChainRenderPass if frame is not in progress");
-			MADAM_CORE_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't begin render pass on command buffer from a different frame");
+			MADAM_CORE_ASSERT(commandBuffer == GetCurrentCommandBuffer(), "Can't begin render pass on command buffer from a different frame");
 
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -285,15 +285,15 @@ namespace Madam {
 			Events::NextRenderPassEvent e(renderpassIndex);
 			Events::EventSystem::Get().PushEvent(&e, true);
 		}
-		void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer) 
+		void Renderer::EndSwapChainRenderPass(VkCommandBuffer commandBuffer) 
 		{
 			MADAM_CORE_ASSERT(isFrameStarted, "Can't call endSwapChainRenderPass if frame is not in progress");
-			MADAM_CORE_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't end render pass on command buffer from a different frame");
+			MADAM_CORE_ASSERT(commandBuffer == GetCurrentCommandBuffer(), "Can't end render pass on command buffer from a different frame");
 			vkCmdEndRenderPass(commandBuffer);
 			renderpassIndex = -1;
 		}
 
-		VkRenderPass Renderer::createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies)
+		VkRenderPass Renderer::CreateRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies)
 		{
 			VkRenderPass renderPass;
 			VkRenderPassCreateInfo renderPassInfo = {};
@@ -314,7 +314,7 @@ namespace Madam {
 		}
 
 
-		void Renderer::createMainRenderImages() 
+		void Renderer::CreateMainRenderImages() 
 		{
 			for (size_t i = 0; i < frames.size(); i++)
 			{
@@ -457,11 +457,11 @@ namespace Madam {
 
 		}
 
-		void Renderer::createMainRenderPass() 
+		void Renderer::CreateMainRenderPass() 
 		{
 
 			MADAM_CORE_INFO("Creating Main Render Pass");
-			createMainRenderImages();
+			CreateMainRenderImages();
 
 			VkAttachmentDescription colorAttachment{};
 			colorAttachment.format = swapChain->getSwapChainImageFormat();
@@ -509,7 +509,7 @@ namespace Madam {
 			std::vector<VkSubpassDescription> subpasses = { subpass };
 			std::vector<VkSubpassDependency> dependencies = { dependency };
 
-			VkRenderPass renderPass = createRenderPass(attachments, subpasses, dependencies);
+			VkRenderPass renderPass = CreateRenderPass(attachments, subpasses, dependencies);
 
 			for (size_t i = 0; i < frames.size(); i++)
 			{

@@ -51,12 +51,15 @@ We are aiming for a major release in the first half of 2025 which will include a
  - **Custom Pointer Data Structures for Garbage Collection**
  - **Adhering to Updated Code Style**
 
+## Fixed Issues
+
+- **Rotation Issues:** Object rotations now rely on Quanternions, Object rotations will also respect scene hierachy.
+
 ## Known Issues
 
 The engine is currently in an early development phase, and we are aware of several existing issues that will be addressed as we progress through the restructuring process.
 
 ### Known Issues
-- **Rotation Issues:** Object rotations still rely on Euler angles instead of quaternions, leading to rotational inconsistencies.
 - **Render Pass Shutdown:** Render passes and renderer are not always shutting down correctly, causing potential stability issues.
 
 ## Building
@@ -110,13 +113,15 @@ The engine should now run correctly with your configured project directory.
     ```
 #### Download dependencies manually
 If you prefer to download dependencies manually, download and unzip the following repositories, placing each in the **IronMaiden/IronMaiden/vendors** directory:
-- [entt](https://github.com/skypjack/entt/tree/fedcb920ce0068c35ffbc66fd4e84864e6ef71ef)
-- [glm](https://github.com/g-truc/glm/tree/adf31f555e73e2bd6fda373bb5d8740f9c6c17c0)
-- [imgui](https://github.com/BigJMC9/imgui/tree/31620ac3f710a0327c143d5ac803bf6461fa9822)
-- [spdlog](https://github.com/gabime/spdlog/tree/134f9194bb93072b72b8cfa27ac3bb30a0fb5b57)
-- [stb](https://github.com/nothings/stb/tree/ae721c50eaf761660b4f90cc590453cdb0c2acd0)
-- [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader/tree/cab4ad7254cbf7eaaafdb73d272f99e92f166df8)
-- [yaml-cpp](https://github.com/BigJMC9/yaml-cpp/tree/cab1344751c0140041f605d50914233cf20eadfa)
+- [entt](https://github.com/skypjack/entt)
+- [glm](https://github.com/g-truc/glm)
+- [ImGuizmo](https://github.com/BigJMC9/ImGuizmo/tree/master)
+- [imgui](https://github.com/BigJMC9/imgui/tree/docking)
+- [spdlog](https://github.com/BigJMC9/spdlog)
+- [stb](https://github.com/nothings/stb)
+- [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)
+- [yaml-cpp](https://github.com/BigJMC9/yaml-cpp)
+- [OpenFBX](https://github.com/nem0/OpenFBX)
 
 ## Development Team
 

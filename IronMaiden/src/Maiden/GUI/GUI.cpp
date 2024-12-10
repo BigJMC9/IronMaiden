@@ -8,6 +8,10 @@
 #include "../Project/H_Project.h"
 #include "../Asset/H_AssetSystem.h"
 #include "../Rendering/H_Mesh.h"
+#include "../Platform/Platforms.hpp"
+
+#define INCLUDE_GLM_UTILS
+#include "../Utils/H_Logger_Utils.h"
 
 #include <cwchar>
 #include <cstring>
@@ -160,7 +164,7 @@ namespace Madam::UI {
 		
 		ImDrawData* draw_data = ImGui::GetDrawData();
 		ImGui_ImplVulkan_Data* bd = ImGui::GetCurrentContext() ? (ImGui_ImplVulkan_Data*)ImGui::GetIO().BackendRendererUserData : nullptr;
-		VkCommandBuffer cmdBuffer = Rendering::Renderer::Get().getCurrentCommandBuffer();
+		VkCommandBuffer cmdBuffer = Rendering::Renderer::Get().GetCurrentCommandBuffer();
 		ImGui_ImplVulkan_ViewportData* viewportRenderData = (ImGui_ImplVulkan_ViewportData*)draw_data->OwnerViewport->RendererUserData;
 		ImGui_ImplVulkan_WindowRenderBuffers* wrb = &viewportRenderData->RenderBuffers;
 		ImGui_ImplVulkan_FrameRenderBuffers* rb = &wrb->FrameRenderBuffers[wrb->Index];
@@ -287,10 +291,10 @@ namespace Madam::UI {
 
 		Style(io); 
 
-		init_info = &Rendering::Renderer::Get().getImGuiInitInfo();
+		init_info = &Rendering::Renderer::Get().GetImGuiInitInfo();
 		init_info->DescriptorPool = guiPool.get()->descriptorPool;
 		init_info->MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-		init_info->RenderPass = Rendering::Renderer::Get().getSwapChainRenderPass();
+		init_info->RenderPass = Rendering::Renderer::Get().GetSwapChainRenderPass();
 
 		VkSamplerCreateInfo samplerInfo = {};
 		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -314,11 +318,11 @@ namespace Madam::UI {
 			throw std::runtime_error("failed to create texture sampler!");
 		}
 
-		ImGui_ImplGlfw_InitForVulkan(Application::Get().getWindow().getGLFWwindow(), true);
+		ImGui_ImplGlfw_InitForVulkan(Application::Get().GetWindow().getGLFWwindow(), true);
 		ImGui_ImplVulkan_Init(init_info);
 
 		//viewport descriptors
-		viewportSet = ImGui_ImplVulkan_AddTexture(viewportSampler, Rendering::Renderer::Get().getImageView(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		viewportSet = ImGui_ImplVulkan_AddTexture(viewportSampler, Rendering::Renderer::Get().GetImageView(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		SetupIcons();
 
@@ -351,8 +355,11 @@ namespace Madam::UI {
 		EventSystem::Get().AddListener(this, &GUI::OnResizeEvent);
 		EventSystem::Get().AddListener(this, &GUI::OnRenderPassEvent);
 		EventSystem::Get().AddListener(this, &GUI::OnSceneChangeEvent);
+		EventSystem::Get().AddListener(this, &GUI::OnMouseMoveRawEvent);
+		EventSystem::Get().AddListener(this, &GUI::OnMouseScrollEvent);
 	}
 
+	//Events
 	void GUI::OnSceneChangeEvent(SceneChangeEvent* e) {
 		selectedEntity = nullptr;
 	}
@@ -366,14 +373,27 @@ namespace Madam::UI {
 	void GUI::OnResizeEvent(WindowResizeEvent* e) {
 		ImGui_ImplGlfw_Shutdown();
 		ImGui_ImplVulkan_Shutdown();
-		init_info = &Rendering::Renderer::Get().getImGuiInitInfo();
+		init_info = &Rendering::Renderer::Get().GetImGuiInitInfo();
 		init_info->DescriptorPool = guiPool.get()->descriptorPool;
 		init_info->MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-		init_info->RenderPass = Rendering::Renderer::Get().getSwapChainRenderPass();
-		ImGui_ImplGlfw_InitForVulkan(Application::Get().getWindow().getGLFWwindow(), true);
+		init_info->RenderPass = Rendering::Renderer::Get().GetSwapChainRenderPass();
+		ImGui_ImplGlfw_InitForVulkan(Application::Get().GetWindow().getGLFWwindow(), true);
 		ImGui_ImplVulkan_Init(init_info);
-		viewportSet = ImGui_ImplVulkan_AddTexture(viewportSampler, Rendering::Renderer::Get().getImageView(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		viewportSet = ImGui_ImplVulkan_AddTexture(viewportSampler, Rendering::Renderer::Get().GetImageView(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		CreateViewportPipeline();
+	}
+
+	void GUI::OnMouseMoveRawEvent(MouseMoveRawEvent* e)
+	{
+		if (!isMovingViewportCamera)
+		{
+			ImGui_ImplGlfw_CursorPosCallback(Application::Get().GetWindow().getGLFWwindow(), e->x, e->y);
+		}
+	}
+
+	void GUI::OnMouseScrollEvent(MouseScrollEvent* e)
+	{
+		ImGui_ImplGlfw_ScrollCallback(Application::Get().GetWindow().getGLFWwindow(), e->x, e->y);
 	}
 
 	void GUI::OnDetach() {
@@ -432,12 +452,12 @@ namespace Madam::UI {
 
 	void GUI::OnUpdate() {
 		if (*pendingEntityDeletion) {
-			Application::Get().getScene().DestroyEntity(*pendingEntityDeletion);
+			Application::Get().GetScene().DestroyEntity(*pendingEntityDeletion);
 			pendingEntityDeletion = CreateRef<Entity>(Entity());
 		}
 
 		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize = ImVec2((float)Application::Get().getWindow().getWidth(), (float)Application::Get().getWindow().getHeight());
+		io.DisplaySize = ImVec2((float)Application::Get().GetWindow().getWidth(), (float)Application::Get().GetWindow().getHeight());
 
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -451,7 +471,7 @@ namespace Madam::UI {
 
 		ImGui::Render();
 
-		VkCommandBuffer commandBuffer = Rendering::Renderer::Get().getCurrentCommandBuffer();
+		VkCommandBuffer commandBuffer = Rendering::Renderer::Get().GetCurrentCommandBuffer();
 		Record(commandBuffer);
 	}
 
@@ -493,7 +513,7 @@ namespace Madam::UI {
 					camera.GetComponent<CTransform>().translation.z = -2.5f;
 					Rendering::CameraData cameraData;
 					cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
-					cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().getAspectRatio(), 0.1f, 1000.0f);
+					cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().GetAspectRatio(), 0.1f, 1000.0f);
 					camera.AddComponent<CCamera>(cameraData);
 					camera.GetComponent<CCamera>().cameraHandle->SetViewDirection(glm::vec3(0.f, 2.0f, 0.f), glm::vec3(0.f, 0.f, 0.f));
 					camera.GetComponent<CCamera>().cameraHandle->SetMain();
@@ -501,7 +521,10 @@ namespace Madam::UI {
 				}
 				if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {
 					if (OpenFileDialog(sceneDir, L"scene", L"scene")) {
-						Application::GetSceneSerializer()->Deserialize(sceneDir);
+						if (!Application::GetSceneSerializer()->Deserialize(sceneDir))
+						{
+							MADAM_ERROR("Unable to Load Scene");
+						}
 					}
 					else {
 						// User cancelled or error occurred
@@ -531,7 +554,7 @@ namespace Madam::UI {
 						ShowMessageBox(L"Could not save scene.", L"Info", MB_OK | MB_ICONINFORMATION);
 					}
 				}
-				if (ImGui::MenuItem("Exit")) Application::Get().quit();
+				if (ImGui::MenuItem("Exit")) Application::Get().Quit();
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Edit"))
@@ -602,16 +625,15 @@ namespace Madam::UI {
 	}
 
 	void GUI::Viewport() {
-
-		//Update in future to scale with window size
 		if (ImGui::Begin("Viewport")) {
 
 			ImVec2 windowSize = ImGui::GetContentRegionAvail();
-			ImVec2 imageSize = ImVec2(static_cast<float>(Application::Get().getConfig().windowWidth), static_cast<float>(Application::Get().getConfig().windowHeight));
+			ImVec2 windowMinPoint = ImVec2(ImGui::GetWindowSize().x - ImGui::GetContentRegionAvail().x, ImGui::GetWindowSize().y - ImGui::GetContentRegionAvail().y);
+			ImVec2 imageSize = ImVec2(static_cast<float>(Application::Get().GetConfig().windowWidth), static_cast<float>(Application::Get().GetConfig().windowHeight));
 			float imageAspectRatio = imageSize.x / imageSize.y;
 
 			ImVec2 displaySize;
-			if (windowSize.x / windowSize.y > imageAspectRatio) {
+			if ((windowSize.x / windowSize.y) > imageAspectRatio) {
 				displaySize.y = windowSize.y;
 				displaySize.x = windowSize.y * imageAspectRatio;
 			}
@@ -621,7 +643,6 @@ namespace Madam::UI {
 			}
 
 			ImVec2 uv0 = ImVec2(0, 0);
-			ImVec2 uv1 = ImVec2(displaySize.x / imageSize.x, displaySize.y / imageSize.y);
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 			drawList->AddCallback(viewportCallback, &viewportPipelineInfo);
 			ImGui::Image(viewportSet, displaySize, uv0, ImVec2(1,1), ImVec4(1, 1, 1, 1));
@@ -635,7 +656,10 @@ namespace Madam::UI {
 					std::string path = ConvertWideToUtf8(wPath);
 
 					MADAM_CORE_INFO("Opening scene: " + path);
-					Application::GetSceneSerializer()->Deserialize(path);
+					if (!Application::GetSceneSerializer()->Deserialize(path))
+					{
+						MADAM_ERROR("Unable to Load Scene");
+					}
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -657,28 +681,72 @@ namespace Madam::UI {
 				ImGuizmo::SetDrawlist();
 				float windowWidth = (float)ImGui::GetWindowWidth();
 				float windowHeight = (float)ImGui::GetWindowHeight();
-				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, displaySize.x, displaySize.y);
+				ImVec2 padding = ImGui::GetStyle().WindowPadding;
+				ImVec2 rectAreaStartPos = ImVec2(ImGui::GetWindowPos().x + windowMinPoint.x - padding.x, ImGui::GetWindowPos().y + windowMinPoint.y - padding.y);
+
+				ImGuizmo::SetRect(rectAreaStartPos.x, rectAreaStartPos.y , displaySize.x, displaySize.y);
+				
 
 				auto& cameraHandle = Rendering::CameraHandle::GetMain();
 				glm::mat4 cameraProjection = cameraHandle.GetProjection();
 				cameraProjection[1][1] *= -1;
 
 				glm::mat4 cameraView = cameraHandle.GetView();
-
-				glm::mat4 transform = selectedEntity->GetComponent<CTransform>();
-
 				
+				UUID parentUUID = selectedEntity->GetComponent<CRelationship>().parent;
+				glm::mat4 parentTransform;
+				glm::mat4 transform = selectedEntity->GetComponent<CTransform>().transform();
+
+				if (parentUUID != null)
+				{
+					parentTransform = Application::Get().GetScene().GetWorldTransform(parentUUID);
+				}
+				else
+				{
+					parentTransform = glm::mat4(1.0f);
+				}
+
+				glm::mat4 worldTransform = parentTransform * transform;
+
 				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)ImGuizmoType,
-					ImGuizmo::LOCAL, glm::value_ptr(transform));
+					ImGuizmo::LOCAL, glm::value_ptr(worldTransform));
 
 				if (ImGuizmo::IsUsing()) {
-					glm::vec3 rotation = selectedEntity->GetComponent<CTransform>().rotation;
-
+					if (parentUUID != null)
+					{
+						
+						transform = glm::inverse(parentTransform) * worldTransform;
+					}
+					else
+					{
+						transform = worldTransform;
+					}
 					selectedEntity->GetComponent<CTransform>().UpdateTransform(transform);
-					glm::vec3 deltaRotation = selectedEntity->GetComponent<CTransform>().rotation - rotation;
-					selectedEntity->GetComponent<CTransform>().rotation = rotation + deltaRotation;
 				}
 			}
+		}
+		if (ImGui::IsWindowHovered() || isMovingViewportCamera)
+		{
+			if (Input::Get().IsMouseButtonPress(MouseCode::RIGHTMOUSEBUTTON))
+			{
+				Application::Get().GetWindow().SetCursorState(CursorState::DISABLED);
+				isMovingViewportCamera = true;
+			}
+			else
+			{
+				if (isMovingViewportCamera)
+				{
+					isMovingViewportCamera = false;
+					Application::Get().GetWindow().PopCursorPosition();
+				}
+				Application::Get().GetWindow().SetCursorState(CursorState::NORMAL);
+				Application::Get().GetWindow().SetCursorIcon(CursorType::CROSSHAIR);
+			}
+		}
+		else
+		{
+			Application::Get().GetWindow().SetCursorState(CursorState::NORMAL);
+			Application::Get().GetWindow().SetCursorIcon(CursorType::ARROW);
 		}
 		ImGui::End();
 	}
@@ -686,11 +754,45 @@ namespace Madam::UI {
 	void GUI::Hierarchy() {
 
 		if (ImGui::Begin("Hierarchy")) {
-			Application::Get().getScene().GetAllEntitiesWith<CMetadata>().each([&](auto entityId, auto& gameObject)
+			Application::Get().GetScene().GetAllEntitiesWith<CMetadata>().each([&](auto entityId, auto& gameObject)
 			{
-				Entity entity {entityId, &Application::Get().getScene()};
-				DrawEntityNode(entity);
+				Entity entity {entityId, &Application::Get().GetScene()};
+				if (entity.GetComponent<CRelationship>().parent == null && entity.GetComponent<CMetadata>().isHiddenEntity != true)
+				{
+					DrawEntityNode(entity);
+				}
 			});
+
+			if (hasEntityRelationshipChanged)
+			{
+				glm::mat4 inverseParentWorldMatrix = glm::inverse(Application::Get().GetScene().GetWorldTransform(Application::Get().GetScene().GetEntity(newParentEntityUUID)));
+
+				glm::mat4 localMatrixChild = inverseParentWorldMatrix * Application::Get().GetScene().GetWorldTransform(Application::Get().GetScene().GetEntity(newChildEntityUUID));
+
+				Application::Get().GetScene().AddEntityRelationship(Application::Get().GetScene().GetEntity(newParentEntityUUID), Application::Get().GetScene().GetEntity(newChildEntityUUID));
+
+				Application::Get().GetScene().GetEntity(newChildEntityUUID).GetComponent<CTransform>().UpdateTransform(localMatrixChild);
+
+				hasEntityRelationshipChanged = false;
+			}
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY_ITEM"))
+			{
+				UUID uuid = *(UUID*)payload->Data;
+				Entity other = Application::Get().GetScene().GetEntity(uuid);
+				if (other != null)
+				{
+					Application::Get().GetScene().RemoveParentEntityRelationship(other);
+				}
+				else
+				{
+					MADAM_CORE_ERROR("Entity {0} is NULL", uuid);
+				}
+			}
+			ImGui::EndDragDropTarget();
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
@@ -699,24 +801,24 @@ namespace Madam::UI {
 
 		if (ImGui::BeginPopupContextWindow(0, 1 | ImGuiPopupFlags_NoOpenOverItems)) {
 			if (ImGui::MenuItem("Create Empty")) {
-				auto entity = Application::Get().getScene().CreateEntity();
+				auto entity = Application::Get().GetScene().CreateEntity();
 			}
 			if (ImGui::BeginMenu("3D")) {
 				if (ImGui::MenuItem("Quad"))
 				{
-					auto entity = Application::Get().getScene().CreateEntity("Quad");
+					auto entity = Application::Get().GetScene().CreateEntity("Quad");
 					entity.AddComponent<CMeshRenderer>();
 					entity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Quad);
 				}
 				if (ImGui::MenuItem("Cube"))
 				{
-					auto entity = Application::Get().getScene().CreateEntity("Cube");
+					auto entity = Application::Get().GetScene().CreateEntity("Cube");
 					entity.AddComponent<CMeshRenderer>();
 					entity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Cube);
 				}
 				if (ImGui::MenuItem("Sphere"))
 				{
-					auto entity = Application::Get().getScene().CreateEntity("Sphere");
+					auto entity = Application::Get().GetScene().CreateEntity("Sphere");
 					entity.AddComponent<CMeshRenderer>();
 					entity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Sphere);
 				}
@@ -726,7 +828,7 @@ namespace Madam::UI {
 			{
 				if (ImGui::MenuItem("Point Light"))
 				{
-					auto entity = Application::Get().getScene().CreateEntity("Point Light");
+					auto entity = Application::Get().GetScene().CreateEntity("Point Light");
 					entity.AddComponent<CPointLight>();
 				}
 				ImGui::EndMenu();
@@ -929,6 +1031,13 @@ namespace Madam::UI {
 							selectedAsset = Project::Get().getAssetManager().GetAsset(metadata->uuid);
 						}
 					}
+					else if (Project::Get().getAssetManager().GetAssetType(metadata->uuid) == AssetType::SCENE)
+					{
+						if (ImGui::ImageButton(buttonID.c_str(), icons["Scene.png"].descriptorSet, thumbnailSize))
+						{
+							selectedAsset = Project::Get().getAssetManager().GetAsset(metadata->uuid);
+						}
+					}
 					else if (ImGui::ImageButton(buttonID.c_str(), icons["File.png"].descriptorSet, thumbnailSize))
 					{
 						selectedAsset = Project::Get().getAssetManager().GetAsset(metadata->uuid);
@@ -1051,7 +1160,7 @@ namespace Madam::UI {
 				ImGui::TreePop();
 				ImGui::NextColumn();
 				//we need a renderpassInfo struct to get the name of the renderpass
-				std::vector<VkRenderPass> renderpasses = Rendering::Renderer::Get().getRenderPasses();
+				std::vector<VkRenderPass> renderpasses = Rendering::Renderer::Get().GetRenderPasses();
 				std::vector<Ref<Rendering::RenderLayer>> renderLayers;
 				for (size_t i = 0; i < renderpasses.size(); i++)
 				{
@@ -1064,7 +1173,7 @@ namespace Madam::UI {
 						ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
 						if (i == 0) //only temp until renderer is probably setup to handle multiple renderpasses with multiple pipelines
 						{
-							renderLayers = Application::Get().getMasterRenderSystem().getRenderLayers();
+							renderLayers = Application::Get().GetMasterRenderSystem().getRenderLayers();
 							ImVec4 headerColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 							//ImVec4 headerHoveredColor = ImGui::GetStyle().Colors[ImGuiCol_HeaderHovered];
 							ImGui::PushStyleColor(ImGuiCol_HeaderHovered, headerColor);
@@ -1132,12 +1241,12 @@ namespace Madam::UI {
 
 				}
 				else if (isUpHit && !isDownHit) {
-					Application::Get().getMasterRenderSystem().switchRenderSystems(selectedPipeline.second, selectedPipeline.second - 1);
+					Application::Get().GetMasterRenderSystem().switchRenderSystems(selectedPipeline.second, selectedPipeline.second - 1);
 					selectedPipeline.second--;
 				}
 				else if (!isUpHit && isDownHit) {
 					MADAM_CORE_INFO("Down has been hit");
-					Application::Get().getMasterRenderSystem().switchRenderSystems(selectedPipeline.second, selectedPipeline.second + 1);
+					Application::Get().GetMasterRenderSystem().switchRenderSystems(selectedPipeline.second, selectedPipeline.second + 1);
 					selectedPipeline.second++;
 				}
 				else {
@@ -1169,13 +1278,85 @@ namespace Madam::UI {
 
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
+			if (ImGui::MenuItem("Create Empty")) {
+				auto childEntity = Application::Get().GetScene().CreateEntity();
+				Application::Get().GetScene().AddEntityRelationship(entity, childEntity);
+			}
+			if (ImGui::BeginMenu("3D")) {
+				if (ImGui::MenuItem("Quad"))
+				{
+					auto childEntity = Application::Get().GetScene().CreateEntity("Quad");
+					childEntity.AddComponent<CMeshRenderer>();
+					childEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Quad);
+					Application::Get().GetScene().AddEntityRelationship(entity, childEntity);
+				}
+				if (ImGui::MenuItem("Cube"))
+				{
+					auto childEntity = Application::Get().GetScene().CreateEntity("Cube");
+					childEntity.AddComponent<CMeshRenderer>();
+					childEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Cube);
+					Application::Get().GetScene().AddEntityRelationship(entity, childEntity);
+				}
+				if (ImGui::MenuItem("Sphere"))
+				{
+					auto childEntity = Application::Get().GetScene().CreateEntity("Sphere");
+					childEntity.AddComponent<CMeshRenderer>();
+					childEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(MeshPrimatives::Sphere);
+					Application::Get().GetScene().AddEntityRelationship(entity, childEntity);
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Lights"))
+			{
+				if (ImGui::MenuItem("Point Light"))
+				{
+					auto childEntity = Application::Get().GetScene().CreateEntity("Point Light");
+					childEntity.AddComponent<CPointLight>();
+					Application::Get().GetScene().AddEntityRelationship(entity, childEntity);
+				}
+				ImGui::EndMenu();
+			}
 			if (ImGui::MenuItem("Delete Entity")) {
 				entityDeleted = true;
 			}
 			ImGui::EndPopup();
 		}
 
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY_ITEM"))
+			{
+				UUID uuid = *(UUID*)payload->Data;
+				Entity other = Application::Get().GetScene().GetEntity(uuid);
+				if (other != null)
+				{
+					newParentEntityUUID = entity.GetComponent<CUniqueIdentifier>().uuid;
+					newChildEntityUUID = uuid;
+					hasEntityRelationshipChanged = true;
+				}
+				else
+				{
+					MADAM_CORE_ERROR("Entity {0} is NULL", uuid);
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+		{
+			UUID entityUUID = entity.GetComponent<CUniqueIdentifier>().uuid;
+			ImGui::SetDragDropPayload("ENTITY_ITEM", &entity.GetComponent<CUniqueIdentifier>().uuid, sizeof(UUID));
+			ImGui::EndDragDropSource();
+		}
+
 		if (opened) {
+			if (entity.HasComponent<CRelationship>() && entity.GetComponent<CMetadata>().isHiddenEntity != true)
+			{
+				for each (UUID child in entity.GetComponent<CRelationship>().children) {
+					Entity childEntity = Application::Get().GetScene().GetEntity(child);
+					DrawEntityNode(childEntity);
+				}
+			}
 			ImGui::TreePop();
 		}
 
@@ -1223,16 +1404,16 @@ namespace Madam::UI {
 			}
 
 			if (open) {
-				//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
 				DrawVec3("Translation", transform.translation);
-				//ImGui::DragFloat3("Position", glm::value_ptr(transform.translation), 0.5f);
-				glm::vec3 rotation = glm::degrees(transform.rotation);
+				glm::vec3 rotation = glm::degrees(glm::eulerAngles(transform.rotation));
 				DrawVec3("Rotation", rotation);
-				transform.rotation = glm::radians(rotation);
+				if (glm::degrees(glm::eulerAngles(transform.rotation)) != rotation)
+				{
+					transform.rotation = glm::quat(rotation);
+				}
 				DrawVec3("Scale", transform.scale);
 				ImGui::PopStyleVar();
-				//ImGui::PopStyleVar();
 				ImGui::TreePop();
 			}
 		}
@@ -1568,7 +1749,7 @@ namespace Madam::UI {
 
 	void GUI::CreateViewportPipeline() {
 		PipelineConfigInfo configInfo{};
-		configInfo.renderPass = Rendering::Renderer::Get().getSwapChainRenderPass();
+		configInfo.renderPass = Rendering::Renderer::Get().GetSwapChainRenderPass();
 		std::vector< VkVertexInputBindingDescription> bindingDescriptions;
 		bindingDescriptions.resize(1);
 		bindingDescriptions[0].stride = sizeof(ImDrawVert);
@@ -1597,6 +1778,10 @@ namespace Madam::UI {
 		configInfo.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 
 		ImGui_ImplVulkan_Data* bd = ImGui::GetCurrentContext() ? (ImGui_ImplVulkan_Data*)ImGui::GetIO().BackendRendererUserData : nullptr;
+		if (bd == nullptr)
+		{
+			MADAM_CORE_ERROR("GUI: Trying to dereference a nullptr");
+		}
 		ImGui_ImplVulkan_InitInfo* v = &bd->VulkanInitInfo;
 
 		VkPushConstantRange push_constants[1] = {};

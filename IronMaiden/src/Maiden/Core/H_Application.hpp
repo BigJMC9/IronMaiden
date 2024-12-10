@@ -2,9 +2,9 @@
 
 // Fix these headers, only essential headers are needed, the rest can reside in the implementation
 #include "maidenpch.hpp"
-#include "Main/core.hpp"
-#include "H_Utils.hpp"
-#include "H_Logger.hpp"
+#include "Version.h"
+#include "Main/Core.hpp"
+#include "H_CoreUtils.hpp"
 #include "../Rendering/H_Renderer.hpp"
 #include "../Rendering/H_RenderSystems.hpp"
 #include "../Rendering/H_DescriptorSetLayout.hpp"
@@ -24,7 +24,7 @@ namespace Madam {
 	struct ApplicationInfo
 	{
 		std::string name = "IronMaidenEngine";
-		std::string version = "0.08";
+		std::string version = ENGINE_VERSION;
 		std::string windowName = "Iron Maiden Engine";
 		uint32_t windowWidth = 1600, windowHeight = 900;
 		std::filesystem::path projectsDirectory = "Projects";
@@ -40,95 +40,74 @@ namespace Madam {
 		Application(const Application&) = delete;
 		Application& operator=(const Application&) = delete;
 
-		void init();
-		void deinit();
+		void Init();
+		void Deinit();
 
-		float getAspectRatio() {
-			return renderer.getAspectRatio();
+		float GetAspectRatio() {
+			return renderer.GetAspectRatio();
 		}
 
-		void addSurface(Scope<EngineInterface> _surface) {
-			pSurface = std::move(_surface);
-			MADAM_CORE_INFO("EngineInterface added");
-		}
+		void AddSurface(Scope<EngineInterface> _surface);
 
-		static Application& Get() {
-			//static Application instance;
-			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-			return *instance;
-		}
+		static Application& Get();
 
-		static Application* GetPtr() {
-			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-			return instance;
-		}
+		static Application* GetPtr();
 
-		static SceneSerializer* GetSceneSerializer() {
-			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-			return instance->pSceneSerializer;
-		}
+		static SceneSerializer* GetSceneSerializer();
 
 		// Use const func() const {} for readonly vars
 
-		Window& getWindow() { return window;  }
-		Rendering::RenderStack& getMasterRenderSystem() { return renderStack; }
+		Window& GetWindow() { return window;  }
+		Rendering::RenderStack& GetMasterRenderSystem() { return renderStack; }
 
-		//Depreciated
-		const std::vector<Ref<Rendering::RenderLayer>>& getRenderLayers() const;
-
-		Scene& getScene() { return *_scene; }
-		const Time& getTime() const { return time; }
-		ApplicationInfo getConfig() {
+		Scene& GetScene() { return *_scene; }
+		const Time& GetTime() const { return time; }
+		ApplicationInfo GetConfig() {
 			return config;
 		}
 		
-		//Put in engine config header
+		//Put in engine config header maybe?
 		const float MAX_FRAME_TIME = 0.1f;
-
-		bool debug = false;
 
 		std::string CreateScript() {
 			std::string returnVal = createNative;
-			if (returnVal != "") {
-				MADAM_CORE_INFO("Creating Native Script: {0}", returnVal);
-			}
 			createNative = "";
 			return returnVal;
 		}
 
-		void setCreateNative(const std::string scriptName) {
+		void SetCreateNative(const std::string scriptName) {
 			createNative = scriptName;
 		}
 
-		bool isScan() {
+		bool IsScan() {
 			bool temp = isScanning;
 			isScanning = false;
 			return temp;
 		}
 
-		void setScan() {
+		void SetScan() {
 			isScanning = true;
 		}
 
-		bool isPlay() const {
+		bool IsPlay() const {
 			return runtime;
 		}
 
-		bool isRuntimeFlag() {
+		bool IsRuntimeFlag() {
 			bool temp = runtimeFlag;
 			runtimeFlag = false;
 			return temp;
 		}
 
-		void setRuntimeFlag() {
+		void SetRuntimeFlag() {
 			runtimeFlag = true;
 		}
 
-		void setRuntimeStopFlag() {
+		void SetRuntimeStopFlag() {
 			runtimeStopFlag = true;
 		}
 
-		bool isRuntimeStopFlag() {
+		bool IsRuntimeStopFlag() {
 			bool temp = runtimeStopFlag;
 			runtimeStopFlag = false;
 			return temp;
@@ -152,34 +131,34 @@ namespace Madam {
 			Events::EventSystem::Get().PushEvent(&e, true);
 		}
 
-		bool isUpdate() 
+		bool IsUpdate() 
 		{
 			bool temp = isUpdating;
 			isUpdating = false;
 			return temp;
 		}
 
-		void setUpdate() 
+		void SetUpdate() 
 		{
 			isUpdating = true;
 		}
 
-		bool getScripts() 
+		bool GetScripts() 
 		{
 			bool temp = isGettingScripts;
 			isGettingScripts = false;
 			return temp;
 		}
 
-		void setScripts() 
+		void SetScripts() 
 		{
 			isGettingScripts = true;
 		}
 
-		void configureApp();
-		void saveSession();
-		void run();
-		void quit();
+		void ConfigureApp();
+		void SaveSession();
+		void Run();
+		void Quit();
 
 		Scope<EngineInterface> pSurface = nullptr;
 
@@ -216,6 +195,7 @@ namespace Madam {
 		Ref<Scene> _scene = nullptr;
 		Ref<Scene> runtimeScene = nullptr;
 		SceneSerializer* pSceneSerializer = nullptr;
+
 	protected:
 		
 	};

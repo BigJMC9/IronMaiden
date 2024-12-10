@@ -19,5 +19,11 @@ if exist "IronMaiden/vendors/yaml-cpp/bin" (
 if exist "IronMaiden/vendors/yaml-cpp/bin-int" (
     rmdir /s /q "IronMaiden/vendors/yaml-cpp/bin-int"
 )
+if exist "IronMaiden/vendors/spdlog/bin" (
+    rmdir /s /q "IronMaiden/vendors/spdlog/bin"
+)
+if exist "IronMaiden/vendors/yaml-cpp/bin-int" (
+    rmdir /s /q "IronMaiden/vendors/spdlog/bin-int"
+)
 call vendors\bin\premake\premake5.exe vs2022
 PAUSE

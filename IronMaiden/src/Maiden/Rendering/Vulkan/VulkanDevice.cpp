@@ -95,6 +95,7 @@ namespace Madam {
 		if (enableValidationLayers && !checkValidationLayerSupport()) {
 			throw std::runtime_error("validation layers requested, but not available!");
 		}
+		checkInstanceExtensionSupport();
 
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -102,7 +103,7 @@ namespace Madam {
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 1, 0);
 		appInfo.pEngineName = "Iron Maiden Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 1, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_2; //Update
+		appInfo.apiVersion = VK_API_VERSION_1_2;
 
 		VkInstanceCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -300,7 +301,22 @@ namespace Madam {
 		return true;
 	}
 
-	std::vector<const char*> Device::getRequiredExtensions() {
+	bool Device::checkInstanceExtensionSupport()
+	{
+		uint32_t extensionCount = 0;
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
+
+		MADAM_CORE_INFO("Available Vulkan Extensions:");
+		for (const auto& extension : availableExtensions)
+		{
+			MADAM_CORE_INFO("    {0}", extension.extensionName);
+		}
+		return true;
+	}
+
+	std::vector<const char*> Device::getRequiredExtensions() const {
 		uint32_t glfwExtensionCount = 0;
 		const char** glfwExtensions;
 		glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);

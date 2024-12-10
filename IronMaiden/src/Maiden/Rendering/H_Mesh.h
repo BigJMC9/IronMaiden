@@ -14,15 +14,25 @@
 
 namespace Madam {
 
-	enum class MeshPrimatives
+	enum class MeshPrimatives : uint8_t
 	{
-		Quad = 0,
-		Cube = 1,
-		Sphere = 2
+		None = static_cast<uint8_t>(0),
+		Quad = static_cast<uint8_t>(1),
+		Cube = static_cast<uint8_t>(2),
+		Sphere = static_cast<uint8_t>(3)
 	};
 
-	static std::filesystem::path meshPrimativeFilepaths[3] =
+	static std::map<std::string, uint8_t> meshPrimativesMap =
 	{
+		{"None", static_cast<uint8_t>(0)},
+		{"Quad", static_cast<uint8_t>(1)},
+		{"Cube", static_cast<uint8_t>(2)},
+		{"Sphere", static_cast<uint8_t>(3)}
+	};
+
+	static std::filesystem::path meshPrimativeFilepaths[4] =
+	{
+		"none",
 		"resources\\models\\plane.obj",
 		"resources\\models\\cube.obj",
 		"resources\\models\\sphere.obj"
@@ -45,13 +55,38 @@ namespace Madam {
 		virtual void draw(void* commandBuffer) = 0;
 
 		std::filesystem::path GetFilepath() const { return _filepath; }
+		bool IsPrimative() const { return meshPrimative != MeshPrimatives::None; }
+		MeshPrimatives GetPrimative() const { return meshPrimative; }
+		std::string GetPrimativeAsString() const 
+		{
+			switch (meshPrimative)
+			{
+			case Madam::MeshPrimatives::None:
+				return "None";
+				break;
+			case Madam::MeshPrimatives::Quad:
+				return "Quad";
+				break;
+			case Madam::MeshPrimatives::Cube:
+				return "Cube";
+				break;
+			case Madam::MeshPrimatives::Sphere:
+				return "Sphere";
+				break;
+			default:
+				return "None";
+				break;
+			}
+		}
 
 		static AssetType GetStaticType() { return AssetType::MESH; }
 		virtual AssetType GetAssetType() const override { return GetStaticType(); }
 
 	protected:
 
+		bool isLoaded = false;
 		MeshFlags meshFlags;
 		std::filesystem::path _filepath;
+		MeshPrimatives meshPrimative = MeshPrimatives::None;
 	};
 }

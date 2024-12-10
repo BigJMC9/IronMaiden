@@ -35,53 +35,53 @@ namespace Madam {
 			Renderer& operator=(const Renderer&) = delete;
 			Renderer& operator=(Renderer&&) = delete;
 
-			void init();
-			void deinit();
+			void Init();
+			void Deinit();
 
-			VkRenderPass getSwapChainRenderPass() const 
+			VkRenderPass GetSwapChainRenderPass() const 
 			{ 
 				return swapChain->getRenderPass(); 
 			}
-			VkRenderPass getMainRenderPass() const 
+			VkRenderPass GetMainRenderPass() const 
 			{ 
 				return renderPasses[0]; 
 			}
-			float getAspectRatio() const 
+			float GetAspectRatio() const 
 			{
 				return swapChain->extentAspectRatio();
 			}
-			bool isFrameInProgress() const 
+			bool IsFrameInProgress() const 
 			{ 
 				return isFrameStarted; 
 			}
 
-			VkCommandBuffer getCurrentCommandBuffer() const 
+			VkCommandBuffer GetCurrentCommandBuffer() const 
 			{
 				MADAM_CORE_ASSERT(isFrameStarted, "Cannot get command buffer when frame not in progress");
 				return commandBuffers[currentFrameIndex];
 			}
 
-			int getFrameIndex() const 
+			int GetFrameIndex() const 
 			{
 				MADAM_CORE_ASSERT(isFrameStarted, "Cannot get command buffer when frame not in progress");
 				return currentFrameIndex;
 			}
 
-			VkImageView getImageView(int index) const 
+			VkImageView GetImageView(int index) const 
 			{
 				return frames[currentFrameIndex].images[index].imageView;
 			}
 
-			uint32_t getViewportWidth() const 
+			uint32_t GetViewportWidth() const 
 			{ 
 				return viewportWidth; 
 			}
-			uint32_t getViewportHeight() const 
+			uint32_t GetViewportHeight() const 
 			{ 
 				return viewportHeight; 
 			}
 
-			ImGui_ImplVulkan_InitInfo getImGuiInitInfo() 
+			ImGui_ImplVulkan_InitInfo GetImGuiInitInfo() 
 			{
 				ImGui_ImplVulkan_InitInfo init_info = ImGui_ImplVulkan_InitInfo();
 				init_info.Device = device.device();
@@ -122,31 +122,31 @@ namespace Madam {
 			}
 
 			//Needs to be updated to abstract away from the VkRenderPass, we don't want to accidentally change renderpass settings while the engine is running
-			const std::vector<VkRenderPass> getRenderPasses() 
+			const std::vector<VkRenderPass> GetRenderPasses() 
 			{
 				return renderPasses;
 			}
 
-			bool beginFrame();
-			void endFrame();
-			VkCommandBuffer beginCommandBuffer();
-			void endCommandBuffer(VkCommandBuffer commandBuffer);
-			void beginRenderPass(VkCommandBuffer commandBuffer, int renderpassIndex);
-			void endRenderPass(VkCommandBuffer commandBuffer);
-			void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
-			void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+			bool BeginFrame();
+			void EndFrame();
+			VkCommandBuffer BeginCommandBuffer() const;
+			void EndCommandBuffer(VkCommandBuffer commandBuffer);
+			void BeginRenderPass(VkCommandBuffer commandBuffer, int renderpassIndex);
+			void EndRenderPass(VkCommandBuffer commandBuffer) const;
+			void BeginSwapChainRenderPass(VkCommandBuffer commandBuffer);
+			void EndSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
-			VkRenderPass createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies);
+			VkRenderPass CreateRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies);
 
 			void PipelineBarrier(VkCommandBuffer commandBuffer, bool isSwapchain, bool isSwitch, int frameIndex, int renderIndex);
 
 		private:
-			void createCommandBuffers();
-			void createMainRenderImages();
-			void createMainRenderPass();
-			void freeCommandBuffers();
-			void recreateSwapChain();
-			//VkRenderPass createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies, bool isSwapChain);
+			void CreateCommandBuffers();
+			void CreateMainRenderImages();
+			void CreateMainRenderPass();
+			void FreeCommandBuffers();
+			void RecreateSwapChain();
+			//VkRenderPass CreateRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies, bool isSwapChain);
 
 			static Renderer* instance;
 			static bool instanceFlag;
@@ -156,7 +156,7 @@ namespace Madam {
 			Scope<SwapChain> swapChain = nullptr;
 			std::vector<VkCommandBuffer> commandBuffers;
 
-			uint32_t currentImageIndex;
+			uint32_t currentImageIndex = 0;
 			int currentFrameIndex = 0;
 			uint32_t currentCommandBufferIndex = 0;
 			int renderpassIndex = -1;

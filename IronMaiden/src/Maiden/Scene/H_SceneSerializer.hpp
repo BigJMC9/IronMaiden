@@ -1,10 +1,11 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/H_Utils.hpp"
+#include "../Core/H_CoreUtils.hpp"
 #include "../Rendering/Vulkan/H_VulkanDevice.hpp"
 
 #include <filesystem>
+#include <optional>
 
 namespace Madam {
 	class Scene;
@@ -19,7 +20,10 @@ namespace Madam {
 
 		bool Deserialize(const std::filesystem::path& rawfilePath);
 		bool DeserializeRuntime(const std::string& filePath);
+
+		
 	private:
+
 		Ref<Scene> m_Scene;
 		Device& device;
 	};
