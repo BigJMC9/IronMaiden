@@ -109,10 +109,15 @@ namespace Madam {
 		//GENERATE_COMPONENT()
 		std::string name = "Object";
 		bool isErrorEntity = false;
+		bool isHiddenEntity = false;
 		CMetadata() = default;
 		CMetadata(const CMetadata&) = default;
 		CMetadata(std::string _name) {
 			name = _name;
+		}
+		CMetadata(std::string _name, bool _isHidden) {
+			name = _name;
+			isHiddenEntity = _isHidden;
 		}
 		//Parent
 		//Tag
@@ -163,7 +168,7 @@ namespace Madam {
 	struct CPointLight {
 		//GENERATE_COMPONENT()
 		glm::vec3 color{ 1.0f, 1.0f, 1.0f };
-		float radius = 5.0f;
+		float radius = 0.5f;
 		float intensity = 1.0f;
 
 		CPointLight() = default;

@@ -537,7 +537,7 @@ namespace Madam {
 		std::filesystem::path fileName = filePath.stem();
 		YAML::Emitter out;
 		out << YAML::BeginMap;
-		out << YAML::Key << "Version" << YAML::Value << Application::Get().getConfig().version;
+		out << YAML::Key << "Version" << YAML::Value << Application::Get().GetConfig().version;
 		out << YAML::Key << "Scene" << YAML::Value << fileName.string();
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		entt::registry& reg = m_Scene->Reg();
@@ -608,11 +608,11 @@ namespace Madam {
 		}
 
 		std::string relevantVersion = version.substr(0, buildVersionPos);
-		std::string applicationRelevantVersion = Application::Get().getConfig().version.substr(0, buildVersionPos);
+		std::string applicationRelevantVersion = Application::Get().GetConfig().version.substr(0, buildVersionPos);
 
 
 		if (applicationRelevantVersion != relevantVersion) {
-			MADAM_CORE_ERROR("Failed to load scene: The Application version and Scene file version do not match\nApplication Version: {0}\nScene Version: {1}", Application::Get().getConfig().version, version);
+			MADAM_CORE_ERROR("Failed to load scene: The Application version and Scene file version do not match\nApplication Version: {0}\nScene Version: {1}", Application::Get().GetConfig().version, version);
 			return false;
 		}
 
@@ -726,12 +726,9 @@ namespace Madam {
 
 						camera.cameraHandle->SetViewDirection(cameraNode["ViewPosition"].as<glm::vec3>(), cameraNode["ViewDirection"].as<glm::vec3>());
 						if (cameraNode["Main"].as<bool>()) {
-							MADAM_CORE_INFO("Is Main Camera");
 							camera.cameraHandle->SetMain();
+							deserializedEntity.GetComponent<CMetadata>().isHiddenEntity = true;
 							isMain = true;
-						}
-						else {
-							MADAM_CORE_INFO("Is Not Main Camera");
 						}
 					}
 				}
@@ -765,7 +762,7 @@ namespace Madam {
 			camera.GetComponent<Transform>().translation.z = -2.5f;
 			Rendering::CameraData cameraData;
 			cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
-			cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().getAspectRatio(), 0.1f, 1000.0f);
+			cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().GetAspectRatio(), 0.1f, 1000.0f);
 			camera.AddComponent<Camera>(cameraData);
 			camera.GetComponent<Camera>().cameraHandle->SetViewDirection(glm::vec3(0.f, 2.0f, 0.f), glm::vec3(0.f, 0.f, 0.f));
 			camera.GetComponent<Camera>().cameraHandle->SetMain();

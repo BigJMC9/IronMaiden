@@ -63,7 +63,7 @@ namespace Madam
 		if (!instanceFlag)
 		{
 			clear();
-			new Project(Application::Get().getConfig().projectsDirectory / "temp");
+			new Project(Application::Get().GetConfig().projectsDirectory / "temp");
 		}
 		return *instance;
 	}

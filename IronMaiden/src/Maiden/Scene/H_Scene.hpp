@@ -29,7 +29,7 @@ namespace Madam {
 
 		Entity CreateErrorEntity();
 		Entity CreateEntity();
-		Entity CreateEntity(const std::string& name);
+		Entity CreateEntity(const std::string& name, bool isHidden = false);
 		Entity CreateEntity(entt::entity _entity);
 		Entity CreateEntity(UUID uuid);
 		Entity CreateEntity(UUID uuid, const std::string& name);

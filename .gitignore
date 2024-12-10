@@ -372,6 +372,7 @@ bin/
 *.vcxproj
 *.filters
 *.user
+*.sha
 Editor/logs/
 Editor/session.ini
 Editor/pref.conf

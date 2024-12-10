@@ -145,14 +145,15 @@ namespace Madam::UI {
 		std::filesystem::path popupContextSelectedItem;
 		bool isPopupContextOpen = false;
 
-#define ICON_SIZE 5
+#define ICON_SIZE 6
 		std::filesystem::path iconFilepaths[ICON_SIZE] =
 		{
 			"resources\\icons\\PlayButton.png",
 			"resources\\icons\\PauseButton.png",
 			"resources\\icons\\StopButton.png",
 			"resources\\icons\\Folder.png",
-			"resources\\icons\\File.png"
+			"resources\\icons\\File.png",
+			"resources\\icons\\Scene.png"
 		};
 
 		template<typename T, typename U>

@@ -80,10 +80,10 @@ namespace Madam {
 		return entity;
 	}
 
-	Entity Scene::CreateEntity(const std::string& name) {
+	Entity Scene::CreateEntity(const std::string& name, bool isHidden) {
 		Entity entity = { registry.create(), this };
 		entity.AddComponent<CUniqueIdentifier>();
-		entity.AddComponent<CMetadata>(name);
+		entity.AddComponent<CMetadata>(name, isHidden);
 		entity.AddComponent<CTransform>();
 		entity.AddComponent<CRelationship>();
 		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;

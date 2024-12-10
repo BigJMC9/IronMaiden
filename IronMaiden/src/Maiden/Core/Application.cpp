@@ -23,7 +23,7 @@ namespace Madam {
 
 	Application::Application() {
 		
-		init();
+		Init();
 		//Data to be shared among all objects (UBO)
 		globalPool = 
 			DescriptorPool::Builder(device)
@@ -52,29 +52,29 @@ namespace Madam {
 	Application::~Application() {
 		if (isRunning) {
 			MADAM_CORE_WARN("Application prematurally shutdown");
-			deinit();
+			Deinit();
 		}
 	}
 
-	void Application::init() {
+	void Application::Init() {
 		instance = this;
 		instanceFlag = true;
-		configureApp();
+		ConfigureApp();
 		window.init(config.windowWidth, config.windowHeight, config.windowName);
 		device.init();
-		renderer.init();
+		renderer.Init();
 		isRunning = true;
 	}
 
-	void Application::deinit() {
+	void Application::Deinit() {
 		renderStack.deinit();
-		renderer.deinit();
+		renderer.Deinit();
 		window.deinit();
 		delete pSceneSerializer;
 		isRunning = false;
 	}
 
-	void Application::addSurface(Scope<EngineInterface> _surface)
+	void Application::AddSurface(Scope<EngineInterface> _surface)
 	{
 		pSurface = std::move(_surface);
 		MADAM_CORE_INFO("EngineInterface added");
@@ -98,12 +98,7 @@ namespace Madam {
 		return instance->pSceneSerializer;
 	}
 
-
-	const std::vector<Ref<Rendering::RenderLayer>>& Application::getRenderLayers() const {
-		return renderStack.getRenderLayers();
-	}
-
-	void Application::run() {
+	void Application::Run() {
 
 		Scope<UI::GUI> pGUI = std::make_unique<UI::GUI>();
 		std::vector < Scope<Buffer>> uboBuffers(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -155,9 +150,9 @@ namespace Madam {
 			pGUI->OnUpdate();
 			_scene->Update();
 
-			if (renderer.beginFrame()) {
-				auto commandBuffer = renderer.beginCommandBuffer();
-				int frameIndex = renderer.getFrameIndex();
+			if (renderer.BeginFrame()) {
+				auto commandBuffer = renderer.BeginCommandBuffer();
+				int frameIndex = renderer.GetFrameIndex();
 				framePools[frameIndex]->resetPool();
 				GlobalUbo ubo{};
 				FrameInfo frameInfo {
@@ -183,7 +178,11 @@ namespace Madam {
 					auto [transform, pointLight] = group.get<CTransform, CPointLight>(entity);
 
 					//copy light to ubo
-					frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(transform.translation, 1.f);
+
+					UUID uuid = _scene->Reg().get<CUniqueIdentifier>(entity).uuid;
+					glm::mat4 worldTransform = Application::Get().GetScene().GetWorldTransform(uuid);
+					glm::vec3 worldTranslation = glm::vec3(worldTransform[3][0], worldTransform[3][1], worldTransform[3][2]);
+					frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(worldTranslation, 1.f);
 					frameInfo.ubo.pointLights[lightIndex].color = glm::vec4(pointLight.color, pointLight.intensity);
 
 					lightIndex ++;
@@ -194,13 +193,13 @@ namespace Madam {
 
 				// render
 				_scene->Render();
-				renderer.beginRenderPass(commandBuffer, 0);
+				renderer.BeginRenderPass(commandBuffer, 0);
 				renderStack.render(frameInfo);
-				renderer.endRenderPass(commandBuffer);
+				renderer.EndRenderPass(commandBuffer);
 				renderer.PipelineBarrier(commandBuffer, false, false, frameIndex, 0);
-				renderer.beginSwapChainRenderPass(commandBuffer);
-				renderer.endSwapChainRenderPass(commandBuffer);
-				renderer.endFrame();
+				renderer.BeginSwapChainRenderPass(commandBuffer);
+				renderer.EndSwapChainRenderPass(commandBuffer);
+				renderer.EndFrame();
 				
 				if (firstFrame) {
 					firstFrame = false;
@@ -211,13 +210,13 @@ namespace Madam {
 		MADAM_CORE_INFO("Closing Program");
 		framePools.clear();
 		globalPool.reset();
-		saveSession();
+		SaveSession();
 		vkDeviceWaitIdle(device.device());
 		pGUI = nullptr;
-		deinit();
+		Deinit();
 	}
 
-	void Application::configureApp()
+	void Application::ConfigureApp()
 	{
 		std::ifstream prefFile;
 		if (!std::filesystem::exists("pref.conf"))
@@ -305,7 +304,7 @@ namespace Madam {
 		}
 	}
 
-	void Application::saveSession()
+	void Application::SaveSession()
 	{
 		std::ofstream lastSession("session.ini");
 		if (lastSession.is_open())
@@ -322,7 +321,7 @@ namespace Madam {
 		Project::saveProject();
 	}
 
-	void Application::quit() {
+	void Application::Quit() {
 		window.quit();
 	}
 }

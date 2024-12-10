@@ -7,36 +7,36 @@ namespace Madam {
 	
 	Input::Input()
 	{
-		glfwSetCursorPosCallback(Application::Get().getWindow().getGLFWwindow(), CursorPositionCallback);
-		glfwSetScrollCallback(Application::Get().getWindow().getGLFWwindow(), ScrollCallback);
+		glfwSetCursorPosCallback(Application::Get().GetWindow().getGLFWwindow(), CursorPositionCallback);
+		glfwSetScrollCallback(Application::Get().GetWindow().getGLFWwindow(), ScrollCallback);
 	}
 	
 	bool Input::IsKeyPress(const KeyCode key) {
-		return glfwGetKey(Application::Get().getWindow().getGLFWwindow(), static_cast<int32_t>(key)) == GLFW_PRESS;
+		return glfwGetKey(Application::Get().GetWindow().getGLFWwindow(), static_cast<int32_t>(key)) == GLFW_PRESS;
 	}
 
 	bool Input::IsKeyHeld(const KeyCode key) {
-		return glfwGetKey(Application::Get().getWindow().getGLFWwindow(), static_cast<int32_t>(key)) == GLFW_REPEAT;
+		return glfwGetKey(Application::Get().GetWindow().getGLFWwindow(), static_cast<int32_t>(key)) == GLFW_REPEAT;
 	}
 
 	bool Input::IsKeyRelease(const KeyCode key) {
-		return glfwGetKey(Application::Get().getWindow().getGLFWwindow(), static_cast<int32_t>(key)) == GLFW_RELEASE;
+		return glfwGetKey(Application::Get().GetWindow().getGLFWwindow(), static_cast<int32_t>(key)) == GLFW_RELEASE;
 	}
 
 	bool Input::IsMouseButtonPress(const MouseCode button)
 	{
-		return glfwGetMouseButton(Application::Get().getWindow().getGLFWwindow(), static_cast<int32_t>(button)) == GLFW_PRESS;
+		return glfwGetMouseButton(Application::Get().GetWindow().getGLFWwindow(), static_cast<int32_t>(button)) == GLFW_PRESS;
 	}
 
 	bool Input::IsMouseButtonRelease(const MouseCode button)
 	{
-		return glfwGetMouseButton(Application::Get().getWindow().getGLFWwindow(), static_cast<int32_t>(button)) == GLFW_RELEASE;
+		return glfwGetMouseButton(Application::Get().GetWindow().getGLFWwindow(), static_cast<int32_t>(button)) == GLFW_RELEASE;
 	}
 
 	glm::vec2 Input::GetMousePosition()
 	{
 		double xpos, ypos;
-		glfwGetCursorPos(Application::Get().getWindow().getGLFWwindow(), &xpos, &ypos);
+		glfwGetCursorPos(Application::Get().GetWindow().getGLFWwindow(), &xpos, &ypos);
 		return { (float)xpos, (float)ypos };
 	}
 

@@ -503,9 +503,14 @@ namespace Madam {
 
 			//This could absolutely be speed up if put on another thread and done before the rendering call
 			auto group = entities.view<CTransform, CPointLight>();
-			for (auto entity : group) {
+			for (entt::entity entity : group) {
 				auto [transform, pointLight] = group.get<CTransform, CPointLight>(entity);
-				auto offset = Rendering::CameraHandle::GetMain().GetPosition() - transform.translation;
+
+				UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
+				glm::mat4 worldTransform = Application::Get().GetScene().GetWorldTransform(uuid);
+				glm::vec3 worldTranslation = glm::vec3(worldTransform[3][0], worldTransform[3][1], worldTransform[3][2]);
+
+				auto offset = Rendering::CameraHandle::GetMain().GetPosition() - worldTranslation;
 				float disSquared = glm::dot(offset, offset);
 				sorted[disSquared] = entity;
 			}
@@ -529,7 +534,10 @@ namespace Madam {
 				PointLightPushConstants push{};
 				//glm::vec3 adjustedTranslation = transform.translation;
 				//adjustedTranslation.y = -transform.translation.y;
-				push.position = glm::vec4(transform.translation, 1.f);
+				UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
+				glm::mat4 worldTransform = Application::Get().GetScene().GetWorldTransform(uuid);
+				glm::vec3 worldTranslation = glm::vec3(worldTransform[3][0], worldTransform[3][1], worldTransform[3][2]);
+				push.position = glm::vec4(worldTranslation, 1.f);
 				push.color = glm::vec4(pointLight.color, pointLight.intensity);
 				push.radius = pointLight.radius;
 
@@ -572,14 +580,14 @@ namespace Madam {
 				renderSystems.push_back(std::make_unique<SkyboxRenderLayer>
 					(
 						device,
-						renderer.getMainRenderPass(),
+						renderer.GetMainRenderPass(),
 						globalSetLayout->getDescriptorSetLayout(),
 						"Skybox Render System"
 					));
 				renderSystems.push_back(std::make_unique<TextureRenderLayer>
 					(
 						device,
-						renderer.getMainRenderPass(),
+						renderer.GetMainRenderPass(),
 						globalSetLayout->getDescriptorSetLayout(),
 						"Texture Render System"
 					));
@@ -587,7 +595,7 @@ namespace Madam {
 				renderSystems.push_back(std::make_unique<RenderLayer>
 					(
 						device,
-						renderer.getMainRenderPass(),
+						renderer.GetMainRenderPass(),
 						globalSetLayout->getDescriptorSetLayout(),
 						"Render System"
 					));
@@ -595,7 +603,7 @@ namespace Madam {
 				renderSystems.push_back(std::make_unique<GridRenderLayer>
 					(
 						device,
-						renderer.getMainRenderPass(),
+						renderer.GetMainRenderPass(),
 						globalSetLayout->getDescriptorSetLayout(),
 						"Grid Render System"
 					));
@@ -603,7 +611,7 @@ namespace Madam {
 				renderSystems.push_back(std::make_unique<PointLightRenderLayer>
 					(
 						device,
-						renderer.getMainRenderPass(),
+						renderer.GetMainRenderPass(),
 						globalSetLayout->getDescriptorSetLayout(),
 						"Point Light Render System"
 					));
