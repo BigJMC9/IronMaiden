@@ -10,8 +10,9 @@ int main(int argc, char** argv)
 	MADAM_CORE_WARN("Initialized Log!");
 
 	auto app = Madam::CreateApplication();
-	app->run();
+	app->Run();
 	delete app;
+	return 0;
 }
 
 #endif // MADAM_PLATFORM_WINDOWS

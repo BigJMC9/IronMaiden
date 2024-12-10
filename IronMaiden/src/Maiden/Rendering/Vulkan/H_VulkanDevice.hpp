@@ -34,7 +34,7 @@ namespace Madam {
 
 	class Device {
 	public:
-#ifdef NDEBUG
+#ifndef MADAM_DEBUG
 		const bool enableValidationLayers = false;
 #else
 		const bool enableValidationLayers = true;
@@ -43,8 +43,8 @@ namespace Madam {
 		Device(Window& window);
 		~Device();
 
-		void StartUp();
-		void ShutDown();
+		void init();
+		void deinit();
 		// Not copyable or movable
 		Device(const Device&) = delete;
 		Device& operator=(const Device&) = delete;
@@ -100,7 +100,7 @@ namespace Madam {
 			uint32_t mipLevels = 1,
 			uint32_t layerCount = 1);
 
-		VkPhysicalDeviceProperties properties;
+		VkPhysicalDeviceProperties properties{};
 
 	private:
 		void createInstance();
@@ -112,7 +112,8 @@ namespace Madam {
 
 		// helper functions
 		bool isDeviceSuitable(VkPhysicalDevice device);
-		std::vector<const char*> getRequiredExtensions();
+		std::vector<const char*> getRequiredExtensions() const;
+		bool checkInstanceExtensionSupport();
 		bool checkValidationLayerSupport();
 		QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 		void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
@@ -120,16 +121,16 @@ namespace Madam {
 		bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 		SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
-		VkInstance instance;
-		VkDebugUtilsMessengerEXT debugMessenger;
+		VkInstance instance = nullptr;
+		VkDebugUtilsMessengerEXT debugMessenger = nullptr;
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; //Represents the GPU
 		Window& window;
-		VkCommandPool commandPool;
+		VkCommandPool commandPool = nullptr;
 
-		VkDevice device_; //Logical device, created from physical device
-		VkSurfaceKHR surface_;
-		VkQueue graphicsQueue_;
-		VkQueue presentQueue_;
+		VkDevice device_ = nullptr; //Logical device, created from physical device
+		VkSurfaceKHR surface_ = nullptr;
+		VkQueue graphicsQueue_ = nullptr;
+		VkQueue presentQueue_ = nullptr;
 
 		const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 		const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };

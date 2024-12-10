@@ -1,7 +1,7 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/H_Utils.hpp"
+#include "../Core/H_CoreUtils.hpp"
 #include "../Core/Main/Core.hpp"
 #include "Vulkan/H_VulkanDevice.hpp"
 #include "../GUI/H_GUI.hpp"
@@ -71,11 +71,11 @@ namespace Madam {
             VkDescriptorPoolCreateFlags poolFlags,
             const std::vector<VkDescriptorPoolSize>& poolSizes);
         ~DescriptorPool();
+
         DescriptorPool(const DescriptorPool&) = delete;
         DescriptorPool& operator=(const DescriptorPool&) = delete;
 
-        bool allocateDescriptor(
-            const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const;
+        bool allocateDescriptor(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const;
 
         void freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const;
 

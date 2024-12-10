@@ -15,7 +15,7 @@ namespace Madam {
 		void SetUpEvents();
 		void OnSceneChangeEvent(SceneChangeEvent* e);
 	private:
-		Entity viewerObject;
+		//Entity viewerObject;
 		bool isFirst = true;
 		std::shared_ptr<Scripting::ScriptEngine> scriptEngine = nullptr;
 		std::shared_ptr<Scene> scene = nullptr;

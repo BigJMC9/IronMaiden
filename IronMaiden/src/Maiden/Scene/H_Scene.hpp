@@ -2,10 +2,12 @@
 
 #include "maidenpch.hpp"
 #include "../Rendering/Vulkan/H_VulkanDevice.hpp"
-#include "H_Model.hpp"
 #include "../Rendering/FrameInfo.hpp"
 #include "../Rendering/H_Camera.hpp"
 #include "../Events/H_EventSystem.h"
+#include "../Asset/Asset.h"
+
+#include <deque>
 
 //When we add animation, we will have to compress the data when loaded into the GPU or it will be very memory intensive. see (pg 63)
 
@@ -13,33 +15,32 @@
 
 //Rank Each Camera by priority and render in that order. Put the editor camera at the top of the list.
 namespace Madam {
-	struct Material;
+	struct MaterialComponent;
 
 	class Entity;
-	class UUID;
-	class MADAM_API Scene
+	struct UUID;
+
+	//Needs special Asset Serialization and Deserialization. (Don't want to load scene when loading asset details)
+	class MADAM_API Scene : public Asset
 	{
 	public:
 		Scene();
-		~Scene();
+		~Scene() override;
 
+		Entity CreateErrorEntity();
 		Entity CreateEntity();
+		Entity CreateEntity(const std::string& name, bool isHidden = false);
 		Entity CreateEntity(entt::entity _entity);
 		Entity CreateEntity(UUID uuid);
 		Entity CreateEntity(UUID uuid, const std::string& name);
+
 		void DestroyEntity(Entity entity);
-		Entity LoadGameObject(Ref<Model> model);
-		Entity LoadGameObject(Ref<Model> model, Material mat);
 
 		void Start();
 		void RunTimeStart();
 		void Update();
 		void Render();
 
-
-		Ref<Rendering::CameraHandle> GetCurrentCamera() {
-			return cameras[mainCameraIndex];
-		}
 		Ref<Scene> Copy();
 
 		entt::registry& Reg() { return registry; }
@@ -47,16 +48,19 @@ namespace Madam {
 		Scene& scene() { return *this; }
 
 		Scene(Scene&& other) noexcept : registry(std::move(other.registry)) {
-			// Optionally, perform any additional move-related operations
+			RepopulateEntityMap();
 		}
 
 		Scene& operator=(Scene&& other) noexcept {
 			if (this != &other) {
 				registry = std::move(other.registry);
-				// Optionally, perform any additional move-related operations
+				RepopulateEntityMap();
 			}
 			return *this;
 		}
+
+		static AssetType GetStaticType() { return AssetType::SCENE; }
+		AssetType GetAssetType() const override { return GetStaticType(); }
 
 		template<typename... Components>
 		auto GetAllEntitiesWith()
@@ -70,14 +74,29 @@ namespace Madam {
 			return registry.view<Components...>(std::forward<Args>(args)...);
 		}
 
+		glm::mat4 Scene::GetWorldTransform(UUID entityUUID);
+		glm::mat4 GetWorldTransform(Entity entity);
+
+		Entity GetEntity(UUID uuid);
+
+		void AddEntityRelationship(Entity parent, Entity child);
+		void RemoveParentEntityRelationship(Entity child);
+
+		Entity GetMainCameraEntity();
+
 	private:
-		std::vector<Ref<Rendering::CameraHandle>> cameras;
-		int mainCameraIndex = 0;
 
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
 
+		template<typename T>
+		void OnComponentRemoved(Entity entity, T& component);
+
+		void RepopulateEntityMap();
+
 		entt::registry registry;
+
+		std::unordered_map<UUID, Entity> entityMap;
 
 		friend class Entity;
 		friend class SceneSerializer;

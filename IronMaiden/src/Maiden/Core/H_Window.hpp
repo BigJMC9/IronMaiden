@@ -2,6 +2,7 @@
 
 #include "maidenpch.hpp"
 #include "H_Logger.hpp"
+#define VKB_VALIDATION_LAYERS
 #define GLFW_INCLUDE_VULKAN
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
@@ -9,7 +10,20 @@
 
 namespace Madam {
 
-	
+	enum CursorState : uint32_t
+	{
+		NORMAL = GLFW_CURSOR_NORMAL,
+		HIDDEN = GLFW_CURSOR_HIDDEN,
+		DISABLED = GLFW_CURSOR_DISABLED
+	};
+
+	enum CursorType : uint32_t
+	{
+		ARROW = GLFW_ARROW_CURSOR,
+		HAND = GLFW_HAND_CURSOR,
+		CROSSHAIR = GLFW_CROSSHAIR_CURSOR,
+		TEXT = GLFW_IBEAM_CURSOR,
+	};
 
 	struct WindowData {
 		uint32_t width;
@@ -19,6 +33,7 @@ namespace Madam {
 
 	//Maybe change class as it may cause conflictions between class Window and Win32
 	//Convert Window to static or struct type may stop instancing issues
+
 	class MADAM_API Window {
 
 	public:
@@ -28,8 +43,8 @@ namespace Madam {
 		Window(const Window&) = delete;
 		Window& operator=(const Window&) = delete;
 
-		void StartUp(uint32_t w, uint32_t h, std::string name);
-		void ShutDown();
+		void init(uint32_t w, uint32_t h, std::string name);
+		void deinit();
 
 		bool shouldClose() { return glfwWindowShouldClose(window); }
 		void quit() { glfwSetWindowShouldClose(window, GLFW_TRUE); }
@@ -44,7 +59,13 @@ namespace Madam {
 		int getHeight() const { return data.height; }
 		std::string getName() const { return data.windowName; }
 
+		void SetCursorState(CursorState cursorState);
+		void SetCursorIcon(CursorType cursorType);
+		void PopCursorPosition();
+
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
+
+		double cursorX, cursorY;
 
 	private:
 		static void framebufferResizeCallback(GLFWwindow* _window, int width, int height);
@@ -53,7 +74,8 @@ namespace Madam {
 		bool framebufferResized = false;
 
 		WindowData data;
-		GLFWwindow* window;
+		GLFWwindow* window = nullptr;
+		CursorType currentCursorType = CursorType::ARROW;
 
 		bool isRunning = false;
 	};

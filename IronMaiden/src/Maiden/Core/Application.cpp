@@ -1,15 +1,14 @@
 #include "maidenpch.hpp"
-#define MADAM_APP_IMPL_FLAG
 #include "H_Application.hpp"
+#include "H_Logger.hpp"
 #include "../Scene/H_SceneSerializer.hpp"
 #include "../Events/H_Input.hpp"
 #include "../Rendering/H_Buffer.hpp"
 #include "../GUI/H_GUI.hpp"
+#include "../Project/H_Project.h"
+#include "../Platform/Platforms.hpp"
 
-//Define fixes, hacky solution, will fix when headers are restructured
-#ifdef min
-#undef min
-#endif
+#include <fstream>
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -24,7 +23,7 @@ namespace Madam {
 
 	Application::Application() {
 		
-		StartUp();
+		Init();
 		//Data to be shared among all objects (UBO)
 		globalPool = 
 			DescriptorPool::Builder(device)
@@ -34,53 +33,72 @@ namespace Madam {
 
 		// build frame descriptor pools
 		// ???
-		framePools.resize(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT); //Maximun number of frames being rendered
+		// Should be in descriptor Manager
+		// framePools.resize(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT); //Maximun number of frames being rendered
 		auto framePoolBuilder = DescriptorPool::Builder(device)
 			.setMaxSets(1000) //Storage allocation
 			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
 			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
-		for (int i = 0; i < framePools.size(); i++) {
-			framePools[i] = framePoolBuilder.build();
+		for (int i = 0; i < Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
+			 Scope<DescriptorPool> framePool = framePoolBuilder.build();
+			 framePools.emplace_back(std::move(framePool));
 		}
 		
-		scene = std::make_shared<Scene>();
-		pSceneSerializer = new SceneSerializer(scene, device);
-
-		char buff[FILENAME_MAX];
-		GetCurrentDir(buff, FILENAME_MAX);
-		config.workingDirectory = buff;
+		_scene = std::make_shared<Scene>();
+		pSceneSerializer = new SceneSerializer(_scene, device);
 	}
 
 	Application::~Application() {
 		if (isRunning) {
 			MADAM_CORE_WARN("Application prematurally shutdown");
-			ShutDown();
+			Deinit();
 		}
 	}
 
-	void Application::StartUp() {
-		window.StartUp(config.windowWidth, config.windowHeight, config.windowName);
-		device.StartUp();
-		renderer.StartUp();
-		isRunning = true;
+	void Application::Init() {
 		instance = this;
 		instanceFlag = true;
+		ConfigureApp();
+		window.init(config.windowWidth, config.windowHeight, config.windowName);
+		device.init();
+		renderer.Init();
+		isRunning = true;
 	}
 
-	void Application::ShutDown() {
-		renderStack.ShutDown();
-		renderer.ShutDown();
-		//device.ShutDown(); //For proper shutdown, make singleton
-		window.ShutDown();
+	void Application::Deinit() {
+		renderStack.deinit();
+		renderer.Deinit();
+		window.deinit();
+		delete pSceneSerializer;
 		isRunning = false;
 	}
 
-	const std::vector<Ref<Rendering::RenderLayer>>& Application::getRenderLayers() const {
-		return renderStack.getRenderLayers();
+	void Application::AddSurface(Scope<EngineInterface> _surface)
+	{
+		pSurface = std::move(_surface);
+		MADAM_CORE_INFO("EngineInterface added");
 	}
 
-	void Application::run() {
+	Application& Application::Get()
+	{
+		MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
+		return *instance;
+	}
+
+	Application* Application::GetPtr()
+	{
+		MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
+		return instance;
+	}
+
+	SceneSerializer* Application::GetSceneSerializer()
+	{
+		MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
+		return instance->pSceneSerializer;
+	}
+
+	void Application::Run() {
 
 		Scope<UI::GUI> pGUI = std::make_unique<UI::GUI>();
 		std::vector < Scope<Buffer>> uboBuffers(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -127,14 +145,14 @@ namespace Madam {
 		while (!window.shouldClose()) {
 			glfwPollEvents();
 			time.UpdateTime();
-			
+
 			pSurface->OnUpdate();
 			pGUI->OnUpdate();
-			scene->Update();
+			_scene->Update();
 
-			if (renderer.beginFrame()) {
-				auto commandBuffer = renderer.beginCommandBuffer();
-				int frameIndex = renderer.getFrameIndex();
+			if (renderer.BeginFrame()) {
+				auto commandBuffer = renderer.BeginCommandBuffer();
+				int frameIndex = renderer.GetFrameIndex();
 				framePools[frameIndex]->resetPool();
 				GlobalUbo ubo{};
 				FrameInfo frameInfo {
@@ -143,25 +161,28 @@ namespace Madam {
 					commandBuffer,
 					globalDescriptorSets[frameIndex],
 					* framePools[frameIndex],
-					scene,
+					_scene,
 					ubo};
 
 				//Should be done in renderer
-				Rendering::CameraHandle& camera = Rendering::CameraHandle::getMain();
-				frameInfo.ubo.projection = camera.getProjection();
-				frameInfo.ubo.view = camera.getView();
-				frameInfo.ubo.inverseView = camera.getInverseView();
+				Rendering::CameraHandle& camera = Rendering::CameraHandle::GetMain();
+				frameInfo.ubo.projection = camera.GetProjection();
+				frameInfo.ubo.view = camera.GetView();
+				frameInfo.ubo.inverseView = camera.GetInverseView();
 				
 				//This Specific Behaviour should be done by a proper render system obj (after renderstack and layers are refactored)
-				auto group = scene->Reg().view<Transform, PointLight>();
+				auto group = _scene->Reg().view<CTransform, CPointLight>();
 				int lightIndex = 0;
 				for (auto entity : group)
 				{
-					MADAM_CORE_INFO("Light Index: {0}", lightIndex);
-					auto [transform, pointLight] = group.get<Transform, PointLight>(entity);
+					auto [transform, pointLight] = group.get<CTransform, CPointLight>(entity);
 
 					//copy light to ubo
-					frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(transform.translation, 1.f);
+
+					UUID uuid = _scene->Reg().get<CUniqueIdentifier>(entity).uuid;
+					glm::mat4 worldTransform = Application::Get().GetScene().GetWorldTransform(uuid);
+					glm::vec3 worldTranslation = glm::vec3(worldTransform[3][0], worldTransform[3][1], worldTransform[3][2]);
+					frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(worldTranslation, 1.f);
 					frameInfo.ubo.pointLights[lightIndex].color = glm::vec4(pointLight.color, pointLight.intensity);
 
 					lightIndex ++;
@@ -171,23 +192,14 @@ namespace Madam {
 				uboBuffers[frameIndex]->flush();
 
 				// render
-				scene->Render();
-				renderer.beginRenderPass(commandBuffer, 0);
+				_scene->Render();
+				renderer.BeginRenderPass(commandBuffer, 0);
 				renderStack.render(frameInfo);
-				renderer.endRenderPass(commandBuffer);
+				renderer.EndRenderPass(commandBuffer);
 				renderer.PipelineBarrier(commandBuffer, false, false, frameIndex, 0);
-				renderer.beginSwapChainRenderPass(commandBuffer);
-				renderer.endSwapChainRenderPass(commandBuffer);
-				renderer.endFrame();
-				if (window.wasWindowResized()) {
-					WindowData windowData;
-					windowData.width = window.getWidth();
-					windowData.height = window.getHeight();
-					windowData.windowName = window.getName();
-					Events::WindowResizeEvent e(windowData);
-					eventSystem.PushEvent(&e, true);
-					window.resetWindowResizedFlag();
-				}
+				renderer.BeginSwapChainRenderPass(commandBuffer);
+				renderer.EndSwapChainRenderPass(commandBuffer);
+				renderer.EndFrame();
 				
 				if (firstFrame) {
 					firstFrame = false;
@@ -198,11 +210,118 @@ namespace Madam {
 		MADAM_CORE_INFO("Closing Program");
 		framePools.clear();
 		globalPool.reset();
+		SaveSession();
 		vkDeviceWaitIdle(device.device());
-		ShutDown();
+		pGUI = nullptr;
+		Deinit();
 	}
 
-	void Application::quit() {
+	void Application::ConfigureApp()
+	{
+		std::ifstream prefFile;
+		if (!std::filesystem::exists("pref.conf"))
+		{
+			std::ofstream fout("pref.conf");
+			fout << "ProjectsDirectory: " << config.projectsDirectory.string() << std::endl;
+			fout << "WindowWidth: " << config.windowWidth << std::endl;
+			fout << "WindowHeight: " << config.windowHeight << std::endl;
+			fout.close();
+		}
+
+		if (!Platform::OpenFile(prefFile, "pref.conf"))
+		{
+			MADAM_CORE_ERROR("Failed to open pref.conf");
+			return;
+		}
+
+		std::string line;
+		while (std::getline(prefFile, line))
+		{
+			std::string key = line.substr(0, line.find(':'));
+			std::string value = line.substr(line.find(':') + 2);
+			if (key == "ProjectsDirectory")
+			{
+				config.projectsDirectory = std::filesystem::u8path(value);
+				MADAM_CORE_INFO("Directory: {0}", config.projectsDirectory);
+			}
+			else if (key == "WindowWidth")
+			{
+				config.windowWidth = static_cast<uint32_t>(std::stoul(value));
+			}
+			else if (key == "WindowHeight")
+			{
+				config.windowHeight = static_cast<uint32_t>(std::stoul(value));
+			}
+		}
+		prefFile.close();
+
+		std::ifstream lastSession;
+
+		if (Platform::OpenFile(lastSession, "session.ini"))
+		{
+			std::string line;
+			while (std::getline(lastSession, line))
+			{
+				std::string key = line.substr(0, line.find(':'));
+				std::string value = line.substr(line.find(':') + 2);
+				if (key == "LastProject")
+				{
+					if (Project::loadProject(std::filesystem::u8path(value))) 
+					{
+						config.windowName += " - " + config.version + " - " + Project::Get().getProjectInfo().projectName;
+					}
+					else
+					{
+						ProjectConfig projConfig;
+						projConfig.projectAuthor = "Me";
+						projConfig.projectName = "NewProject";
+						projConfig.projectVersion = config.version;
+						projConfig.projectsDirectory = config.projectsDirectory;
+						Project::newProject(projConfig);
+					}
+				}
+				else if (key == "WindowWidth")
+				{
+					config.windowWidth = static_cast<uint32_t>(std::stoul(value));
+				}
+				else if (key == "WindowHeight")
+				{
+					config.windowHeight = static_cast<uint32_t>(std::stoul(value));
+				}
+			}
+			lastSession.close();
+		}
+		else
+		{
+			MADAM_CORE_INFO("Failed to open session.ini");
+
+			ProjectConfig projConfig;
+			projConfig.projectAuthor = "Me";
+			projConfig.projectName = "NewProject";
+			projConfig.projectVersion = config.version;
+			projConfig.projectsDirectory = config.projectsDirectory;
+			Project::newProject(projConfig);
+		}
+	}
+
+	void Application::SaveSession()
+	{
+		std::ofstream lastSession("session.ini");
+		if (lastSession.is_open())
+		{
+			lastSession << "LastProject: " << Project::Get().getProjectDirectory().string() << std::endl;
+			lastSession << "WindowWidth: " << window.getWidth() << std::endl;
+			lastSession << "WindowHeight: " << window.getHeight() << std::endl;
+			lastSession.close();
+		}
+		else
+		{
+			MADAM_CORE_ERROR("Failed to open session.ini");
+		}
+		Project::saveProject();
+	}
+
+	void Application::Quit() {
 		window.quit();
 	}
 }

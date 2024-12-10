@@ -12,4 +12,4 @@
 	#endif
 #endif
 
-#define BIT(x) (1 << x)
+#define PRINT_WARNING(msg)  _Pragma("message(\"Warning: " msg "\")")

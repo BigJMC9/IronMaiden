@@ -16,8 +16,6 @@ namespace Madam {
 
 	class Scene;
 
-	struct Camera;
-
 	#define MAX_LIGHTS 10
 
 	struct PointLightData

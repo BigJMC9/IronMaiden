@@ -1,8 +1,11 @@
 #pragma once
 
 #include "maidenpch.hpp"
-#include "../Core/H_Utils.hpp"
+#include "../Core/H_CoreUtils.hpp"
 #include "../Rendering/Vulkan/H_VulkanDevice.hpp"
+
+#include <filesystem>
+#include <optional>
 
 namespace Madam {
 	class Scene;
@@ -10,14 +13,17 @@ namespace Madam {
 	public:
 		SceneSerializer(Ref<Scene> scene, Device& _device);
 
-		void Serialize(const std::string& rawfilePath, bool isFullPath = false);
+		void Serialize(const std::filesystem::path& filePath);
 		void SerializeRuntime(const std::string& filePath);
 
 		//static void SerializeEntity(YAML::Emitter& out, Entity entity);
 
-		bool Deserialize(const std::string& rawfilePath, bool isFullPath = false);
+		bool Deserialize(const std::filesystem::path& rawfilePath);
 		bool DeserializeRuntime(const std::string& filePath);
+
+		
 	private:
+
 		Ref<Scene> m_Scene;
 		Device& device;
 	};

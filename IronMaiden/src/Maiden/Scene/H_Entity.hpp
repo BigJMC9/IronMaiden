@@ -1,9 +1,10 @@
 #pragma once
+#ifndef H_ENTITY
+#define H_ENTITY
 
 #include "maidenpch.hpp"
-#include "../Core/H_Utils.hpp"
+#include "../Core/H_CoreUtils.hpp"
 #include "H_Scene.hpp"
-//#include "Components.hpp"
 
 #define MADAM_ENTT_HEADER_FLAG
 
@@ -49,6 +50,7 @@ namespace Madam {
 		void RemoveComponent() {
 			MADAM_CORE_ASSERT(HasComponent<T>(), "GameObject does not have that component!");
 			//assert(HasComponent<T>(), "GameObject does not have that component!");
+			//scene->OnComponentRemoved<T>(*this, component);
 			scene->registry.remove<T>(entityHandle);
 		}
 
@@ -70,6 +72,14 @@ namespace Madam {
 			return ss.str();
 		}
 
+		bool isNull()
+		{
+			if (entityHandle == entt::null)
+			{
+
+			}
+		}
+
 		bool operator==(const Entity& other) const
 		{
 			return entityHandle == other.entityHandle && scene == other.scene;
@@ -80,9 +90,34 @@ namespace Madam {
 			return !(*this == other);
 		}
 
+		bool operator==(const null_t& other) const
+		{
+			if (entityHandle == entt::null)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		bool operator!=(const null_t& other) const
+		{
+			if (entityHandle != entt::null)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
 		//Transform transform;
 	private:
 		entt::entity entityHandle{ entt::null };
 		Scene* scene = nullptr;
 	};
 }
+#endif

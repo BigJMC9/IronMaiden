@@ -1,11 +1,15 @@
 #pragma once
+#ifndef H_COMPONENTS
+#define H_COMPONENTS
 
 #include "maidenpch.hpp"
-#include "../Core/H_Utils.hpp"
-#include "H_Model.hpp"
-#include "H_Texture.hpp"
+#include "../Rendering/H_Mesh.h"
+#include "../Rendering/H_Texture.h"
 #include "ScriptableEntity.hpp"
 #include "../Rendering/H_Camera.hpp"
+
+#define INCLUDE_GLM_UTILS
+#include "../Core/H_Logger.hpp"
 
 //libs
 #include <glm/glm.hpp>
@@ -21,90 +25,99 @@
 #undef near
 #endif
 
+/*#define GENERATE_COMPONENT(...) Entity entity; \
+void SetComponentParams(Entity _entity) { entity = _entity; }*/
+
+
 
 namespace Madam {
 
-	struct Camera {
-		//Shared pointer to camera data?
-		//Rendering::CameraData cameraData = Rendering::CameraData();
-		Ref<Rendering::CameraHandle> cameraHandle;
-
-		const glm::mat4& getProjection() const {
-			return cameraHandle->getProjection();
-		}
-
-		const glm::mat4& getView() const {
-			return cameraHandle->getView();
-		}
-
-		const glm::mat4& getInverseView() const {
-			return cameraHandle->getInverseView();
-		}
-
-		const glm::vec3 getPosition() const {
-			return glm::vec3(cameraHandle->getInverseView()[3]);
-		}
-
-		//Returns reference to camera data
-		Rendering::CameraData& CameraData() {
-			return cameraHandle->CameraData();
-		}
-
-		//Returns copy of camera data
-		Rendering::CameraData getCameraData() {
-			return cameraHandle->CameraData();
-		}
-
-		void pushCameraData(Rendering::CameraData cameraData) {
-			cameraHandle->setCameraData(cameraData);
-		}
-
-		void setAsMainCamera() {
-			cameraHandle->setMain();
-		}
-
-		Camera(Rendering::CameraData _cameraData) {
-			cameraHandle = std::make_shared<Rendering::CameraHandle>(_cameraData);
-		};
-		Camera() {
-			Rendering::CameraData cameraData;
-			cameraHandle = std::make_shared<Rendering::CameraHandle>(cameraData);
-		};
-		//Camera(Camera&) = default;
-		Camera(const Camera& source) {
-			cameraHandle = std::make_shared<Rendering::CameraHandle>(source.cameraHandle->CameraData());
-		};
-	};
-
-	struct UniqueIdentifier {
+	struct CUniqueIdentifier {
+		//GENERATE_COMPONENT()
 		UUID uuid = UUID();
 
-		UniqueIdentifier() = default;
-		UniqueIdentifier(UUID _uuid) {
+		CUniqueIdentifier() = default;
+		CUniqueIdentifier(UUID _uuid) {
 			uuid = _uuid;
 		};
 	};
 
-	struct Tag {
+	struct CCamera {
+		//GENERATE_COMPONENT()
+		CCamera() {
+			Rendering::CameraData _cameraData = Rendering::CameraHandle::GetDefaultCameraData();
+			cameraHandle = CreateRef<Rendering::CameraHandle>(_cameraData);
+		};
+		CCamera(Rendering::CameraData _cameraData) {
+			cameraHandle = CreateRef<Rendering::CameraHandle>(_cameraData);
+		};
+		CCamera(const CCamera& source) {
+			cameraHandle = CreateRef<Rendering::CameraHandle>(source.cameraHandle->GetCameraData());
+		};
+
+		const glm::mat4& GetProjection() const {
+			return cameraHandle->GetProjection();
+		}
+
+		const glm::mat4& GetView() const {
+			return cameraHandle->GetView();
+		}
+
+		const glm::mat4& GetInverseView() const {
+			return cameraHandle->GetInverseView();
+		}
+
+		const glm::vec3 GetPosition() const {
+			return glm::vec3(cameraHandle->GetInverseView()[3]);
+		}
+
+		//Returns reference to camera data
+		Rendering::CameraData& GetMutableCameraData() {
+			return cameraHandle->GetMutableCameraData();
+		}
+
+		//Returns copy of camera data
+		Rendering::CameraData GetCameraData() {
+			return cameraHandle->GetCameraData();
+		}
+
+		void PushCameraData(Rendering::CameraData cameraData) {
+			cameraHandle->SetCameraData(cameraData);
+		}
+
+		void SetAsMainCamera() {
+			cameraHandle->SetMain();
+		}
+
+		Ref<Rendering::CameraHandle> cameraHandle = nullptr;
+	};
+
+	struct CTag {
+		//GENERATE_COMPONENT()
 		std::string tag = "Untagged";
 
-		Tag() = default;
-		Tag(const Tag& other) = default;
-		Tag(const std::string& _tag)
+		CTag() = default;
+		CTag(const CTag& other) = default;
+		CTag(const std::string& _tag)
 			: tag(_tag) {}
 
 		operator std::string& () { return tag; }
 		operator const std::string& () const { return tag; }
 	};
 
-	struct GameObject {
+	struct CMetadata {
+		//GENERATE_COMPONENT()
 		std::string name = "Object";
-
-		GameObject() = default;
-		//Object(Object&) = default;
-		GameObject(const GameObject&) = default;
-		GameObject(std::string _name) {
+		bool isErrorEntity = false;
+		bool isHiddenEntity = false;
+		CMetadata() = default;
+		CMetadata(const CMetadata&) = default;
+		CMetadata(std::string _name) {
 			name = _name;
+		}
+		CMetadata(std::string _name, bool _isHidden) {
+			name = _name;
+			isHiddenEntity = _isHidden;
 		}
 		//Parent
 		//Tag
@@ -112,247 +125,163 @@ namespace Madam {
 		//Icon
 	};
 
-	struct MaidenInternal {
-		std::string name = "Object";
-	};
-
-	struct MeshFilter {
-		Ref<Model> model;
-
-		MeshFilter() = default;
-		//MeshFilter(MeshFilter&) = default;
-		MeshFilter(const MeshFilter&) = default;
-	};
-
 	//Not Component, needs to be moved
-	struct Shader {
+	struct CShader {
 		std::string vertShaderPath;
 		std::string fragShaderPath;
 
-		Shader() = default;
+		CShader() = default;
 		//Shader(Shader&) = default;
-		Shader(const Shader&) = default;
+		CShader(const CShader&) = default;
 	};
-
-	struct Material {
-		Ref<Shader> shader = nullptr;
+	//Remove
+	struct CMaterial {
+		Ref<CShader> shader = nullptr;
 
 		Ref<Texture> diffuseMap = nullptr;
 		Ref<Texture> normalMap = nullptr;
 		Ref<Texture> ambientOcclusionMap = nullptr;
 		Ref<Texture> glossMap = nullptr;
 
-		Material() = default;
+		CMaterial() = default;
 		//Material(Material&) = default;
-		Material(const Material&) = default;
+		CMaterial(const CMaterial&) = default;
 	};
 
-	struct MeshRenderer {
+	struct CMeshRenderer {
+		//GENERATE_COMPONENT()
 
-		MeshFilter mesh;
-		Ref<Material> material = nullptr;
+		CMeshRenderer() = default;
 
-		MeshRenderer() = default;
-		//MeshRenderer(MeshRenderer&) = default;
-		MeshRenderer(const MeshRenderer&) = default;
+		Ref<StaticMesh> mesh = nullptr;
+		Ref<CMaterial> material = nullptr;
 
-		Ref<Model> getModel() {
-			return mesh.model;
+		Ref<StaticMesh> GetMesh() {
+			return mesh;
 		}
 
-		Ref<Material> getMaterial() {
+		Ref<CMaterial> GetMaterial() {
 			return material;
 		}
 	};
 
-	struct PointLight {
-		glm::vec3 color;
-		float radius = 5.0f;
+	struct CPointLight {
+		//GENERATE_COMPONENT()
+		glm::vec3 color{ 1.0f, 1.0f, 1.0f };
+		float radius = 0.5f;
 		float intensity = 1.0f;
 
-		PointLight() = default;
+		CPointLight() = default;
 		//PointLight(PointLight&) = default;
-		PointLight(const PointLight&) = default;
+		CPointLight(const CPointLight&) = default;
 	};
 
-	struct Transform {
-		glm::vec3 translation{}; // (position offset)
-		glm::vec3 scale{ 1.f, 1.f, 1.f };
-		glm::vec3 rotation{};
+	struct CRelationship {
+		UUID parent = UUID("");
+		std::vector<UUID> children;
 
-		// Matrix corrsponds to Translate * Ry * Rx * Rz * Scale
-		// Rotations correspond to Tait-bryan angles of Y(1), X(2), Z(3)
-		// https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
-		glm::mat4 m_transform() {
-			const float c3 = glm::cos(rotation.z);
-			const float s3 = glm::sin(rotation.z);
-			const float c2 = glm::cos(rotation.x);
-			const float s2 = glm::sin(rotation.x);
-			const float c1 = glm::cos(rotation.y);
-			const float s1 = glm::sin(rotation.y);
-			return glm::mat4{
+		CRelationship() = default;
+		CRelationship(const CRelationship& other) = default;
+		CRelationship(UUID parent) : parent(parent) {}
+	};
+
+	struct CTransform {
+		glm::vec3 translation{};
+		glm::vec3 scale{ 1.f, 1.f, 1.f };
+		glm::quat rotation{ 1.f, 0.0f, 0.0f, 0.0f };
+
+		glm::mat4 transform() {
+
+			glm::mat4 rotationMatrix
+			{
 				{
-					scale.x * (c1 * c3 + s1 * s2 * s3),
-					scale.x * (c2 * s3),
-					scale.x * (c1 * s2 * s3 - c3 * s1),
-					0.0f,
+					glm::pow(rotation.w, 2) + glm::pow(rotation.x, 2) - glm::pow(rotation.y, 2) - glm::pow(rotation.z, 2),
+					(2 * rotation.x * rotation.y) + (2 * rotation.z * rotation.w),
+					(2 * rotation.x * rotation.z) - (2 * rotation.y * rotation.w),
+					0.0f
 				},
 				{
-					scale.y * (c3 * s1 * s2 - c1 * s3),
-					scale.y * (c2 * c3),
-					scale.y * (c1 * c3 * s2 + s1 * s3),
-					0.0f,
+					(2 * rotation.x * rotation.y) - (2 * rotation.z * rotation.w),
+					glm::pow(rotation.w, 2) - glm::pow(rotation.x, 2) + glm::pow(rotation.y, 2) - glm::pow(rotation.z, 2),
+					(2 * rotation.y * rotation.z) + (2 * rotation.x * rotation.w),
+					0.0f
 				},
 				{
-					scale.z * (c2 * s1),
-					scale.z * (-s2),
-					scale.z * (c1 * c2),
-					0.0f,
+					(2 * rotation.x * rotation.z) + (2 * rotation.y * rotation.w),
+					(2 * rotation.y * rotation.z) - (2 * rotation.x * rotation.w),
+					glm::pow(rotation.w, 2) - glm::pow(rotation.x, 2) - glm::pow(rotation.y, 2) + glm::pow(rotation.z, 2),
+					0.0f
 				},
-				{translation.x, translation.y, translation.z, 1.0f}
+				{
+					0.0f,
+					0.0f,
+					0.0f,
+					glm::pow(rotation.w, 2) + glm::pow(rotation.x, 2) + glm::pow(rotation.y, 2) + glm::pow(rotation.z, 2)
+				}
 			};
+
+			glm::mat4 transformationMatrix = rotationMatrix;
+			transformationMatrix[0] = scale.x * transformationMatrix[0];
+			transformationMatrix[1] = scale.y * transformationMatrix[1];
+			transformationMatrix[2] = scale.z * transformationMatrix[2];
+			transformationMatrix[3] = glm::vec4(translation, transformationMatrix[3][3]);
+
+			glm::quat quad = glm::quat_cast(rotationMatrix);
+			return transformationMatrix;
 		}
 
-		glm::mat3 normalMatrix() {
-			const float c3 = glm::cos(rotation.z);
-			const float s3 = glm::sin(rotation.z);
-			const float c2 = glm::cos(rotation.x);
-			const float s2 = glm::sin(rotation.x);
-			const float c1 = glm::cos(rotation.y);
-			const float s1 = glm::sin(rotation.y);
-			const glm::vec3 invScale = 1.0f / scale;
-
-			return glm::mat3{
-				{
-					invScale.x * (c1 * c3 + s1 * s2 * s3),
-					invScale.x * (c2 * s3),
-					invScale.x * (c1 * s2 * s3 - c3 * s1),
-				},
-				{
-					invScale.y * (c3 * s1 * s2 - c1 * s3),
-					invScale.y * (c2 * c3),
-					invScale.y * (c1 * c3 * s2 + s1 * s3),
-				},
-				{
-					invScale.z * (c2 * s1),
-					invScale.z * (-s2),
-					invScale.z * (c1 * c2),
-				},
-			};
+		glm::mat4 normalMatrix() {
+			glm::mat4 transformMatrix = transform();
+			glm::mat4 normalMatrix = glm::transpose(glm::inverse(transformMatrix));
+			return normalMatrix;
 		}
 
 		bool UpdateTransform (const glm::mat4& transform) {
+			glm::mat4 localMatrix(transform);
 
-			using namespace glm;
-			using T = float;
-
-			mat4 localMatrix(transform);
-
-			// Normalize the matrix.
-			if (epsilonEqual(localMatrix[3][3], static_cast<float>(0), epsilon<T>()))
+			/*if (glm::epsilonEqual(localMatrix[3][3], static_cast<float>(0), glm::epsilon<float>()))
 				return false;
 
-			MADAM_CORE_ASSERT(epsilonEqual(localMatrix[3][3], static_cast<T>(1), static_cast<T>(0.00001)), "");
+			MADAM_CORE_ASSERT(glm::epsilonEqual(localMatrix[3][3], static_cast<float>(1), static_cast<float>(0.00001)), "");
 
 			MADAM_CORE_ASSERT(
-				epsilonEqual(localMatrix[0][3], static_cast<T>(0), epsilon<T>()) &&
-				epsilonEqual(localMatrix[1][3], static_cast<T>(0), epsilon<T>()) &&
-				epsilonEqual(localMatrix[2][3], static_cast<T>(0), epsilon<T>()), "");
+				glm::epsilonEqual(localMatrix[0][3], static_cast<float>(0), glm::epsilon<float>()) &&
+				glm::epsilonEqual(localMatrix[1][3], static_cast<float>(0), glm::epsilon<float>()) &&
+				glm::epsilonEqual(localMatrix[2][3], static_cast<float>(0), glm::epsilon<float>()), "");*/
+			translation = glm::vec3(localMatrix[3]);
+			glm::mat4 rotationMatrix = localMatrix;
+			
+			
+			scale.x = glm::length(localMatrix[0]);
+			rotationMatrix[0] = glm::normalize(localMatrix[0]);
+			scale.y = glm::length(localMatrix[1]);
+			rotationMatrix[1] = glm::normalize(localMatrix[1]);
+			scale.z = glm::length(localMatrix[2]);
+			rotationMatrix[2] = glm::normalize(localMatrix[2]);
 
-			// Next take care of translation (easy).
-			translation = vec3(localMatrix[3]);
-			localMatrix[3] = vec4(0, 0, 0, localMatrix[3].w);
+			rotation = glm::quat_cast(rotationMatrix);
 
-			vec3 row[3], Pdum3;
-
-			// Now get scale and shear.
-			for (length_t i = 0; i < 3; ++i)
-				for (length_t j = 0; j < 3; ++j)
-					row[i][j] = localMatrix[i][j];
-
-			// Compute X scale factor and normalize first row.
-			scale.x = length(row[0]);
-			row[0] = detail::scale(row[0], static_cast<T>(1));
-			scale.y = length(row[1]);
-			row[1] = detail::scale(row[1], static_cast<T>(1));
-			scale.z = length(row[2]);
-			row[2] = detail::scale(row[2], static_cast<T>(1));
-
-			// At this point, the matrix (in rows[]) is orthonormal.
-			// Check for a coordinate system flip.  If the determinant
-			// is -1, then negate the matrix and the scaling factors.
-#if 0
-			Pdum3 = cross(Row[1], Row[2]); // v3Cross(row[1], row[2], Pdum3);
-			if (dot(Row[0], Pdum3) < 0)
-			{
-				for (length_t i = 0; i < 3; i++)
-				{
-					scale[i] *= static_cast<T>(-1);
-					Row[i] *= static_cast<T>(-1);
-				}
-			}
-#endif
-
-			rotation.y = asin(-row[0][2]);
-			if (cos(rotation.y) != 0) {
-				rotation.x = atan2(row[1][2], row[2][2]);
-				rotation.z = atan2(row[0][1], row[0][0]);
-			}
-			else {
-				rotation.x = atan2(-row[2][0], row[1][1]);
-				rotation.z = 0;
-			}
-
+			glm::mat3 shearMatrix = glm::mat3(localMatrix);
 
 			return true;
 		}
-
-		Transform() = default;
-		//Transform(Transform&) = default;
-		Transform(const Transform&) = default;
-		//Transform(const glm::mat4& transform) : m_transform(transform) {}
+		CTransform() = default;
+		CTransform(const CTransform&) = default;
 
 		operator glm::mat4() {
-			const float c3 = glm::cos(rotation.z);
-			const float s3 = glm::sin(rotation.z);
-			const float c2 = glm::cos(rotation.x);
-			const float s2 = glm::sin(rotation.x);
-			const float c1 = glm::cos(rotation.y);
-			const float s1 = glm::sin(rotation.y);
-			return glm::mat4{
-				{
-					scale.x * (c1 * c3 + s1 * s2 * s3),
-					scale.x * (c2 * s3),
-					scale.x * (c1 * s2 * s3 - c3 * s1),
-					0.0f,
-				},
-				{
-					scale.y * (c3 * s1 * s2 - c1 * s3),
-					scale.y * (c2 * c3),
-					scale.y * (c1 * c3 * s2 + s1 * s3),
-					0.0f,
-				},
-				{
-					scale.z * (c2 * s1),
-					scale.z * (-s2),
-					scale.z * (c1 * c2),
-					0.0f,
-				},
-				{translation.x, translation.y, translation.z, 1.0f}
-			};
+			return transform();
 		}
-		//operator const glm::mat4& () const { return m_transform; }
 	};
 
 	//Maybe set default functions? virtual functions may need to be avoided
-	struct NativeScriptComponent{
-
+	struct CNativeScript{
+		//GENERATE_COMPONENT()
 		ScriptableEntity* Instance = nullptr;
 
 
 		//std::function<void()> InstantiateScript;
 		ScriptableEntity* (*InstantiateScript)();
-		void (*DestroyScript)(NativeScriptComponent*);
+		void (*DestroyScript)(CNativeScript*);
 		//std::function<void()> DestroyScript;
 
 		std::function<void(ScriptableEntity*)> onCreate;
@@ -363,8 +292,8 @@ namespace Madam {
 		std::function<void(ScriptableEntity*)> onDestroy;
 		
 
-		NativeScriptComponent() = default;
-		NativeScriptComponent(const NativeScriptComponent&) = default;
+		CNativeScript() = default;
+		CNativeScript(const CNativeScript&) = default;
 		//NativeScriptComponent(const NativeScriptComponent&) = default;
 
 		//Bind ?!?! How do we work this with dll?
@@ -373,7 +302,7 @@ namespace Madam {
 		template<typename T>
 		void Bind() {
 			InstantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
-			DestroyScript = [](NativeScriptComponent* nsc) { delete (T*)nsc->Instance; nsc->Instance = nullptr; };
+			DestroyScript = [](CNativeScript* nsc) { delete (T*)nsc->Instance; nsc->Instance = nullptr; };
 
 			onCreate = [](ScriptableEntity* Instance) { ((T*)Instance)->Create(); };
 			onDestroy = [](ScriptableEntity* Instance) { ((T*)Instance)->Destroy(); };
@@ -390,6 +319,6 @@ namespace Madam {
 	};
 
 	using AllComponents =
-		ComponentGroup<Transform, MeshRenderer,
-		MeshFilter, Camera, PointLight, NativeScriptComponent>;
+		ComponentGroup<CTransform, CMeshRenderer, CCamera, CPointLight, CNativeScript>;
 }
+#endif

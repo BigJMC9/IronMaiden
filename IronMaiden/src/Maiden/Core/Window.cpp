@@ -9,18 +9,18 @@ namespace Madam {
 		//data.height = h;
 		//data.windowName = name;
 		//initWindow();
+		cursorX = 0.0f;
+		cursorY = 0.0f;
 	}
 
 	Window::~Window() {
-		//glfwDestroyWindow(window);
-		//glfwTerminate();
 		if (isRunning) {
 			MADAM_CORE_WARN("Window prematurally shutdown");
-			ShutDown();
+			deinit();
 		}
 	}
 
-	void Window::StartUp(uint32_t w, uint32_t h, std::string name) {
+	void Window::init(uint32_t w, uint32_t h, std::string name) {
 		data.width = w;
 		data.height = h;
 		data.windowName = name;
@@ -28,7 +28,7 @@ namespace Madam {
 		isRunning = true;
 	}
 
-	void Window::ShutDown() {
+	void Window::deinit() {
 		glfwDestroyWindow(window);
 		glfwTerminate();
 		isRunning = false;
@@ -42,33 +42,6 @@ namespace Madam {
 		window = glfwCreateWindow((int)data.width, (int)data.height, data.windowName.c_str(), nullptr, nullptr);
 		glfwSetWindowUserPointer(window, this);
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
-		/*HWND hwnd = glfwGetWin32Window(window);
-
-		// check state of NCRendering
-		BOOL isNCRenderingEnabled{ FALSE };
-		auto hr = DwmGetWindowAttribute(hwnd, DWMWA_NCRENDERING_ENABLED, &isNCRenderingEnabled, sizeof(isNCRenderingEnabled));
-		if (hr != S_OK) {
-			MADAM_CORE_ERROR("Failed to get DWMWA_NCRENDERING_ENABLED attribute: {0}", hr);
-		}
-		else {
-			MADAM_CORE_INFO("Successfully got DWMWA_NCRENDERING_ENABLED attribute: {0}", hr);
-		}
-		RECT extendedFrameBounds{ 0,0,0,0 };
-		hr = DwmGetWindowAttribute(hwnd,
-			DWMWA_EXTENDED_FRAME_BOUNDS,
-			&extendedFrameBounds,
-			sizeof(extendedFrameBounds));
-		if (hr != S_OK) {
-			MADAM_CORE_ERROR("Failed to get DWMWA_EXTENDED_FRAME_BOUNDS attribute: {0}", hr);
-		}
-		else {
-			MADAM_CORE_INFO("Successfully got DWMWA_EXTENDED_FRAME_BOUNDS attribute: {0}", hr);
-		}
-		COLORREF colour = 0xC32E4E40;
-		DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, &colour, sizeof(colour));*/
-		//SetWindowRgn(hwnd, CreateRectRgn(0, 0, data.width, data.height), true);
-		//SetWindowLongPtr(hwnd, GWL_STYLE, WS_EX_TRANSPARENT);
-		//SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, data.width, data.height, SWP_FRAMECHANGED);
 	}
 
 	void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface) {
@@ -83,5 +56,29 @@ namespace Madam {
 		window->framebufferResized = true;
 		window->data.width = width;
 		window->data.height = height;
+	}
+
+	void Window::SetCursorState(CursorState cursorState)
+	{
+		CursorState cursorMode = (CursorState)glfwGetInputMode(window, GLFW_CURSOR);
+		if (cursorMode != cursorState)
+		{
+			glfwSetInputMode(window, GLFW_CURSOR, (int32_t)cursorState);
+			glfwGetCursorPos(window, &cursorX, &cursorY);
+		}
+	}
+
+	void Window::SetCursorIcon(CursorType cursorType)
+	{
+		if (currentCursorType != cursorType)
+		{
+			glfwSetCursor(window, glfwCreateStandardCursor((int32_t)cursorType));
+			currentCursorType = cursorType;
+		}
+	}
+
+	void Window::PopCursorPosition()
+	{
+		glfwSetCursorPos(window, cursorX, cursorY);
 	}
 }

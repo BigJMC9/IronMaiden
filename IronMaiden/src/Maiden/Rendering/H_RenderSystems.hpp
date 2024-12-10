@@ -9,7 +9,7 @@
 #include "../Scene/H_Entity.hpp"
 #include "H_Pipeline.hpp"
 #include "H_Renderer.hpp"
-#include "../Core/H_Utils.hpp"
+#include "../Core/H_CoreUtils.hpp"
 
 namespace Madam {
     //Create solution that don't involve using virtual functions.
@@ -24,6 +24,11 @@ namespace Madam {
             glm::vec4 position{};
             glm::vec4 color{};
             float radius;
+        };
+
+        struct GridPushConstants {
+            float nearPlane;
+            float farPlane;
         };
 
 
@@ -48,6 +53,7 @@ namespace Madam {
 
             Scope<Pipeline> pipeline;
             VkPipelineLayout pipelineLayout;
+
 		};
 
         class MADAM_API GridRenderLayer : public RenderLayer {
@@ -62,7 +68,24 @@ namespace Madam {
             void createPipelineLayout(VkDescriptorSetLayout globalSetLayout) override;
             void createPipeline(VkRenderPass renderPass) override;
 
-            Scope<DescriptorSetLayout> renderSystemLayout;
+        };
+
+        class MADAM_API SkyboxRenderLayer : public RenderLayer {
+
+        public:
+            SkyboxRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "Default");
+            ~SkyboxRenderLayer();
+
+            void render(FrameInfo& frameInfo) override;
+
+        protected:
+            void createPipelineLayout(VkDescriptorSetLayout globalSetLayout) override;
+            void createPipeline(VkRenderPass renderPass) override;
+
+            Scope<DescriptorSetLayout> skyboxRenderSystemLayout;
+            Scope<Buffer> skyboxBuffer;
+            Ref<Texture> noiseTexture;
+            Ref<StaticMesh> skybox = StaticMesh::Create("resources\\models\\skybox.obj");
         };
 
         class MADAM_API TextureRenderLayer : public RenderLayer {
@@ -100,8 +123,8 @@ namespace Madam {
             RenderStack(Device& device, Renderer& renderer) : device{ device }, renderer{ renderer } {}
             ~RenderStack();
 
-            void StartUp();
-            void ShutDown();
+            void init();
+            void deinit();
 
             void initialize(Scope<DescriptorSetLayout>& globalSetLayout);
             void render(FrameInfo& frameInfo);

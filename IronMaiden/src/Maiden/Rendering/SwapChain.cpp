@@ -1,6 +1,6 @@
 #include "maidenpch.hpp"
 #include "H_SwapChain.hpp"
-#include "H_Image.hpp"
+#include "Vulkan/H_VulkanImage.h"
 
 #ifdef max
 	#undef max
@@ -14,44 +14,36 @@ namespace Madam {
 
 		SwapChain::SwapChain(Device& deviceRef, VkExtent2D extent)
 			: device{ deviceRef }, windowExtent{ extent } {
-			startUp();
+			StartUp();
 		}
 
 		SwapChain::SwapChain(Device& deviceRef, VkExtent2D extent, Ref<SwapChain> previous)
 			: device{ deviceRef }, windowExtent{ extent }, oldSwapChain{ previous } {
-			startUp();
+			StartUp();
 
 			//clean up old swap chain
 			oldSwapChain = nullptr;
 		}
 
-		void SwapChain::startUp() {
-			createSwapChain();
-			createImageViews();
-			createRenderPass();
-			//createDepthResources();
-			createFramebuffers();
-			createSyncObjects();
+		void SwapChain::StartUp() {
+			CreateSwapChain();
+			CreateImageViews();
+			CreateRenderPass();
+			CreateFramebuffers();
+			CreateSyncObjects();
 			MADAM_CORE_INFO("SwapChain image count: {0}", imageCount());
 		}
 
 		SwapChain::~SwapChain() {
 			MADAM_CORE_INFO("Cleaning up SwapChain");
-			for (auto imageView : swapChainImageViews) {
-				vkDestroyImageView(device.device(), imageView.view, nullptr);
+			for (auto image : swapChainImages) {
+				vkDestroyImageView(device.device(), image.view, nullptr);
 			}
-			swapChainImageViews.clear();
+			swapChainImages.clear();
 
 			if (swapChain != nullptr) {
 				vkDestroySwapchainKHR(device.device(), swapChain, nullptr);
 				swapChain = nullptr;
-			}
-
-			for (int i = 0; i < depthImages.size(); i++) {
-				//depthImages[i]->Destroy();
-				vkDestroyImageView(device.device(), depthImageViews[i], nullptr);
-				vkDestroyImage(device.device(), depthImages[i], nullptr);
-				vkFreeMemory(device.device(), depthImageMemorys[i], nullptr);
 			}
 
 			for (auto framebuffer : swapChainFramebuffers) {
@@ -69,7 +61,7 @@ namespace Madam {
 		}
 
 		VkImageView SwapChain::getImageView(int index) {
-			return swapChainImageViews[index].view;
+			return swapChainImages[index].view;
 		}
 
 		VkRenderPass SwapChain::getRenderPass() {
@@ -144,7 +136,7 @@ namespace Madam {
 			return result;
 		}
 
-		void SwapChain::createSwapChain() {
+		void SwapChain::CreateSwapChain() {
 			MADAM_CORE_INFO("Creating SwapChain");
 			SwapChainSupportDetails swapChainSupport = device.getSwapChainSupport();
 
@@ -209,29 +201,33 @@ namespace Madam {
 			// retrieve the handles.
 			vkGetSwapchainImagesKHR(device.device(), swapChain, &imageCount, nullptr);
 			swapChainImages.resize(imageCount);
-			vkGetSwapchainImagesKHR(device.device(), swapChain, &imageCount, swapChainImages.data());
-
+			std::vector<VkImage> images;
+			images.resize(imageCount);
+			vkGetSwapchainImagesKHR(device.device(), swapChain, &imageCount, images.data());
+			for (size_t i = 0; i < images.size(); i++)
+			{
+				swapChainImages[i].image = images[i];
+			}
 			swapChainImageFormat = surfaceFormat.format;
 			swapChainExtent = extent;
 			//VkFormat depthFormat = findDepthFormat();
 			//swapChainDepthFormat = depthFormat;
 		}
 
-		void SwapChain::createImageViews() {
-			swapChainImageViews.resize(swapChainImages.size());
+		void SwapChain::CreateImageViews() {
 			for (size_t i = 0; i < swapChainImages.size(); i++) {
-				swapChainImageViews[i].info = {};
-				swapChainImageViews[i].info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				swapChainImageViews[i].info.image = swapChainImages[i];
-				swapChainImageViews[i].info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-				swapChainImageViews[i].info.format = swapChainImageFormat;
-				swapChainImageViews[i].info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				swapChainImageViews[i].info.subresourceRange.baseMipLevel = 0;
-				swapChainImageViews[i].info.subresourceRange.levelCount = 1;
-				swapChainImageViews[i].info.subresourceRange.baseArrayLayer = 0;
-				swapChainImageViews[i].info.subresourceRange.layerCount = 1;
+				VkImageViewCreateInfo info = {};
+				info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+				info.image = swapChainImages[i].image;
+				info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+				info.format = swapChainImageFormat;
+				info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				info.subresourceRange.baseMipLevel = 0;
+				info.subresourceRange.levelCount = 1;
+				info.subresourceRange.baseArrayLayer = 0;
+				info.subresourceRange.layerCount = 1;
 
-				if (vkCreateImageView(device.device(), &swapChainImageViews[i].info, nullptr, &swapChainImageViews[i].view) !=
+				if (vkCreateImageView(device.device(), &info, nullptr, &swapChainImages[i].view) !=
 					VK_SUCCESS) {
 					throw std::runtime_error("failed to create texture image view!");
 				}
@@ -239,7 +235,7 @@ namespace Madam {
 		}
 
 		//Look into this in more depth
-		void SwapChain::createRenderPass() {
+		void SwapChain::CreateRenderPass() {
 
 			VkAttachmentDescription colorAttachment = {};
 			colorAttachment.format = getSwapChainImageFormat();
@@ -292,139 +288,13 @@ namespace Madam {
 			}
 		}
 
-		/*void SwapChain::createSceneResources() {
-			sceneImages.resize(imageCount());
-			sceneImageMemorys.resize(imageCount());
-			sceneImageViews.resize(imageCount());
-
-			for (int i = 0; i < sceneImages.size(); i++) {
-				VkImageCreateInfo imageInfo{};
-				imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-				imageInfo.imageType = VK_IMAGE_TYPE_2D;
-				imageInfo.extent.width = viewportWidth;
-				imageInfo.extent.height = viewportHeight;
-				imageInfo.extent.depth = 1;
-				imageInfo.mipLevels = 1;
-				imageInfo.arrayLayers = 1;
-				imageInfo.format = swapChainImageFormat;
-				imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-				imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-				imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-				imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-				imageInfo.flags = 0;
-
-				device.createImageWithInfo(
-					imageInfo,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-					sceneImages[i],
-					sceneImageMemorys[i]);
-
-				VkImageViewCreateInfo viewInfo{};
-				viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				viewInfo.image = sceneImages[i];
-				viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-				viewInfo.format = swapChainImageFormat;
-				viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				viewInfo.subresourceRange.baseMipLevel = 0;
-				viewInfo.subresourceRange.levelCount = 1;
-				viewInfo.subresourceRange.baseArrayLayer = 0;
-				viewInfo.subresourceRange.layerCount = 1;
-
-				if (vkCreateImageView(device.device(), &viewInfo, nullptr, &sceneImageViews[i]) != VK_SUCCESS) {
-					throw std::runtime_error("failed to create texture image view!");
-				}
-			}
-		}*/
-
-		/*void SwapChain::createDepthResources() {
-			VkExtent2D swapChainExtent = getSwapChainExtent();
-
-			depthImages.resize(imageCount());
-			depthImageMemorys.resize(imageCount());
-			depthImageViews.resize(imageCount());
-
-			/*Rendering::MultiSample multiSample = Rendering::MultiSample::None;
-
-			Rendering::ImageFormat format;
-			switch (swapChainDepthFormat)
-			{
-			case VK_FORMAT_D32_SFLOAT:
-				format = Rendering::ImageFormat::D32F;
-				break;
-			case VK_FORMAT_D32_SFLOAT_S8_UINT:
-				format = Rendering::ImageFormat::D32FS8;
-				break;
-			case VK_FORMAT_D24_UNORM_S8_UINT:
-				format = Rendering::ImageFormat::D24S8;
-				break;
-			default:
-				MADAM_CORE_ERROR("Unsupported Depth Format!");
-				break;
-			}
-
-			Rendering::ImageLayoutType layout = Rendering::ImageLayoutType::Undefined;
-			Rendering::ImageUsageType usage = Rendering::ImageUsageType::Attachment;
-
-			Rendering::ImageSpecification imageSpecs;
-			imageSpecs.format = format;
-			imageSpecs.width = swapChainExtent.width;
-			imageSpecs.height = swapChainExtent.height;
-			imageSpecs.layout = layout;
-			imageSpecs.usuage = usage;
-			imageSpecs.multiSample = multiSample;
-			imageSpecs.mipLevels = 1;
-			imageSpecs.arrayLayers = 1;
-			imageSpecs.depth = 1;*/
-			/*
-			for (int i = 0; i < depthImages.size(); i++) {
-				//depthImages[i] = CreateRef<Rendering::Image>(imageSpecs);
-				VkImageCreateInfo imageInfo{};
-				imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-				imageInfo.imageType = VK_IMAGE_TYPE_2D;
-				imageInfo.extent.width = swapChainExtent.width;
-				imageInfo.extent.height = swapChainExtent.height;
-				imageInfo.extent.depth = 1;
-				imageInfo.mipLevels = 1;
-				imageInfo.arrayLayers = 1;
-				imageInfo.format = swapChainDepthFormat;
-				imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-				imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-				imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-				imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-				imageInfo.flags = 0;
-
-				device.createImageWithInfo(
-					imageInfo,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-					depthImages[i],
-					depthImageMemorys[i]);
-
-				VkImageViewCreateInfo viewInfo{};
-				viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				viewInfo.image = depthImages[i];
-				viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-				viewInfo.format = swapChainDepthFormat;
-				viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-				viewInfo.subresourceRange.baseMipLevel = 0;
-				viewInfo.subresourceRange.levelCount = 1;
-				viewInfo.subresourceRange.baseArrayLayer = 0;
-				viewInfo.subresourceRange.layerCount = 1;
-
-				if (vkCreateImageView(device.device(), &viewInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS) {
-					throw std::runtime_error("failed to create texture image view!");
-				}
-			}
-		}*/
-
-		void SwapChain::createFramebuffers() {
+		void SwapChain::CreateFramebuffers() {
 
 			MADAM_CORE_INFO("Debug Framebuffer");
 			swapChainFramebuffers.resize(imageCount());
 			
 			for (size_t i = 0; i < imageCount(); i++) {
-				std::array<VkImageView, 1> attachments = { swapChainImageViews[i].view };
+				std::array<VkImageView, 1> attachments = { swapChainImages[i].view };
 
 				VkFramebufferCreateInfo framebufferInfo;
 				VkExtent2D swapChainExtent = getSwapChainExtent();
@@ -443,7 +313,7 @@ namespace Madam {
 			}
 		}
 
-		void SwapChain::createSyncObjects() {
+		void SwapChain::CreateSyncObjects() {
 			imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 			renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 			inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
@@ -483,19 +353,11 @@ namespace Madam {
 			const std::vector<VkPresentModeKHR>& availablePresentModes) {
 			for (const auto& availablePresentMode : availablePresentModes) {
 				if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-					std::cout << "Present mode: Mailbox" << std::endl;
+					MADAM_CORE_INFO("Present mode: Mailbox");
 					return availablePresentMode;
 				}
 			}
-
-			//for (const auto &availablePresentMode : availablePresentModes) {
-			//	if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-			//		std::cout << "Present mode: Immediate" << std::endl;
-			//		return availablePresentMode;
-			//	}
-			//}
-
-			std::cout << "Present mode: V-Sync" << std::endl;
+			MADAM_CORE_INFO("Present mode: V-Sync");
 			return VK_PRESENT_MODE_FIFO_KHR;
 		}
 
@@ -522,6 +384,10 @@ namespace Madam {
 				VK_IMAGE_TILING_OPTIMAL,
 				VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 		}
-	}
 
+		VkImage SwapChain::getSwapChainImage(int index)
+		{
+			return swapChainImages[index].image;
+		}
+	}
 }

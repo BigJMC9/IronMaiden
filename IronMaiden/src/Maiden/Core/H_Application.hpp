@@ -1,39 +1,34 @@
 #pragma once
 
-//Fix these headers, only essential headers are needed, the rest can reside in the implementation
+// Fix these headers, only essential headers are needed, the rest can reside in the implementation
 #include "maidenpch.hpp"
-#include "Main/core.hpp"
-#include "H_Utils.hpp"
-#include "H_Logger.hpp"
-#include "../Rendering/H_DescriptorSetLayout.hpp"
+#include "Version.h"
+#include "Main/Core.hpp"
+#include "H_CoreUtils.hpp"
 #include "../Rendering/H_Renderer.hpp"
 #include "../Rendering/H_RenderSystems.hpp"
+#include "../Rendering/H_DescriptorSetLayout.hpp"
 #include "../Scene/H_Scene.hpp"
 #include "H_Time.hpp"
 #include "../Interfaces/H_Interface.h"
 #include "../Events/H_EventSystem.h"
 
-//int main();
+#include <filesystem>
 
 namespace Madam {
-
+	
 	class SceneSerializer;
+	class Project;
 
-	//Should be passed in when App is created
-	struct ApplicationConfig
+	// Should be passed in when App is created
+	struct ApplicationInfo
 	{
 		std::string name = "IronMaidenEngine";
+		std::string version = ENGINE_VERSION;
 		std::string windowName = "Iron Maiden Engine";
-		std::string version = "0.05";
 		uint32_t windowWidth = 1600, windowHeight = 900;
-		std::string workingDirectory;
-		std::string projectFolder = "C:/Users/xbox/Desktop/Development/IronMaiden Projects/Sandbox/Sandbox/"; //This should be the folder to the project is stored
-		std::string projectWorkingDirectory = "C:/Users/xbox/Desktop/Development/IronMaiden Projects/Sandbox/"; //This should be the folder where the project folder is stored
-		std::string internals = "Internal/";
-		std::string assets = "Assets/";
-		bool is2D = false;
+		std::filesystem::path projectsDirectory = "Projects";
 	};
-
 
 	// With madam api macro, the compiler will throw a warning, may need change in future, look at microsoft C4251 warn page for more details
 	class MADAM_API Application {
@@ -42,105 +37,77 @@ namespace Madam {
 	public:
 		virtual ~Application();
 		
-		void StartUp();
-		void ShutDown();
+		Application(const Application&) = delete;
+		Application& operator=(const Application&) = delete;
 
-		float getAspectRatio() {
-			return renderer.getAspectRatio();
+		void Init();
+		void Deinit();
+
+		float GetAspectRatio() {
+			return renderer.GetAspectRatio();
 		}
 
-		void addSurface(Scope<EngineInterface> _surface) {
-			pSurface = std::move(_surface);
-			MADAM_CORE_INFO("EngineInterface added");
-		}
+		void AddSurface(Scope<EngineInterface> _surface);
 
-		static Application& Get() {
-			//static Application instance;
-			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-			return *instance;
-		}
+		static Application& Get();
 
-		static Application* GetPtr() {
-			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-			return instance;
-		}
+		static Application* GetPtr();
 
-		static SceneSerializer* GetSceneSerializer() {
-			MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-			return instance->pSceneSerializer;
-		}
+		static SceneSerializer* GetSceneSerializer();
 
 		// Use const func() const {} for readonly vars
 
-		Window& getWindow() { return window;  }
-		Rendering::RenderStack& getMasterRenderSystem() { return renderStack; }
+		Window& GetWindow() { return window;  }
+		Rendering::RenderStack& GetMasterRenderSystem() { return renderStack; }
 
-		//Depreciated
-		const std::vector<Ref<Rendering::RenderLayer>>& getRenderLayers() const;
-
-		Scene& getScene() { return *scene; }
-		const Time& getTime() const { return time; }
-		ApplicationConfig getConfig() {
+		Scene& GetScene() { return *_scene; }
+		const Time& GetTime() const { return time; }
+		ApplicationInfo GetConfig() {
 			return config;
 		}
 		
-		//Put in engine config header
+		//Put in engine config header maybe?
 		const float MAX_FRAME_TIME = 0.1f;
-
-		bool debug = false;
 
 		std::string CreateScript() {
 			std::string returnVal = createNative;
-			if (returnVal != "") {
-				MADAM_CORE_INFO("Creating Native Script: {0}", returnVal);
-			}
 			createNative = "";
 			return returnVal;
 		}
 
-		void setCreateNative(const std::string scriptName) {
+		void SetCreateNative(const std::string scriptName) {
 			createNative = scriptName;
 		}
 
-		bool isScan() {
+		bool IsScan() {
 			bool temp = isScanning;
 			isScanning = false;
 			return temp;
 		}
 
-		void setScan() {
+		void SetScan() {
 			isScanning = true;
 		}
 
-		/*bool isCompile() {
-			bool temp = isCompiling;
-			isCompiling = false;
-			return temp;
-		}
-
-		void setCompile() {
-			isCompiling = true;
-		}*/
-
-		bool isPlay() const {
+		bool IsPlay() const {
 			return runtime;
 		}
 
-		bool isRuntimeFlag() {
+		bool IsRuntimeFlag() {
 			bool temp = runtimeFlag;
 			runtimeFlag = false;
 			return temp;
 		}
 
-		void setRuntimeFlag() {
+		void SetRuntimeFlag() {
 			runtimeFlag = true;
 		}
 
-		void setRuntimeStopFlag() {
+		void SetRuntimeStopFlag() {
 			runtimeStopFlag = true;
 		}
 
-		bool isRuntimeStopFlag() {
+		bool IsRuntimeStopFlag() {
 			bool temp = runtimeStopFlag;
 			runtimeStopFlag = false;
 			return temp;
@@ -153,86 +120,52 @@ namespace Madam {
 		void RuntimeStop() {
 			if (runtime) {
 				runtime = false;
-				SwitchScenes(true);
+				//SwitchScenes(true); //Fix this
 			}
 		}
 
-
-		//Temp solution. Need to move to Scene Management class and needs to be safer
-		void PrimeReserve(Ref<Scene> _scene) {
-			reservedScene = _scene;
+		void SwitchScenes(Ref<Scene> scene)
+		{
+			_scene = scene;
+			SceneChangeEvent e;
+			Events::EventSystem::Get().PushEvent(&e, true);
 		}
 
-		void SwitchScenes() {
-			if (reservedScene == nullptr) {
-				MADAM_CORE_ERROR("Scene has not been primed into reserve");
-			}
-			else {
-				Ref<Scene> temp = scene;
-				scene = reservedScene;
-				reservedScene = temp;
-			}
-		}
-
-		void SwitchScenes(bool drop) {
-			if (reservedScene == nullptr) {
-				MADAM_CORE_ERROR("Scene has not been primed into reserve");
-			}
-			else {
-				Ref<Scene> temp = scene;
-				scene = reservedScene;
-				if (drop) {
-					reservedScene = nullptr;
-				}
-				else {
-					reservedScene = temp;
-				}
-			}
-		}
-
-		/*bool isTest() {
-			bool temp = isTesting;
-			isTesting = false;
-			return temp;
-		}
-
-		void setTest() {
-			isTesting = true;
-		}*/
-
-		bool isUpdate() {
+		bool IsUpdate() 
+		{
 			bool temp = isUpdating;
 			isUpdating = false;
 			return temp;
 		}
 
-		void setUpdate() {
+		void SetUpdate() 
+		{
 			isUpdating = true;
 		}
 
-		bool getScripts() {
+		bool GetScripts() 
+		{
 			bool temp = isGettingScripts;
 			isGettingScripts = false;
 			return temp;
 		}
 
-		void setScripts() {
+		void SetScripts() 
+		{
 			isGettingScripts = true;
 		}
 
-		Application(const Application&) = delete;
-		Application& operator=(const Application&) = delete;
-
-		void run();
-
-		void quit();
+		void ConfigureApp();
+		void SaveSession();
+		void Run();
+		void Quit();
 
 		Scope<EngineInterface> pSurface = nullptr;
 
 	private:
 		static Application* instance;
 		static bool instanceFlag;
-		ApplicationConfig config;
+		ApplicationInfo config;
 
 		Window window = Window{};
 		Device device = Device{ window };
@@ -257,11 +190,12 @@ namespace Madam {
 		bool isGettingScripts = false;
 		//bool isTesting = false;
 		bool isUpdating = false;
-
+		
 		//Need Scene Management class
-		Ref<Scene> scene;
-		Ref<Scene> reservedScene = nullptr;
-		SceneSerializer* pSceneSerializer;
+		Ref<Scene> _scene = nullptr;
+		Ref<Scene> runtimeScene = nullptr;
+		SceneSerializer* pSceneSerializer = nullptr;
+
 	protected:
 		
 	};

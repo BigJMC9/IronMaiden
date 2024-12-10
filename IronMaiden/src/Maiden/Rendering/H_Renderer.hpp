@@ -10,7 +10,7 @@
 namespace Madam {
 	namespace Rendering {
 
-		struct ImageData {
+		struct ImageInfo {
 			std::string debugName;
 			VkImageView imageView;
 			VkImage image;
@@ -18,7 +18,7 @@ namespace Madam {
 			VkFramebuffer frameBuffer;
 		};
 		struct Frame {
-			std::vector<ImageData> images;
+			std::vector<ImageInfo> images;
 			uint32_t width, height;
 		};
 		struct CommandBufferGroup {
@@ -35,47 +35,67 @@ namespace Madam {
 			Renderer& operator=(const Renderer&) = delete;
 			Renderer& operator=(Renderer&&) = delete;
 
-			void StartUp();
-			void ShutDown();
+			void Init();
+			void Deinit();
 
-			VkRenderPass getSwapChainRenderPass() const { return swapChain->getRenderPass(); }
-			VkRenderPass getMainRenderPass() const { return renderPasses[0]; }
-
-			float getAspectRatio() const {
+			VkRenderPass GetSwapChainRenderPass() const 
+			{ 
+				return swapChain->getRenderPass(); 
+			}
+			VkRenderPass GetMainRenderPass() const 
+			{ 
+				return renderPasses[0]; 
+			}
+			float GetAspectRatio() const 
+			{
 				return swapChain->extentAspectRatio();
 			}
-			bool isFrameInProgress() const { return isFrameStarted; }
+			bool IsFrameInProgress() const 
+			{ 
+				return isFrameStarted; 
+			}
 
-			VkCommandBuffer getCurrentCommandBuffer() const {
+			VkCommandBuffer GetCurrentCommandBuffer() const 
+			{
 				MADAM_CORE_ASSERT(isFrameStarted, "Cannot get command buffer when frame not in progress");
 				return commandBuffers[currentFrameIndex];
 			}
 
-			int getFrameIndex() const {
+			int GetFrameIndex() const 
+			{
 				MADAM_CORE_ASSERT(isFrameStarted, "Cannot get command buffer when frame not in progress");
 				return currentFrameIndex;
 			}
 
-			VkImageView getImageView(int index) const {
+			VkImageView GetImageView(int index) const 
+			{
 				return frames[currentFrameIndex].images[index].imageView;
 			}
 
-			uint32_t getViewportWidth() const { return viewportWidth; }
-			uint32_t getViewportHeight() const { return viewportHeight; }
+			uint32_t GetViewportWidth() const 
+			{ 
+				return viewportWidth; 
+			}
+			uint32_t GetViewportHeight() const 
+			{ 
+				return viewportHeight; 
+			}
 
-			ImGui_ImplVulkan_InitInfo getImGuiInitInfo() {
+			ImGui_ImplVulkan_InitInfo GetImGuiInitInfo() 
+			{
 				ImGui_ImplVulkan_InitInfo init_info = ImGui_ImplVulkan_InitInfo();
 				init_info.Device = device.device();
 				init_info.PipelineCache = VK_NULL_HANDLE;
 				init_info.Allocator = VK_NULL_HANDLE;
-				init_info.MinImageCount = swapChain->imageCount();
-				init_info.ImageCount = swapChain->imageCount();
+				init_info.MinImageCount = static_cast<uint32_t>(swapChain->imageCount());
+				init_info.ImageCount = static_cast<uint32_t>(swapChain->imageCount());
 				init_info.CheckVkResultFn = nullptr;
 				device.getImGuiInitInfo(&init_info);
 				return init_info;
 			};
 
-			static Renderer& Get() {
+			static Renderer& Get() 
+			{
 				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
 				if (instance == nullptr) {
 					MADAM_CORE_ERROR("Renderer instance is null pointer");
@@ -102,29 +122,31 @@ namespace Madam {
 			}
 
 			//Needs to be updated to abstract away from the VkRenderPass, we don't want to accidentally change renderpass settings while the engine is running
-			const std::vector<VkRenderPass> getRenderPasses() {
+			const std::vector<VkRenderPass> GetRenderPasses() 
+			{
 				return renderPasses;
 			}
 
-			bool beginFrame();
-			void endFrame();
-			VkCommandBuffer beginCommandBuffer();
-			void endCommandBuffer(VkCommandBuffer commandBuffer);
-			void beginRenderPass(VkCommandBuffer commandBuffer, int renderpassIndex);
-			void endRenderPass(VkCommandBuffer commandBuffer);
-			void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
-			void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+			bool BeginFrame();
+			void EndFrame();
+			VkCommandBuffer BeginCommandBuffer() const;
+			void EndCommandBuffer(VkCommandBuffer commandBuffer);
+			void BeginRenderPass(VkCommandBuffer commandBuffer, int renderpassIndex);
+			void EndRenderPass(VkCommandBuffer commandBuffer) const;
+			void BeginSwapChainRenderPass(VkCommandBuffer commandBuffer);
+			void EndSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
-			VkRenderPass createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies);
+			VkRenderPass CreateRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies);
 
 			void PipelineBarrier(VkCommandBuffer commandBuffer, bool isSwapchain, bool isSwitch, int frameIndex, int renderIndex);
+
 		private:
-			void createCommandBuffers();
-			void createMainRenderImages();
-			void createMainRenderPass();
-			void freeCommandBuffers();
-			void recreateSwapChain();
-			//VkRenderPass createRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies, bool isSwapChain);
+			void CreateCommandBuffers();
+			void CreateMainRenderImages();
+			void CreateMainRenderPass();
+			void FreeCommandBuffers();
+			void RecreateSwapChain();
+			//VkRenderPass CreateRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies, bool isSwapChain);
 
 			static Renderer* instance;
 			static bool instanceFlag;
@@ -134,7 +156,7 @@ namespace Madam {
 			Scope<SwapChain> swapChain = nullptr;
 			std::vector<VkCommandBuffer> commandBuffers;
 
-			uint32_t currentImageIndex;
+			uint32_t currentImageIndex = 0;
 			int currentFrameIndex = 0;
 			uint32_t currentCommandBufferIndex = 0;
 			int renderpassIndex = -1;
@@ -143,11 +165,10 @@ namespace Madam {
 			std::vector<VkRenderPass> renderPasses;
 			std::vector<Frame> frames;
 			std::vector<CommandBufferGroup> commandBufferGroups;
-			
+			bool hasSwapChainRecreated = false;
 			//std::vector<ImageView> imageViews;
 
 			uint32_t viewportWidth = 800, viewportHeight = 450;
-
 		};
 	}
 }
