@@ -74,6 +74,7 @@ namespace Madam {
 				return "Sphere";
 				break;
 			default:
+				return "None";
 				break;
 			}
 		}
