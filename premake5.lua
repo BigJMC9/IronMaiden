@@ -90,6 +90,9 @@ project "IronMaiden"
         "%{Lib.spdlog}"
     }
 
+    filter "action:vs*"
+        buildoptions {"/utf-8"}
+
     filter "files:IronMaiden/vendors/ImGuizmo/**.cpp"
     flags{ "NoPCH" }
 
@@ -166,6 +169,9 @@ project "Editor"
         "IronMaiden.lib",
         "%{Lib.yaml_cpp}"
     }
+
+    filter "action:vs*"
+        buildoptions {"/utf-8"}
 
     filter "system:windows"
         systemversion "latest"
