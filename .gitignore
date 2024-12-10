@@ -379,3 +379,6 @@ Editor/pref.conf
 Editor/Internal/shaders/temp/
 VersionControl.py
 IronMaiden/OnBuild.bat
+
+#UnIgnore
+!vendors/*
