@@ -187,8 +187,7 @@ project "Editor"
         postbuildcommands
         {
             "call \"compile.bat\"",
-            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\resources\\\" \"%{wks.location}bin\\" .. outputdir .. "\\Editor\\resources\\\" /E /I /Y",
-            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\logs\\\" \"%{wks.location}bin\\" .. outputdir .. "\\Editor\\logs\\\" /E /I /Y"
+            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\resources\\\" \"%{wks.location}bin\\" .. outputdir .. "\\Editor\\resources\\\" /E /I /Y"
         }
 
     filter "configurations:Debug"

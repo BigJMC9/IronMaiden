@@ -382,3 +382,4 @@ IronMaiden/OnBuild.bat
 
 #UnIgnore
 !vendors/*
+!Editor/resources/*

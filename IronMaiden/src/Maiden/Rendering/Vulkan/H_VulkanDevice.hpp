@@ -112,7 +112,8 @@ namespace Madam {
 
 		// helper functions
 		bool isDeviceSuitable(VkPhysicalDevice device);
-		std::vector<const char*> getRequiredExtensions();
+		std::vector<const char*> getRequiredExtensions() const;
+		bool checkInstanceExtensionSupport();
 		bool checkValidationLayerSupport();
 		QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 		void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
