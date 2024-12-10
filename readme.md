@@ -51,12 +51,15 @@ We are aiming for a major release in the first half of 2025 which will include a
  - **Custom Pointer Data Structures for Garbage Collection**
  - **Adhering to Updated Code Style**
 
+## Fixed Issues
+
+- **Rotation Issues:** Object rotations now rely on Quanternions, Object rotations will also respect scene hierachy.
+
 ## Known Issues
 
 The engine is currently in an early development phase, and we are aware of several existing issues that will be addressed as we progress through the restructuring process.
 
 ### Known Issues
-- **Rotation Issues:** Object rotations still rely on Euler angles instead of quaternions, leading to rotational inconsistencies.
 - **Render Pass Shutdown:** Render passes and renderer are not always shutting down correctly, causing potential stability issues.
 
 ## Building
@@ -112,6 +115,7 @@ The engine should now run correctly with your configured project directory.
 If you prefer to download dependencies manually, download and unzip the following repositories, placing each in the **IronMaiden/IronMaiden/vendors** directory:
 - [entt](https://github.com/skypjack/entt)
 - [glm](https://github.com/g-truc/glm)
+- [ImGuizmo](https://github.com/BigJMC9/ImGuizmo/tree/master)
 - [imgui](https://github.com/BigJMC9/imgui/tree/docking)
 - [spdlog](https://github.com/BigJMC9/spdlog)
 - [stb](https://github.com/nothings/stb)
