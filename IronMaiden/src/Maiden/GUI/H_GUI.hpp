@@ -85,13 +85,15 @@ namespace Madam::UI {
 		void Project();
 		void Console();
 		void RenderingSettings();
+		void DebugWindow();
 
 		static void DrawViewport(const ImDrawList* parentList, const ImDrawCmd* pcmd);
 		//Ref<Asset>& AssetReference(const AssetType filter);
 	private:
 
 		enum WindowStates {
-			RENDER_SETTINGS_WINDOW = 1 << 0
+			RENDER_SETTINGS_WINDOW = BIT(0),
+			DEBUG_INFO_WINDOW = BIT(1)
 		};
 
 		int windowStates = 0;

@@ -9,14 +9,17 @@
 #include "../Rendering/H_RenderSystems.hpp"
 #include "../Rendering/H_DescriptorSetLayout.hpp"
 #include "../Scene/H_Scene.hpp"
+#include "../Scene/H_SceneManager.hpp"
+#include "../Rendering/H_RenderScene.hpp"
 #include "H_Time.hpp"
 #include "../Interfaces/H_Interface.h"
 #include "../Events/H_EventSystem.h"
 
 #include <filesystem>
 
-namespace Madam {
-	
+namespace Madam
+{
+
 	class SceneSerializer;
 	class Project;
 
@@ -31,19 +34,21 @@ namespace Madam {
 	};
 
 	// With madam api macro, the compiler will throw a warning, may need change in future, look at microsoft C4251 warn page for more details
-	class MADAM_API Application {
+	class MADAM_API Application
+	{
 	protected:
 		Application();
 	public:
 		virtual ~Application();
-		
+
 		Application(const Application&) = delete;
 		Application& operator=(const Application&) = delete;
 
 		void Init();
 		void Deinit();
 
-		float GetAspectRatio() {
+		float GetAspectRatio()
+		{
 			return renderer.GetAspectRatio();
 		}
 
@@ -53,72 +58,83 @@ namespace Madam {
 
 		static Application* GetPtr();
 
-		static SceneSerializer* GetSceneSerializer();
-
 		// Use const func() const {} for readonly vars
 
-		Window& GetWindow() { return window;  }
-		Rendering::RenderStack& GetMasterRenderSystem() { return renderStack; }
+		Window& GetWindow() { return window; }
+		Rendering::RenderStack& GetMasterRenderSystem() { return render_stack; }
 
-		Scene& GetScene() { return *_scene; }
+		Scene& GetScene() { return m_sceneManager.GetActiveScene(); }
 		const Time& GetTime() const { return time; }
-		ApplicationInfo GetConfig() {
+		ApplicationInfo GetConfig()
+		{
 			return config;
 		}
-		
+
 		//Put in engine config header maybe?
 		const float MAX_FRAME_TIME = 0.1f;
 
-		std::string CreateScript() {
+		std::string CreateScript()
+		{
 			std::string returnVal = createNative;
 			createNative = "";
 			return returnVal;
 		}
 
-		void SetCreateNative(const std::string scriptName) {
+		void SetCreateNative(const std::string scriptName)
+		{
 			createNative = scriptName;
 		}
 
-		bool IsScan() {
+		bool IsScan()
+		{
 			bool temp = isScanning;
 			isScanning = false;
 			return temp;
 		}
 
-		void SetScan() {
+		void SetScan()
+		{
 			isScanning = true;
 		}
 
-		bool IsPlay() const {
+		bool IsPlay() const
+		{
 			return runtime;
 		}
 
-		bool IsRuntimeFlag() {
+		bool IsRuntimeFlag()
+		{
 			bool temp = runtimeFlag;
 			runtimeFlag = false;
 			return temp;
 		}
 
-		void SetRuntimeFlag() {
+		void SetRuntimeFlag()
+		{
 			runtimeFlag = true;
 		}
 
-		void SetRuntimeStopFlag() {
+		void SetRuntimeStopFlag()
+		{
 			runtimeStopFlag = true;
 		}
 
-		bool IsRuntimeStopFlag() {
+		bool IsRuntimeStopFlag()
+		{
 			bool temp = runtimeStopFlag;
 			runtimeStopFlag = false;
 			return temp;
 		}
 
-		void RuntimeStart() {
+		void RuntimeStart()
+		{
 			runtime = true;
 		}
 
-		void RuntimeStop() {
-			if (runtime) {
+		void RuntimeStop()
+		{
+			if (runtime)
+			{
 				runtime = false;
 				//SwitchScenes(true); //Fix this
 			}
@@ -126,33 +142,39 @@ namespace Madam {
 
 		void SwitchScenes(Ref<Scene> scene)
 		{
-			_scene = scene;
-			SceneChangeEvent e;
-			Events::EventSystem::Get().PushEvent(&e, true);
+			m_sceneManager.SwitchScene(scene);
 		}
 
-		bool IsUpdate() 
+		IrmResult LoadScene(std::filesystem::path file_path);
+		IrmResult SaveScene(std::filesystem::path file_path);
+
+		bool IsUpdate()
 		{
 			bool temp = isUpdating;
 			isUpdating = false;
 			return temp;
 		}
 
-		void SetUpdate() 
+		void SetUpdate()
 		{
 			isUpdating = true;
 		}
 
-		bool GetScripts() 
+		bool GetScripts()
 		{
 			bool temp = isGettingScripts;
 			isGettingScripts = false;
 			return temp;
 		}
 
-		void SetScripts() 
+		void SetScripts()
 		{
 			isGettingScripts = true;
+		}
+
+		void ReloadShaders()
+		{
+			reload_shaders = true;
 		}
 
 		void ConfigureApp();
@@ -160,17 +182,17 @@ namespace Madam {
 		void Run();
 		void Quit();
 
-		Scope<EngineInterface> pSurface = nullptr;
+		Scope<EngineInterface> p_surface = nullptr;
 
 	private:
-		static Application* instance;
+		static Application* Instance;
 		static bool instanceFlag;
 		ApplicationInfo config;
 
 		Window window = Window{};
 		Device device = Device{ window };
-		Rendering::Renderer renderer = Rendering::Renderer{window, device};
-		Rendering::RenderStack renderStack = Rendering::RenderStack{ device, renderer };
+		Rendering::Renderer renderer = Rendering::Renderer{ window, device };
+		Rendering::RenderStack render_stack = Rendering::RenderStack{ device, renderer };
 		Time time = Time{};
 		EventSystem eventSystem = EventSystem{};
 
@@ -179,7 +201,7 @@ namespace Madam {
 		std::vector<Scope<DescriptorPool>> framePools;
 
 		bool isRunning = false;
-		bool firstFrame = true;
+		bool first_frame = true;
 		//For Testing Remove when redundant
 		std::string createNative = "";
 		bool isScanning = true;
@@ -190,17 +212,17 @@ namespace Madam {
 		bool isGettingScripts = false;
 		//bool isTesting = false;
 		bool isUpdating = false;
-		
-		//Need Scene Management class
-		Ref<Scene> _scene = nullptr;
-		Ref<Scene> runtimeScene = nullptr;
-		SceneSerializer* pSceneSerializer = nullptr;
+
+		bool reload_shaders = false;
+
+		SceneManager m_sceneManager;
+		Rendering::RenderScene m_renderScene{};
 
 	protected:
-		
+
 	};
 
 	//Defined by client
 	Application* CreateApplication();
-	
+
 }

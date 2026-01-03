@@ -4,6 +4,39 @@
 
 namespace Madam {
 
+	enum IrmResult
+	{
+		IRM_SUCCESS = 0,
+		IRM_FAILURE = -1,
+		IRM_ERROR_UNKNOWN = -2,
+		IRM_INVALID_VERSION = -3,
+		IRM_VERSION_MISMATCH = -4,
+		IRM_STD_EXCEPTION = -5,
+		IRM_ERROR_INVALID_PARAM = -6,
+		IRM_ERROR_OUT_OF_MEMORY = -7,
+		// File System Specific
+		IRM_INVALID_FILE_TYPE = -101,
+		IRM_FILE_NOT_FOUND = -102,
+		IRM_READ_FAILURE = -103,
+		IRM_WRITE_FAILURE = -104,
+		IRM_FILE_DIALOG_CANCELLED = -105,
+		// YAML Specific
+		IRM_YAML_EXCEPTION = -200,
+		IRM_YAML_READ_FAILURE = -201,
+		IRM_YAML_WRITE_FAILURE = -202,
+		IRM_YAML_INVALID_NODE = -203,
+		IRM_YAML_BAD_CONVERSION = -204,
+		// Serialization Specific
+		IRM_INVALID_SCENE_NODE = -301,
+		IRM_INVALID_VERSION_NODE = -302,
+		IRM_INVALID_ENTITIES_NODE = -302,
+		// Scene Specific
+		IRM_INVALID_SCENE_NAME = -401,
+		// Entity Specific
+		IRM_INVALID_ENTITY = -501,
+
+	};
+
 	struct null_t final 
 	{
 		null_t() = default;
@@ -37,7 +70,6 @@ namespace Madam {
 
 	constexpr inline null_t null{};
 
-	// from: https://stackoverflow.com/a/57595105
 	template <typename T, typename... Rest>
 	void hashCombine(std::size_t& seed, const T& v, const Rest&... rest) {
 		seed ^= std::hash<T>{}(v)+0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -52,14 +84,6 @@ namespace Madam {
 	/*
 	The UUID struct will be changed to GUID and will be used only for assets.
 	A new struct for UUID will use a uint64_t for ingame objects for efficiency purposes. - Jacob
-
-	Why not just use a uint64_t for the UUID and have that be used for both assets and game objects? - Luis
-
-	1. uint128 hex string is standard in the industry thus would be familar to developers.
-	2. A Hex string is easier to read and serialize in comparison to a uint64_t.
-	3. A uint128 hex string has enough data to contain certain metadata segments into the string which makes version control
-	more robust and easier.
-	- Jacob
 	*/
 	struct UUID {
 
@@ -69,32 +93,32 @@ namespace Madam {
 		UUID(std::string uuid);
 		UUID(const UUID&) = default;
 
-		operator std::string() const { return _UUID; }
+		operator std::string() const { return m_uuid; }
 
 		friend std::ostream& operator<<(std::ostream& os, const UUID& uuid) {
-			os << "UUID: " << uuid._UUID;
+			os << "UUID: " << uuid.m_uuid;
 			return os;
 		}
 
 		friend bool operator==(const UUID& left, const UUID& right) {
-			return left._UUID == right._UUID;
+			return left.m_uuid == right.m_uuid;
 		}
 
 		friend bool operator!=(const UUID& left, const UUID& right) {
-			return left._UUID != right._UUID;
+			return left.m_uuid != right.m_uuid;
 		}
 		
 		friend bool operator==(const UUID& left, const std::string& right) {
-			return left._UUID == right;
+			return left.m_uuid == right;
 		}
 
 		friend bool operator!=(const UUID& left, const std::string& right) {
-			return left._UUID != right;
+			return left.m_uuid != right;
 		}
 
 		bool operator==(const null_t& other) const
 		{
-			if (_UUID == "")
+			if (m_uuid == "")
 			{
 				return true;
 			}
@@ -106,7 +130,7 @@ namespace Madam {
 
 		bool operator!=(const null_t& other) const
 		{
-			if (_UUID != "")
+			if (m_uuid != "")
 			{
 				return true;
 			}
@@ -117,7 +141,7 @@ namespace Madam {
 		}
 
 	private:
-		std::string _UUID;
+		std::string m_uuid;
 	};
 
 	

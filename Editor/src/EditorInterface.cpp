@@ -11,14 +11,16 @@ namespace Madam {
 		float speedStep = 2.0f;
 		glm::vec2 mouseDelta{ 0.0f };
 		glm::vec2 mouseScroll{ 0.0f };
+		glm::vec2 lastMousePos{ 0.0f };
+		bool hasLastMousePos = false;
 
 
 		void Create() {
-			Events::EventSystem::Get().AddListener(this, &CameraController::OnMouseMoveEvent);
+			Events::EventSystem::Get().AddListener(this, &CameraController::OnMouseMoveRawEvent);
 			Events::EventSystem::Get().AddListener(this, &CameraController::OnMouseScrollEvent);
 		}
 		void Destroy() {
-			Events::EventSystem::Get().RemoveListener(this, &CameraController::OnMouseMoveEvent);
+			Events::EventSystem::Get().RemoveListener(this, &CameraController::OnMouseMoveRawEvent);
 			Events::EventSystem::Get().RemoveListener(this, &CameraController::OnMouseScrollEvent);
 		}
 		void Start() {
@@ -27,7 +29,8 @@ namespace Madam {
 		void Update() {
 			if (GetComponent<CCamera>().cameraHandle->IsMain()) {
 				GLFWwindow* window = Application::Get().GetWindow().getGLFWwindow();
-				glm::vec2 rotate = (mouseDelta * mouseSensitivity);
+				glm::vec2 rotate{ mouseDelta.y, mouseDelta.x };
+				rotate *= mouseSensitivity;
 				rotate.x = -rotate.x;
 				mouseDelta = { 0.0f, 0.0f };
 
@@ -131,12 +134,22 @@ namespace Madam {
 
 		}
 
-		void OnMouseMoveEvent(MouseMoveEvent* e)
+		void OnMouseMoveRawEvent(MouseMoveRawEvent* e)
 		{
-			if (Input::Get().IsMouseButtonPress(MouseCode::RIGHTMOUSEBUTTON))
+			if (!Input::Get().IsMouseButtonPress(MouseCode::RIGHTMOUSEBUTTON))
 			{
-				mouseDelta = e->mouseDelta;
+				hasLastMousePos = false;
+				mouseDelta = { 0.0f, 0.0f };
+				return;
 			}
+
+			glm::vec2 pos{ static_cast<float>(e->x), static_cast<float>(e->y) };
+			if (hasLastMousePos)
+			{
+				mouseDelta = lastMousePos - pos;
+			}
+			lastMousePos = pos;
+			hasLastMousePos = true;
 		}
 
 		void OnMouseScrollEvent(MouseScrollEvent* e)
@@ -176,7 +189,7 @@ namespace Madam {
 		if (isFirst) {
 
 			std::string debugStr;
-			Application::Get().GetScene().Reg().view<entt::entity>().each([&](auto entityID) {
+			Application::Get().GetScene().GetRegistry().view<entt::entity>().each([&](auto entityID) {
 				std::stringstream ss;
 				ss << "Entity ID: " << std::to_string((uint32_t)entityID) << " at: " << static_cast<void*>(&entityID) << "\n";
 				debugStr += ss.str();

@@ -11,20 +11,13 @@ namespace Madam {
 	class Scene;
 	class SceneSerializer {
 	public:
-		SceneSerializer(Ref<Scene> scene, Device& _device);
+		SceneSerializer();
 
-		void Serialize(const std::filesystem::path& filePath);
-		void SerializeRuntime(const std::string& filePath);
-
-		//static void SerializeEntity(YAML::Emitter& out, Entity entity);
-
-		bool Deserialize(const std::filesystem::path& rawfilePath);
-		bool DeserializeRuntime(const std::string& filePath);
+		static IrmResult Serialize(const std::filesystem::path& file_path, Ref<Scene> scene);
+		static IrmResult Deserialize(const std::filesystem::path& file_path, Ref<Scene> scene);
 
 		
 	private:
 
-		Ref<Scene> m_Scene;
-		Device& device;
 	};
 }

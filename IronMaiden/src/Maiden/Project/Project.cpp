@@ -125,7 +125,7 @@ namespace Madam
 			
 		}
 
-		assetMetaFile << "Registry: " << std::endl;
+		assetMetaFile << "m_registry: " << std::endl;
 		assetMetaFile.close();
 		return true;
 	}

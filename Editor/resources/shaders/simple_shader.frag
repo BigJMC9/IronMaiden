@@ -12,7 +12,6 @@ struct PointLight {
 	vec4 color; // w is intensity
 };
 
-//Has to be same order as GlobalUno struct or data will be in the wrong position or some weird stuff
 layout(set = 0, binding = 0) uniform GlobalUno {
 	mat4 projection;
 	mat4 view;

@@ -20,6 +20,23 @@ namespace Madam {
             glm::mat4 normalMatrix{ 1.f };
         };
 
+        struct Q12Constants{
+            glm::mat4 modelMatrix{ 1.f };
+            glm::mat4 normalMatrix{ 1.f };
+            float dx0;
+            float dx1;
+        };
+
+        struct Q13Constants
+        {
+            glm::mat4 modelMatrix{ 1.f };
+            glm::mat4 normalMatrix{ 1.f };
+            float dx0;
+            float dx1;
+            float dx2;
+            float dx3;
+        };
+
         struct PointLightPushConstants {
             glm::vec4 position{};
             glm::vec4 color{};
@@ -46,20 +63,38 @@ namespace Madam {
 		protected:
             virtual void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
             virtual void createPipeline(VkRenderPass renderPass);
+            virtual void recreatePipeline(VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+            virtual void updatePipelineState();
 
 			bool isFirstFrame = true;
 
             Device& device;
 
-            Scope<Pipeline> pipeline;
-            VkPipelineLayout pipelineLayout;
-
+            Scope<Pipeline> pipeline = nullptr;
+            Scope<Pipeline> oldPipeline = nullptr;
+            int tick = 0;
+            VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+            VkPipelineLayout oldPipelineLayout = VK_NULL_HANDLE;
+            friend class RenderStack;
 		};
+
+        class MADAM_API CustomLayer : public RenderLayer {
+
+        public:
+            CustomLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "CustomLayer");
+            ~CustomLayer();
+
+            void render(FrameInfo& frameInfo) override;
+        protected:
+            void createPipelineLayout(VkDescriptorSetLayout globalSetLayout) override;
+            void createPipeline(VkRenderPass renderPass) override;
+
+        };
 
         class MADAM_API GridRenderLayer : public RenderLayer {
 
         public:
-            GridRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "Default");
+            GridRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "GridLayer");
             ~GridRenderLayer();
 
             void render(FrameInfo& frameInfo) override;
@@ -73,7 +108,7 @@ namespace Madam {
         class MADAM_API SkyboxRenderLayer : public RenderLayer {
 
         public:
-            SkyboxRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "Default");
+            SkyboxRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "SkyboxLayer");
             ~SkyboxRenderLayer();
 
             void render(FrameInfo& frameInfo) override;
@@ -91,7 +126,7 @@ namespace Madam {
         class MADAM_API TextureRenderLayer : public RenderLayer {
 
         public:
-            TextureRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "Default");
+            TextureRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "TextureLayer");
             ~TextureRenderLayer();
 
             void render(FrameInfo& frameInfo) override;
@@ -106,7 +141,7 @@ namespace Madam {
         class MADAM_API PointLightRenderLayer : public RenderLayer {
 
         public:
-            PointLightRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "Default");
+            PointLightRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "PointLightLayer");
             ~PointLightRenderLayer();
 
             void render(FrameInfo& frameInfo) override;
@@ -129,13 +164,10 @@ namespace Madam {
             void initialize(Scope<DescriptorSetLayout>& globalSetLayout);
             void render(FrameInfo& frameInfo);
             bool switchRenderSystems(int first, int second);
+            void reloadPipeline(int renderLayer, VkRenderPass renderPass, Scope<DescriptorSetLayout>& globalDescriptorSetLayout);
             const std::vector<Ref<RenderLayer>>& getRenderLayers() const {
                 return renderSystems;
             }
-
-            /*void addSystem(const RenderLayer& renderSystem) {
-                renderSystems.push_back(std::make_unique<RenderLayer>(std::move(renderSystem)));
-            }*/
 
             Renderer& renderer;
 

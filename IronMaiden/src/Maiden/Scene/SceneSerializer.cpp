@@ -262,21 +262,21 @@ namespace YAML {
 
 namespace Madam {
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec2& v)
+	static YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec2& v)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << YAML::EndSeq;
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec3& v)
+	static YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec3& v)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << v.z << YAML::EndSeq;
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const UUID uuid)
+	static YAML::Emitter& operator<<(YAML::Emitter& out, const UUID uuid)
 	{
 		out << (std::string)uuid;
 		return out;
@@ -294,7 +294,7 @@ namespace Madam {
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const std::vector<UUID>& v)
+	static YAML::Emitter& operator<<(YAML::Emitter& out, const std::vector<UUID>& v)
 	{
 		out << YAML::BeginSeq;
 		for (size_t i = 0; i < v.size(); i++)
@@ -305,35 +305,35 @@ namespace Madam {
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec4& v)
+	static YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec4& v)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << v.z << v.w << YAML::EndSeq;
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::quat& v)
+	static YAML::Emitter& operator<<(YAML::Emitter& out, const glm::quat& v)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << v.z << v.w << YAML::EndSeq;
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const CShader s)
+	static YAML::Emitter& operator<<(YAML::Emitter& out, const CShader s)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << s.vertShaderPath << s.fragShaderPath << YAML::EndSeq;
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const Ref<CShader> s)
+	static YAML::Emitter& operator<<(YAML::Emitter& out, const Ref<CShader> s)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << s->vertShaderPath << s->fragShaderPath << YAML::EndSeq;
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const Madam::Rendering::CameraData::Perspective& p)
+	static YAML::Emitter& operator<<(YAML::Emitter& out, const Madam::Rendering::CameraData::Perspective& p)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginMap;
@@ -345,7 +345,7 @@ namespace Madam {
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const Madam::Rendering::CameraData::Orthographic& o)
+	static YAML::Emitter& operator<<(YAML::Emitter& out, const Madam::Rendering::CameraData::Orthographic& o)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginMap;
@@ -471,10 +471,10 @@ namespace Madam {
 
 			CMaterial& material = entity.GetComponent<CMaterial>();
 			out << YAML::Key << "Shader" << YAML::Value << material.shader;
-			out << YAML::Key << "Diffuse" << YAML::Value << material.diffuseMap->GetUUID();
-			out << YAML::Key << "Normal" << YAML::Value << material.normalMap->GetUUID();
-			out << YAML::Key << "AO" << YAML::Value << material.ambientOcclusionMap->GetUUID();
-			out << YAML::Key << "Gloss" << YAML::Value << material.glossMap->GetUUID();
+			out << YAML::Key << "Diffuse" << YAML::Value << material.diffuse_map->GetUUID();
+			out << YAML::Key << "Normal" << YAML::Value << material.normal_map->GetUUID();
+			out << YAML::Key << "AO" << YAML::Value << material.ambient_occlusion_map->GetUUID();
+			out << YAML::Key << "Gloss" << YAML::Value << material.gloss_map->GetUUID();
 			out << YAML::EndMap;
 		}
 
@@ -527,12 +527,8 @@ namespace Madam {
 
 		out << YAML::EndMap;
 	}
-
-	SceneSerializer::SceneSerializer(Ref<Scene> scene, Device& _device) : m_Scene(scene), device(_device) {
-
-	}
 	
-	void SceneSerializer::Serialize(const std::filesystem::path& filePath) {
+	IrmResult SceneSerializer::Serialize(const std::filesystem::path& filePath, Ref<Scene> scene) {
 
 		std::filesystem::path fileName = filePath.stem();
 		YAML::Emitter out;
@@ -540,11 +536,11 @@ namespace Madam {
 		out << YAML::Key << "Version" << YAML::Value << Application::Get().GetConfig().version;
 		out << YAML::Key << "Scene" << YAML::Value << fileName.string();
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
-		entt::registry& reg = m_Scene->Reg();
+		entt::registry& reg = scene->GetRegistry();
 		reg.view<entt::entity>().each([&](auto entityID) {
 
 			std::cout << "Entity: " << (uint32_t)entityID << std::endl;
-			Entity entity = { entityID, m_Scene.get()};
+			Entity entity = { entityID, scene.get()};
 			if (!entity) return;
 
 			SerializeEntity(out, entity);
@@ -556,55 +552,59 @@ namespace Madam {
 
 		std::ofstream fout(filePath);
 		fout << out.c_str();
+		return IRM_SUCCESS;
 	}
 
-	void SceneSerializer::SerializeRuntime(const std::string& filePath) {
-		//Not Implemented
-	}
-
-	bool SceneSerializer::Deserialize(const std::filesystem::path& filePath) {
+	IrmResult SceneSerializer::Deserialize(const std::filesystem::path& filePath, Ref<Scene> scene) {
 		std::string fileType = filePath.extension().string();
 
 		if (fileType != ".scene") {
 			MADAM_ERROR("Failed to load scene: Parsed scene is wrong file type");
-			return false;
+			return IRM_INVALID_FILE_TYPE;
 		}
 
 		std::ifstream file(filePath);
 
 		if (!file.good()) {
 			MADAM_ERROR("Failed to load scene: Scene file does not exist");
-			return false;
+			return IRM_FILE_NOT_FOUND;
 		}
 
 		YAML::Node parentNode;
-		try {
+		try 
+		{
 			parentNode = YAML::LoadFile(filePath.string().c_str());
 		}
 		catch (YAML::ParserException e) {
 			std::stringstream ss;
 			ss << e.what();
 			std::cout << "YAML has failed to load scene file: " << ss.str() << std::endl;
-			return false;
+			return IRM_READ_FAILURE;
 		}
 
 		if (!parentNode["Scene"]) {
 			MADAM_ERROR("Failed to load scene: Scene Node does not exist.");
-			return false;
+			return IRM_INVALID_SCENE_NODE;
 		}
 
-		Scene newScene{};
+		if (!scene)
+		{
+			MADAM_ERROR("Failed to load scene: Destination scene is null");
+			return IRM_ERROR_INVALID_PARAM;
+		}
+
+		Scene& targetScene = *scene;
 		std::string version = GetNodeValue<std::string>(parentNode, "Version").has_value() ? GetNodeValue<std::string>(parentNode, "Version").value() : "";
 		if (version == null) {
 			MADAM_ERROR("Failed to load scene: Unable to read version of the scene file");
-			return false;
+			return IRM_INVALID_VERSION_NODE;
 		}
 
 		size_t buildVersionPos = version.find_last_of('.');
 
 		if (buildVersionPos == std::string::npos) {
-			MADAM_ERROR("Failed to load scene: Unable to read version of the scene file. \nUnable to find build version of the provided version string.");
-			return false;
+			MADAM_ERROR("Failed to load scene: Unable to read version of the scene file. \nUnable to find Build version of the provided version string.");
+			return IRM_INVALID_VERSION;
 		}
 
 		std::string relevantVersion = version.substr(0, buildVersionPos);
@@ -613,16 +613,17 @@ namespace Madam {
 
 		if (applicationRelevantVersion != relevantVersion) {
 			MADAM_CORE_ERROR("Failed to load scene: The Application version and Scene file version do not match\nApplication Version: {0}\nScene Version: {1}", Application::Get().GetConfig().version, version);
-			return false;
+			return IRM_VERSION_MISMATCH;
 		}
 
 		
-		std::string sceneName = GetNodeValue<std::string>(parentNode, "Scene").has_value() ? GetNodeValue<std::string>(parentNode, "Version").value() : "";
+		std::string sceneName = GetNodeValue<std::string>(parentNode, "Scene").has_value() ? GetNodeValue<std::string>(parentNode, "Scene").value() : "";
 		if (sceneName == null)
 		{
 			MADAM_ERROR("Failed to load scene: Unable to obtain Scene Name");
-			return false;
+			return IRM_INVALID_SCENE_NAME;
 		}
+
 		//Put in a entity serializer
 		bool isMain = false;
 
@@ -632,7 +633,7 @@ namespace Madam {
 			for (auto entity : entities) {
 				try
 				{
-					Entity deserializedEntity = newScene.CreateEntity(entity["Entity"].as<UUID>());
+					Entity deserializedEntity = targetScene.CreateEntity(entity["Entity"].as<UUID>());
 
 					std::cout << deserializedEntity.GetComponent<CUniqueIdentifier>().uuid << ", Handle: " << (uint32_t)deserializedEntity.GetHandle() << std::endl;
 
@@ -664,13 +665,13 @@ namespace Madam {
 						material.shader = std::make_shared<CShader>(shader);
 						UUID uuid = materialNode["Diffuse"].as<UUID>();
 						TextureData textureData;
-						material.diffuseMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+						material.diffuse_map = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
 						uuid = materialNode["Normal"].as<UUID>();
-						material.normalMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+						material.normal_map = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
 						uuid = materialNode["AO"].as<UUID>();
-						material.ambientOcclusionMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+						material.ambient_occlusion_map = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
 						uuid = materialNode["Gloss"].as<UUID>();
-						material.glossMap = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+						material.gloss_map = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
 					}
 
 					auto pointLightNode = entity["PointLight"];
@@ -727,7 +728,7 @@ namespace Madam {
 						camera.cameraHandle->SetViewDirection(cameraNode["ViewPosition"].as<glm::vec3>(), cameraNode["ViewDirection"].as<glm::vec3>());
 						if (cameraNode["Main"].as<bool>()) {
 							camera.cameraHandle->SetMain();
-							deserializedEntity.GetComponent<CMetadata>().isHiddenEntity = true;
+							deserializedEntity.GetComponent<CMetadata>().is_hidden_entity = true;
 							isMain = true;
 						}
 					}
@@ -753,28 +754,9 @@ namespace Madam {
 		else
 		{
 			MADAM_ERROR("Failed to load scene: Unable to read the node \"Entities\"");
+			return IRM_INVALID_ENTITIES_NODE;
 		}
 
-		//Will need to be updated for runtime
-		/*if (!isMain) {
-			Entity camera = newScene.CreateEntity();
-			camera.GetComponent<Metadata>().name = "Editor Camera";
-			camera.GetComponent<Transform>().translation.z = -2.5f;
-			Rendering::CameraData cameraData;
-			cameraData.projectionType = Rendering::CameraData::ProjectionType::Perspective;
-			cameraData.perspective = Rendering::CameraData::Perspective(glm::radians(50.0f), Application::Get().GetAspectRatio(), 0.1f, 1000.0f);
-			camera.AddComponent<Camera>(cameraData);
-			camera.GetComponent<Camera>().cameraHandle->SetViewDirection(glm::vec3(0.f, 2.0f, 0.f), glm::vec3(0.f, 0.f, 0.f));
-			camera.GetComponent<Camera>().cameraHandle->SetMain();
-		}*/
-
-		m_Scene = std::make_shared<Scene>(std::move(newScene));
-		Application::Get().SwitchScenes(m_Scene);
-
-		return true;
-	}
-
-	bool SceneSerializer::DeserializeRuntime(const std::string& filepath) {
-		return false;
+		return IRM_SUCCESS;
 	}
 }

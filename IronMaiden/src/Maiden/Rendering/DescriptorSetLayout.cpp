@@ -31,9 +31,10 @@ namespace Madam {
 
     // *************** Descriptor Set Layout *********************
 
-    DescriptorSetLayout::DescriptorSetLayout(
-        Device& device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
-        : device{ device }, bindings{ bindings } {
+    DescriptorSetLayout::DescriptorSetLayout(Device& device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings) : device{ device }, bindings{ bindings } {
+
+        uuid = UUID();
+        MADAM_CORE_INFO("Created DescriptorSetLayout UUID: {0}", uuid);
 
         std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
         for (const auto& kv : bindings) {
@@ -49,13 +50,14 @@ namespace Madam {
             device.device(),
             &descriptorSetLayoutInfo,
             nullptr,
-            &descriptorSetLayout) != VK_SUCCESS) {
+            &descriptor_set_layout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor set layout!");
         }
     }
 
     DescriptorSetLayout::~DescriptorSetLayout() {
-        vkDestroyDescriptorSetLayout(device.device(), descriptorSetLayout, nullptr);
+        MADAM_CORE_INFO("Destroying DescriptorSetLayout UUID: {0}", uuid);
+        vkDestroyDescriptorSetLayout(device.device(), descriptor_set_layout, nullptr);
     }
 
     // *************** Descriptor Pool Builder *********************
@@ -95,21 +97,22 @@ namespace Madam {
         descriptorPoolInfo.maxSets = maxSets;
         descriptorPoolInfo.flags = poolFlags;
 
-        if (vkCreateDescriptorPool(device.device(), &descriptorPoolInfo, nullptr, &descriptorPool) !=
+        if (vkCreateDescriptorPool(device.device(), &descriptorPoolInfo, nullptr, &descriptor_pool) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor pool!");
         }
     }
 
     DescriptorPool::~DescriptorPool() {
-        vkDestroyDescriptorPool(device.device(), descriptorPool, nullptr);
+        resetPool();
+        vkDestroyDescriptorPool(device.device(), descriptor_pool, nullptr);
     }
 
     bool DescriptorPool::allocateDescriptor(
         const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const {
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = descriptorPool;
+        allocInfo.descriptorPool = descriptor_pool;
         allocInfo.pSetLayouts = &descriptorSetLayout;
         allocInfo.descriptorSetCount = 1;
 
@@ -124,44 +127,24 @@ namespace Madam {
     void DescriptorPool::freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const {
         vkFreeDescriptorSets(
             device.device(),
-            descriptorPool,
+            descriptor_pool,
             static_cast<uint32_t>(descriptors.size()),
             descriptors.data());
     }
 
     void DescriptorPool::resetPool() {
-        vkResetDescriptorPool(device.device(), descriptorPool, 0);
+        vkResetDescriptorPool(device.device(), descriptor_pool, 0);
     }
 
     // *************** Descriptor Writer *********************
 
-    DescriptorWriter::DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool)
-        : setLayout{ setLayout }, pool{ pool } {}
+    DescriptorWriter::DescriptorWriter(DescriptorSetLayout& set_layout, DescriptorPool& pool)
+        : set_layout{ set_layout }, pool{ pool } {}
 
-    DescriptorWriter& DescriptorWriter::writeBuffer(
-        uint32_t binding, VkDescriptorBufferInfo* bufferInfo) {
-        MADAM_CORE_ASSERT(setLayout.bindings.count(binding) == 1, "Layout does not contain specified binding");
+    DescriptorWriter& DescriptorWriter::WriteBuffer(uint32_t binding, VkDescriptorBufferInfo* buffer_info) {
+        MADAM_CORE_ASSERT(set_layout.bindings.count(binding) == 1, "Layout does not contain specified binding");
 
-        auto& bindingDescription = setLayout.bindings[binding];
-
-        MADAM_CORE_ASSERT(bindingDescription.descriptorCount == 1, "Binding single descriptor info, but binding expects multiple");
-
-        VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorType = bindingDescription.descriptorType;
-        write.dstBinding = binding;
-        write.pBufferInfo = bufferInfo;
-        write.descriptorCount = 1;
-
-        writes.push_back(write);
-        return *this;
-    }
-
-    DescriptorWriter& DescriptorWriter::writeImage(
-        uint32_t binding, VkDescriptorImageInfo* imageInfo) {
-        MADAM_CORE_ASSERT(setLayout.bindings.count(binding) == 1, "Layout does not contain specified binding");
-
-        auto& bindingDescription = setLayout.bindings[binding];
+        auto& bindingDescription = set_layout.bindings[binding];
 
         MADAM_CORE_ASSERT(bindingDescription.descriptorCount == 1, "Binding single descriptor info, but binding expects multiple");
 
@@ -169,23 +152,42 @@ namespace Madam {
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.descriptorType = bindingDescription.descriptorType;
         write.dstBinding = binding;
-        write.pImageInfo = imageInfo;
+        write.pBufferInfo = buffer_info;
         write.descriptorCount = 1;
 
         writes.push_back(write);
         return *this;
     }
 
-    bool DescriptorWriter::build(VkDescriptorSet& set) {
-        bool success = pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), set);
+    DescriptorWriter& DescriptorWriter::WriteImage(uint32_t binding, VkDescriptorImageInfo* image_info) {
+
+        MADAM_CORE_ASSERT(set_layout.bindings.count(binding) == 1, "Layout does not contain specified binding");
+
+        auto& bindingDescription = set_layout.bindings[binding];
+
+        MADAM_CORE_ASSERT(bindingDescription.descriptorCount == 1, "Binding single descriptor info, but binding expects multiple");
+
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.descriptorType = bindingDescription.descriptorType;
+        write.dstBinding = binding;
+        write.pImageInfo = image_info;
+        write.descriptorCount = 1;
+
+        writes.push_back(write);
+        return *this;
+    }
+
+    bool DescriptorWriter::Build(VkDescriptorSet& set) {
+        bool success = pool.allocateDescriptor(set_layout.getDescriptorSetLayout(), set);
         if (!success) {
             return false;
         }
-        overwrite(set);
+        Overwrite(set);
         return true;
     }
 
-    void DescriptorWriter::overwrite(VkDescriptorSet& set) {
+    void DescriptorWriter::Overwrite(VkDescriptorSet& set) {
         for (auto& write : writes) {
             write.dstSet = set;
         }

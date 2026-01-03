@@ -73,6 +73,8 @@ namespace Madam {
 		VkFormat findSupportedFormat(
 			const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
+		void destroyCommandPool();
+
 		// Buffer Helper Functions
 		void createBuffer(
 			VkDeviceSize size,

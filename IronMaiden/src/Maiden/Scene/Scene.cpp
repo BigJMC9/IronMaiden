@@ -5,23 +5,25 @@
 #include "../Events/H_Input.hpp"
 #include "Components.hpp"
 #include "../Rendering/H_Renderer.hpp"
+#include "../Rendering/H_RenderScene.hpp"
 
-namespace Madam {
+namespace Madam
+{
 
 	template<typename... Component>
-	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap)
+	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& entt_map)
 	{
 		([&]()
+		{
+			auto view = src.view<Component>();
+			for (auto src_entity : view)
 			{
-				auto view = src.view<Component>();
-				for (auto srcEntity : view)
-				{
-					entt::entity dstEntity = enttMap.at(src.get<CUniqueIdentifier>(srcEntity).uuid);
+				entt::entity dst_entity = entt_map.at(src.get<CUniqueIdentifier>(src_entity).uuid);
 
-					auto& srcComponent = src.get<Component>(srcEntity);
-					dst.emplace_or_replace<Component>(dstEntity, srcComponent);
-				}
-			}(), ...);
+				auto& src_component = src.get<Component>(src_entity);
+				dst.emplace_or_replace<Component>(dst_entity, src_component);
+			}
+		}(), ...);
 	}
 
 	template<typename... Component>
@@ -30,107 +32,139 @@ namespace Madam {
 		CopyComponent<Component...>(dst, src, enttMap);
 	}
 
-	Scene::Scene() {
+	Scene::Scene()
+	{
 
 	}
 
 	Scene::~Scene()
 	{
-		registry.clear();
-		entityMap.clear();
+		m_registry.clear();
+		m_entity_map.clear();
 	}
 
 	Ref<Scene> Scene::Copy()
 	{
-		Ref<Scene> newScene = CreateRef<Scene>();
-		std::unordered_map<UUID, entt::entity> enttMap;
+		Ref<Scene> new_scene = CreateRef<Scene>();
+		std::unordered_map<UUID, entt::entity> entt_map;
 
-		auto IdView = registry.view<CUniqueIdentifier>();
-		for (entt::entity entity : IdView) {
-			UUID& uuid = registry.get<CUniqueIdentifier>(entity).uuid;
-			const auto& name = registry.get<CMetadata>(entity).name;
-			Entity newEntity = newScene->CreateEntity(uuid, name);
-			enttMap[uuid] = (entt::entity)newEntity;
+		auto id_view = m_registry.view<CUniqueIdentifier>();
+		for (entt::entity entity : id_view)
+		{
+			UUID& uuid = m_registry.get<CUniqueIdentifier>(entity).uuid;
+			const auto& name = m_registry.get<CMetadata>(entity).name;
+			Entity new_entity = new_scene->CreateEntity(uuid, name);
+			entt_map[uuid] = (entt::entity)new_entity;
 		}
 
-		CopyComponent(AllComponents{}, newScene->Reg(), registry, enttMap);
+		CopyComponent(AllComponents{}, new_scene->GetRegistry(), m_registry, entt_map);
 
-		return newScene;
+		return new_scene;
+	}
+
+	void Scene::BuildRenderScene(Rendering::RenderScene& out)
+	{
+		out.Clear();
+		out.registry = &m_registry;
+
+		auto meshView = m_registry.view<CTransform, CMeshRenderer>();
+		out.meshEntities.reserve(meshView.size_hint());
+		for (auto entity : meshView)
+		{
+			out.meshEntities.push_back(entity);
+		}
+
+		auto pointLightView = m_registry.view<CTransform, CPointLight>();
+		out.pointLightEntities.reserve(pointLightView.size_hint());
+		for (auto entity : pointLightView)
+		{
+			out.pointLightEntities.push_back(entity);
+		}
 	}
 
 	Entity Scene::CreateErrorEntity()
 	{
-		Entity entity = { registry.create(), this };
+		Entity entity = { m_registry.create(), this };
 		entity.AddComponent<CUniqueIdentifier>();
 		entity.AddComponent<CMetadata>();
 		CMetadata& entityMetadata = entity.GetComponent<CMetadata>();
 		entityMetadata.name = "ERROR";
-		entityMetadata.isErrorEntity = true;
-		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
+		entityMetadata.is_error_entity = true;
+		m_entity_map[entity.GetComponent<CUniqueIdentifier>().uuid] = entity.GetHandle();
 		return entity;
 	}
 
-	Entity Scene::CreateEntity() {
-		Entity entity = { registry.create(), this };
+	Entity Scene::CreateEntity()
+	{
+		Entity entity = { m_registry.create(), this };
 		entity.AddComponent<CUniqueIdentifier>();
 		entity.AddComponent<CMetadata>();
 		entity.AddComponent<CTransform>();
 		entity.AddComponent<CRelationship>();
-		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
+		m_entity_map[entity.GetComponent<CUniqueIdentifier>().uuid] = entity.GetHandle();
 		return entity;
 	}
 
-	Entity Scene::CreateEntity(const std::string& name, bool isHidden) {
-		Entity entity = { registry.create(), this };
+	Entity Scene::CreateEntity(const std::string& name, bool is_hidden)
+	{
+		Entity entity = { m_registry.create(), this };
 		entity.AddComponent<CUniqueIdentifier>();
-		entity.AddComponent<CMetadata>(name, isHidden);
+		entity.AddComponent<CMetadata>(name, is_hidden);
 		entity.AddComponent<CTransform>();
 		entity.AddComponent<CRelationship>();
-		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
+		m_entity_map[entity.GetComponent<CUniqueIdentifier>().uuid] = entity.GetHandle();
 		return entity;
 	}
 
-	Entity Scene::CreateEntity(entt::entity _entity) {
-		Entity entity = { registry.create(_entity), this };
+	Entity Scene::CreateEntity(entt::entity entt_entity)
+	{
+		Entity entity = { m_registry.create(entt_entity), this };
 		entity.AddComponent<CUniqueIdentifier>();
 		entity.AddComponent<CMetadata>();
 		entity.AddComponent<CTransform>();
 		entity.AddComponent<CRelationship>();
-		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
+		m_entity_map[entity.GetComponent<CUniqueIdentifier>().uuid] = entity.GetHandle();
 		return entity;
 	}
 
-	Entity Scene::CreateEntity(UUID uuid) {
-		Entity entity = { registry.create(), this};
+	Entity Scene::CreateEntity(UUID uuid)
+	{
+		Entity entity = { m_registry.create(), this };
 		entity.AddComponent<CUniqueIdentifier>(uuid);
 		entity.AddComponent<CMetadata>();
 		entity.AddComponent<CTransform>();
 		entity.AddComponent<CRelationship>();
-		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
+		m_entity_map[entity.GetComponent<CUniqueIdentifier>().uuid] = entity.GetHandle();
 		return entity;
 	}
 
-	Entity Scene::CreateEntity(UUID uuid, const std::string& name) {
-		Entity entity = { registry.create(), this };
+	Entity Scene::CreateEntity(UUID uuid, const std::string& name)
+	{
+		Entity entity = { m_registry.create(), this };
 		entity.AddComponent<CUniqueIdentifier>(uuid);
 		entity.AddComponent<CMetadata>(name);
 		entity.AddComponent<CTransform>();
 		entity.AddComponent<CRelationship>();
-		entityMap[entity.GetComponent<CUniqueIdentifier>().uuid] = entity;
+		m_entity_map[entity.GetComponent<CUniqueIdentifier>().uuid] = entity.GetHandle();
 		return entity;
 	}
 
-	void Scene::DestroyEntity(Entity entity) {
+	void Scene::DestroyEntity(Entity entity)
+	{
 		for each (UUID child in entity.GetComponent<CRelationship>().children)
 		{
-			DestroyEntity(entityMap[child]);
+			Entity childEntity = GetEntity(child);
+			if (childEntity != null)
+			{
+				DestroyEntity(childEntity);
+			}
 		}
 		UUID parent = entity.GetComponent<CRelationship>().parent;
 		UUID uuid = entity.GetComponent<CUniqueIdentifier>().uuid;
 		if (parent != null)
 		{
-			Entity parentEntity = entityMap[parent];
-			
+			Entity parentEntity = GetEntity(parent);
+
 			std::vector<UUID> children = parentEntity.GetComponent<CRelationship>().children;
 
 			for (size_t i = 0; i < children.size(); i++)
@@ -144,24 +178,28 @@ namespace Madam {
 
 			parentEntity.GetComponent<CRelationship>().children = children;
 		}
-		entityMap.erase(uuid);
-		registry.destroy(entity);
+		m_entity_map.erase(uuid);
+		m_registry.destroy(entity);
 	}
 
 	glm::mat4 Scene::GetWorldTransform(UUID entityUUID)
 	{
-		Entity entity = entityMap[entityUUID];
+		Entity entity = GetEntity(entityUUID);
 		if (entity == null)
 		{
 			MADAM_CORE_ERROR("Attempting to get an Entity that does not exist");
 			return glm::mat4(glm::vec4(0), glm::vec4(0), glm::vec4(0), glm::vec4(0));
 		}
 
-		glm::mat4 transform = entity.GetComponent<CTransform>().transform();
+		glm::mat4 transform = entity.GetComponent<CTransform>().TransformMatrix();
 		UUID parent = entity.GetComponent<CRelationship>().parent;
 		if (parent != null)
 		{
-			transform = GetWorldTransform(entityMap[parent]) * transform;
+			Entity parentEntity = GetEntity(parent);
+			if (parentEntity != null)
+			{
+				transform = GetWorldTransform(parentEntity) * transform;
+			}
 		}
 		return transform;
 	}
@@ -174,29 +212,37 @@ namespace Madam {
 			return glm::mat4(glm::vec4(0), glm::vec4(0), glm::vec4(0), glm::vec4(0));
 		}
 
-		glm::mat4 transform = entity.GetComponent<CTransform>().transform();
+		glm::mat4 transform = entity.GetComponent<CTransform>().TransformMatrix();
 		UUID parent = entity.GetComponent<CRelationship>().parent;
 		if (parent != null)
 		{
-			transform = GetWorldTransform(entityMap[parent]) * transform;
+			Entity parentEntity = GetEntity(parent);
+			if (parentEntity != null)
+			{
+				transform = GetWorldTransform(parentEntity) * transform;
+			}
 		}
 		return transform;
 	}
 
-	void Scene::Start() {
+	void Scene::Start()
+	{
 
 	}
 
-	void Scene::RunTimeStart() {
+	void Scene::RunTimeStart()
+	{
 
 	}
 
-	void Scene::Update() {
+	void Scene::Update()
+	{
 		{
-			registry.view <CNativeScript>().each([=](auto entity, auto& nsc) {
+			m_registry.view <CNativeScript>().each([=](auto entity, auto& nsc) {
 				//Move to on scene play
-				if (!nsc.Instance) {
-					nsc.Instance = nsc.InstantiateScript();
+				if (!nsc.Instance)
+				{
+					nsc.Instance = nsc.instantiate_script();
 					nsc.Instance->entity = Entity{ entity, this };
 					nsc.onCreate(nsc.Instance);
 					nsc.onStart(nsc.Instance);
@@ -206,14 +252,16 @@ namespace Madam {
 				}
 				nsc.onUpdate(nsc.Instance);
 				nsc.onLateUpdate(nsc.Instance);
-			});
+				});
 
 			//SetView Proj
 		}
 	}
 
-	void Scene::Render() {
-		registry.view <CNativeScript>().each([=](auto entity, auto& nsc) {
+	void Scene::Render()
+	{
+		m_registry.view <CNativeScript>().each([=](auto entity, auto& nsc) 
+		{
 			nsc.onRender(nsc.Instance);
 		});
 	}
@@ -236,7 +284,7 @@ namespace Madam {
 		if (child.GetComponent<CRelationship>().parent != null)
 		{
 			UUID oldParentUUID = child.GetComponent<CRelationship>().parent;
-			Entity oldParent = entityMap[oldParentUUID];
+			Entity oldParent = GetEntity(oldParentUUID);
 			if (oldParent != null)
 			{
 				std::vector<UUID> children = oldParent.GetComponent<CRelationship>().children;
@@ -259,20 +307,24 @@ namespace Madam {
 		}
 	}
 
-	void Scene::RepopulateEntityMap() 
+	void Scene::RepopulateEntityMap()
 	{
-		entityMap.clear();
-		auto entities = registry.view<CUniqueIdentifier>();
+		m_entity_map.clear();
+		auto entities = m_registry.view<CUniqueIdentifier>();
 		for (auto handle : entities)
 		{
-			Entity entity = Entity(handle, this);
-			entityMap[entities.get<CUniqueIdentifier>(handle).uuid] = entity;
+			m_entity_map[entities.get<CUniqueIdentifier>(handle).uuid] = handle;
 		}
 	}
 
 	Entity Scene::GetEntity(UUID uuid)
 	{
-		return entityMap[uuid];
+		auto it = m_entity_map.find(uuid);
+		if (it == m_entity_map.end() || it->second == entt::null)
+		{
+			return Entity();
+		}
+		return Entity(it->second, this);
 	}
 
 	Entity Scene::GetMainCameraEntity()
@@ -323,7 +375,7 @@ namespace Madam {
 	}
 
 	template<>
-	void MADAM_API Scene::OnComponentAdded<CPointLight>(Entity entity, CPointLight& component) 
+	void MADAM_API Scene::OnComponentAdded<CPointLight>(Entity entity, CPointLight& component)
 	{
 
 	}

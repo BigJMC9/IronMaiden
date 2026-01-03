@@ -3,6 +3,7 @@
 //#include "H_JCVB_camera.hpp"
 #include "maidenpch.hpp"
 #include "H_DescriptorSetLayout.hpp"
+#include "H_RenderScene.hpp"
 //#include "H_Scene.hpp"
 //#include "H_Game_Object.hpp"
 
@@ -52,6 +53,7 @@ namespace Madam {
 		DescriptorPool& frameDescriptorPool;
 		//Map& gameObjects;
 		Ref<Scene>& scene;
+		Rendering::RenderScene& renderScene;
 		GlobalUbo ubo;
 	};
 

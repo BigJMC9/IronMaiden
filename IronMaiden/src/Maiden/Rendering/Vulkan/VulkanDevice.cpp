@@ -79,7 +79,6 @@ namespace Madam {
 	}
 
 	void Device::deinit() {
-		vkDestroyCommandPool(device_, commandPool, nullptr);
 		vkDestroyDevice(device_, nullptr);
 
 		if (enableValidationLayers) {
@@ -100,9 +99,9 @@ namespace Madam {
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "IronMaidenEditor";
-		appInfo.applicationVersion = VK_MAKE_VERSION(1, 1, 0);
+		appInfo.applicationVersion = VK_MAKE_VERSION(1, 2, 0);
 		appInfo.pEngineName = "Iron Maiden Engine";
-		appInfo.engineVersion = VK_MAKE_VERSION(1, 1, 0);
+		appInfo.engineVersion = VK_MAKE_VERSION(1, 2, 0);
 		appInfo.apiVersion = VK_API_VERSION_1_2;
 
 		VkInstanceCreateInfo createInfo = {};
@@ -140,7 +139,7 @@ namespace Madam {
 		}
 
 		if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create instance!");
+			throw std::runtime_error("failed to create Instance!");
 		}
 
 		hasGflwRequiredInstanceExtensions();
@@ -188,6 +187,8 @@ namespace Madam {
 		}
 
 		VkPhysicalDeviceFeatures deviceFeatures = {};
+
+		deviceFeatures.geometryShader = VK_TRUE;
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 
 		VkDeviceCreateInfo createInfo = {};
@@ -200,8 +201,6 @@ namespace Madam {
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-		// might not really be necessary anymore because device specific validation layers
-		// have been deprecated
 		if (enableValidationLayers) {
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			createInfo.ppEnabledLayerNames = validationLayers.data();
@@ -494,6 +493,12 @@ namespace Madam {
 		}
 
 		vkBindBufferMemory(device_, buffer, bufferMemory, 0);
+	}
+
+	void Device::destroyCommandPool()
+	{
+		vkDestroyCommandPool(device_, commandPool, nullptr);
+		commandPool = VK_NULL_HANDLE;
 	}
 
 	VkCommandBuffer Device::beginSingleTimeCommands() {

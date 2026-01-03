@@ -167,6 +167,7 @@ namespace Madam {
 		static bool SaveFileDialog(std::filesystem::path& filePath, PlatformFlags flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT) {
 			MADAM_CORE_WARN("File extension is not specified! Not specifying file extension is not recommended!");
 			MADAM_CORE_WARN("File filter is not specified! Not specifying file filter is not recommended!");
+			std::filesystem::path working_directory = std::filesystem::current_path();
 			WCHAR _filePath[MAX_PATH];
 			OPENFILENAME ofn;
 			ZeroMemory(&ofn, sizeof(ofn));
@@ -178,19 +179,22 @@ namespace Madam {
 			ofn.nMaxFile = MAX_PATH;
 			ofn.Flags = flags;
 
-			if (GetSaveFileName(&ofn)) {
+			bool result = false;
+			if (GetSaveFileName(&ofn))
+			{
 				filePath = std::filesystem::path(std::wstring(_filePath));
 				MADAM_QUIET_INFO("File saved: {0}", ConvertWideToUtf8(_filePath));
-				return true;
+				result = true;
 			}
-			else {
-				return false;
-			}
+
+			std::filesystem::current_path(working_directory);
+			return result;
 		}
 
 		//Save File dialog
 		static bool SaveFileDialog(std::filesystem::path& filePath, NPSString fileExtension, PlatformFlags flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT) {
 			MADAM_CORE_WARN("File filter is not specified! Not specifying file filter is not recommended!");
+			std::filesystem::path working_directory = std::filesystem::current_path();
 			WCHAR _filePath[MAX_PATH];
 			OPENFILENAME ofn;
 			ZeroMemory(&ofn, sizeof(ofn));
@@ -203,19 +207,21 @@ namespace Madam {
 			ofn.lpstrDefExt = fileExtension;
 			ofn.Flags = flags;
 
+			bool result = false;
 			if (GetSaveFileName(&ofn)) {
 				filePath = std::filesystem::path(std::wstring(_filePath));
 				MADAM_QUIET_INFO("File saved: {0}", ConvertWideToUtf8(_filePath));
-				return true;
+				result = true;
 			}
-			else {
-				return false;
-			}
+
+			std::filesystem::current_path(working_directory);
+			return result;
 		}
 
 		//Save File dialog
 		static bool SaveFileDialog(std::filesystem::path& filePath, NPSString fileExtension, NPSString filter, PlatformFlags flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT)
 		{
+			std::filesystem::path working_directory = std::filesystem::current_path();
 			WCHAR _filePath[MAX_PATH];
 			OPENFILENAME ofn;
 			ZeroMemory(&ofn, sizeof(ofn));
@@ -228,14 +234,15 @@ namespace Madam {
 			ofn.lpstrDefExt = fileExtension;
 			ofn.Flags = flags;
 
+			bool result = false;
 			if (GetSaveFileName(&ofn)) {
 				filePath = std::filesystem::path(std::wstring(_filePath));
 				MADAM_QUIET_INFO("File saved: {0}", ConvertWideToUtf8(_filePath));
-				return true;
+				result =  true;
 			}
-			else {
-				return false;
-			}
+
+			std::filesystem::current_path(working_directory);
+			return result;
 		}
 
 #ifdef CreateDirectory

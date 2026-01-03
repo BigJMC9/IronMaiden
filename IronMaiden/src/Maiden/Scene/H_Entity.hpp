@@ -29,7 +29,7 @@ namespace Madam {
 		{
 			MADAM_CORE_ASSERT(!HasComponent<T>(), "GameObject already has component!");
 			//assert(!HasComponent<T>(), "GameObject already has component!");
-			return scene->registry.emplace<T>(entityHandle, std::forward<Args>(args)...);
+			return scene->m_registry.emplace<T>(entityHandle, std::forward<Args>(args)...);
 			//scene->OnComponentAdded<T>(*this, component);
 			//return component; //forwards args
 		}
@@ -38,12 +38,12 @@ namespace Madam {
 		T& GetComponent() {
 			MADAM_CORE_ASSERT(HasComponent<T>(), "GameObject does not have that component!");
 			//assert(HasComponent<T>(), "GameObject does not have that component!");
-			return scene->registry.get<T>(entityHandle);
+			return scene->m_registry.get<T>(entityHandle);
 		}
 
 		template<typename T>
 		bool HasComponent() {
-			return scene->registry.any_of<T>(entityHandle);
+			return scene->m_registry.any_of<T>(entityHandle);
 		}
 
 		template<typename T>
@@ -51,7 +51,7 @@ namespace Madam {
 			MADAM_CORE_ASSERT(HasComponent<T>(), "GameObject does not have that component!");
 			//assert(HasComponent<T>(), "GameObject does not have that component!");
 			//scene->OnComponentRemoved<T>(*this, component);
-			scene->registry.remove<T>(entityHandle);
+			scene->m_registry.remove<T>(entityHandle);
 		}
 
 		operator bool() const { return entityHandle != entt::null; }

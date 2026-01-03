@@ -96,25 +96,25 @@ namespace Madam {
 
 			static Renderer& Get() 
 			{
-				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
+				MADAM_CORE_ASSERT(instanceFlag, "Renderer Instance not created");
 				if (instance == nullptr) {
-					MADAM_CORE_ERROR("Renderer instance is null pointer");
+					MADAM_CORE_ERROR("Renderer Instance is null pointer");
 				}
 				return *instance;
 			}
 
 			static VkDevice GetLogicDevice() {
-				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
+				MADAM_CORE_ASSERT(instanceFlag, "Renderer Instance not created");
 				return Get().device.device_;
 			}
 
 			static Device& GetDevice() {
-				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
+				MADAM_CORE_ASSERT(instanceFlag, "Renderer Instance not created");
 				return Get().device;
 			}
 
 			static SwapChain& GetSwapChain() {
-				MADAM_CORE_ASSERT(instanceFlag, "Renderer instance not created");
+				MADAM_CORE_ASSERT(instanceFlag, "Renderer Instance not created");
 				if (Get().swapChain == nullptr) {
 					MADAM_CORE_ERROR("SwapChain is null pointer");
 				}
@@ -140,13 +140,14 @@ namespace Madam {
 
 			void PipelineBarrier(VkCommandBuffer commandBuffer, bool isSwapchain, bool isSwitch, int frameIndex, int renderIndex);
 
+			void FreeCommandBuffers();
+			void DestroyCommandPool();
+
 		private:
 			void CreateCommandBuffers();
 			void CreateMainRenderImages();
 			void CreateMainRenderPass();
-			void FreeCommandBuffers();
 			void RecreateSwapChain();
-			//VkRenderPass CreateRenderPass(std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpass, std::vector<VkSubpassDependency> dependencies, bool isSwapChain);
 
 			static Renderer* instance;
 			static bool instanceFlag;

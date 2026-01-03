@@ -42,7 +42,7 @@ namespace Madam
 		AssetMetadata& GetInternalMetadata(UUID uuid);
 
 		std::filesystem::path projectPath;
-		AssetRegistry registry;
+		AssetRegistry m_registry;
 		std::unordered_map<UUID, Ref<Asset>> loadedAssets;
 	};
 }

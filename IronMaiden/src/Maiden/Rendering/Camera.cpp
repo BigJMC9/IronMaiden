@@ -51,7 +51,7 @@ namespace Madam {
 		CameraHandle& CameraHandle::GetMain()
 		{
 			if (!hasInitialized) {
-				MADAM_CORE_INFO("Get Main called, instance not initialized!");
+				MADAM_CORE_INFO("Get Main called, Instance not initialized!");
 				Entity entity = Application::Get().GetScene().CreateEntity("Editor Camera", true);
 				entity.GetComponent<CTransform>().translation.z = -2.5f;
 				entity.AddComponent<CCamera>(defaultCameraData);

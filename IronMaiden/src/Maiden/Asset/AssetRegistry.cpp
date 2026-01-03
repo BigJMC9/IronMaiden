@@ -116,7 +116,7 @@ namespace Madam
 	{
 		YAML::Emitter out;
 		out << YAML::BeginMap;
-		out << YAML::Key << "Registry" << YAML::Value << YAML::BeginSeq;
+		out << YAML::Key << "m_registry" << YAML::Value << YAML::BeginSeq;
 		for (const auto& [uuid, metadata] : assetRegistry)
 		{
 			out << metadata;
@@ -131,19 +131,19 @@ namespace Madam
 	{
 		assetRegistry.clear();
 		YAML::Node node = YAML::Load(file);
-		if (!node["Registry"])
+		if (!node["m_registry"])
 		{
 			MADAM_CORE_ERROR("AssetRegistry node does not exist");
 			return false;
 		}
-		else if (node["Registry"].IsNull())
+		else if (node["m_registry"].IsNull())
 		{
 			MADAM_CORE_ERROR("AssetRegistry node is null");
 			return false;
 		}
 		else
 		{
-			for (const auto& metadata : node["Registry"])
+			for (const auto& metadata : node["m_registry"])
 			{
 				if (!metadata)
 				{

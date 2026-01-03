@@ -34,20 +34,22 @@ namespace Madam {
         DescriptorSetLayout(
             Device& device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
         ~DescriptorSetLayout();
+
+        UUID uuid;
         //DescriptorSetLayout(const DescriptorSetLayout&) = delete;
         //DescriptorSetLayout& operator=(const DescriptorSetLayout&) = delete;
 
-        VkDescriptorSetLayout getDescriptorSetLayout() const { return descriptorSetLayout; }
+        VkDescriptorSetLayout getDescriptorSetLayout() const { return descriptor_set_layout; }
 
     private:
         Device& device;
-        VkDescriptorSetLayout descriptorSetLayout;
+        VkDescriptorSetLayout descriptor_set_layout;
         std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
 
         friend class DescriptorWriter;
     };
 
-    class MADAM_API DescriptorPool {
+    class DescriptorPool {
     public:
         class Builder {
         public:
@@ -83,7 +85,7 @@ namespace Madam {
 
     private:
         Device& device;
-        VkDescriptorPool descriptorPool;
+        VkDescriptorPool descriptor_pool;
 
         friend class DescriptorWriter;
         friend class Madam::UI::GUI;
@@ -91,16 +93,16 @@ namespace Madam {
 
     class DescriptorWriter {
     public:
-        DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool);
+        DescriptorWriter(DescriptorSetLayout& set_layout, DescriptorPool& pool);
 
-        DescriptorWriter& writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo);
-        DescriptorWriter& writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo);
+        DescriptorWriter& WriteBuffer(uint32_t binding, VkDescriptorBufferInfo* buffer_info);
+        DescriptorWriter& WriteImage(uint32_t binding, VkDescriptorImageInfo* image_info);
 
-        bool build(VkDescriptorSet& set);
-        void overwrite(VkDescriptorSet& set);
+        bool Build(VkDescriptorSet& set);
+        void Overwrite(VkDescriptorSet& set);
 
     private:
-        DescriptorSetLayout& setLayout;
+        DescriptorSetLayout& set_layout;
         DescriptorPool& pool;
         std::vector<VkWriteDescriptorSet> writes;
     };

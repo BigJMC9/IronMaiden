@@ -9,18 +9,21 @@
 
 #include <deque>
 
-//When we add animation, we will have to compress the data when loaded into the GPU or it will be very memory intensive. see (pg 63)
+// When we add animation, we will have to compress the data when loaded into the GPU or it will be very memory intensive. see (pg 63)
+// Look into frustum culling and Spacial subdivision culling (pg 47)
+// Rank Each Camera by priority and render in that order. Put the editor camera at the top of the list.
 
-//Look into frustum culling and Spacial subdivision culling (pg 47)
-
-//Rank Each Camera by priority and render in that order. Put the editor camera at the top of the list.
-namespace Madam {
-	struct MaterialComponent;
+namespace Madam
+{
 
 	class Entity;
 	struct UUID;
+	namespace Rendering
+	{
+		struct RenderScene;
+	}
 
-	//Needs special Asset Serialization and Deserialization. (Don't want to load scene when loading asset details)
+	// Needs special Asset Serialization and Deserialization. (Don't want to load scene when loading asset details)
 	class MADAM_API Scene : public Asset
 	{
 	public:
@@ -29,8 +32,8 @@ namespace Madam {
 
 		Entity CreateErrorEntity();
 		Entity CreateEntity();
-		Entity CreateEntity(const std::string& name, bool isHidden = false);
-		Entity CreateEntity(entt::entity _entity);
+		Entity CreateEntity(const std::string& name, bool is_hidden = false);
+		Entity CreateEntity(entt::entity entity);
 		Entity CreateEntity(UUID uuid);
 		Entity CreateEntity(UUID uuid, const std::string& name);
 
@@ -41,40 +44,17 @@ namespace Madam {
 		void Update();
 		void Render();
 
+		Scene& Get() { return *this; }
 		Ref<Scene> Copy();
-
-		entt::registry& Reg() { return registry; }
-
-		Scene& scene() { return *this; }
-
-		Scene(Scene&& other) noexcept : registry(std::move(other.registry)) {
-			RepopulateEntityMap();
-		}
-
-		Scene& operator=(Scene&& other) noexcept {
-			if (this != &other) {
-				registry = std::move(other.registry);
-				RepopulateEntityMap();
-			}
-			return *this;
-		}
 
 		static AssetType GetStaticType() { return AssetType::SCENE; }
 		AssetType GetAssetType() const override { return GetStaticType(); }
 
-		template<typename... Components>
-		auto GetAllEntitiesWith()
-		{
-			return registry.view<Components...>();
-		}
+		entt::registry& GetRegistry() { return m_registry; }
 
-		template<typename... Components, typename... Args>
-		auto GetAllEntitiesWith(Args&&... args)
-		{
-			return registry.view<Components...>(std::forward<Args>(args)...);
-		}
+		void BuildRenderScene(Rendering::RenderScene& out);
 
-		glm::mat4 Scene::GetWorldTransform(UUID entityUUID);
+		glm::mat4 Scene::GetWorldTransform(UUID entity_uuid);
 		glm::mat4 GetWorldTransform(Entity entity);
 
 		Entity GetEntity(UUID uuid);
@@ -84,6 +64,32 @@ namespace Madam {
 
 		Entity GetMainCameraEntity();
 
+		template<typename... Components>
+		auto GetAllEntitiesWith()
+		{
+			return m_registry.view<Components...>();
+		}
+
+		template<typename... Components, typename... Args>
+		auto GetAllEntitiesWith(Args&&... args)
+		{
+			return m_registry.view<Components...>(std::forward<Args>(args)...);
+		}
+
+		Scene(Scene&& other) noexcept : m_registry(std::move(other.m_registry))
+		{
+			RepopulateEntityMap();
+		}
+
+		Scene& operator=(Scene&& other) noexcept
+		{
+			if (this != &other)
+			{
+				m_registry = std::move(other.m_registry);
+				RepopulateEntityMap();
+			}
+			return *this;
+		}
 	private:
 
 		template<typename T>
@@ -94,9 +100,8 @@ namespace Madam {
 
 		void RepopulateEntityMap();
 
-		entt::registry registry;
-
-		std::unordered_map<UUID, Entity> entityMap;
+		entt::registry m_registry;
+		std::unordered_map<UUID, entt::entity> m_entity_map;
 
 		friend class Entity;
 		friend class SceneSerializer;

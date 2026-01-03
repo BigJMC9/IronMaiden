@@ -102,13 +102,9 @@ namespace Madam
 
 		VulkanImage::~VulkanImage()
 		{
-			if (!isDestroyed)
-			{
-				vkDestroyImageView(Renderer::GetDevice().device(), imageView, nullptr);
-				vkDestroyImage(Renderer::GetDevice().device(), image, nullptr);
-				vkFreeMemory(Renderer::GetDevice().device(), imageMemory, nullptr);
-				isDestroyed = true;
-			}
+			vkDestroyImageView(Renderer::GetDevice().device(), imageView, nullptr);
+			vkDestroyImage(Renderer::GetDevice().device(), image, nullptr);
+			vkFreeMemory(Renderer::GetDevice().device(), imageMemory, nullptr);
 		}
 
 		void VulkanImage::TransitionImageLayout(Device& device, VulkanImage& image, VkImageLayout srcLayout, VkImageLayout dstLayout)

@@ -9,7 +9,7 @@ namespace Madam {
 
 	UUID::UUID() {
 
-		//For 128bits (16 bytes)
+		// For 128bits (16 bytes)
 		uint64_t data[2];
 		for (int i = 0; i < 2; i++)
 		{
@@ -24,8 +24,8 @@ namespace Madam {
 			if (i < 1) ss << "-";
 		}
 
-		_UUID = ss.str();
+		m_uuid = ss.str();
 	}
 
-	UUID::UUID(std::string uuid) : _UUID(uuid) {}
+	UUID::UUID(std::string uuid) : m_uuid(uuid) {}
 }

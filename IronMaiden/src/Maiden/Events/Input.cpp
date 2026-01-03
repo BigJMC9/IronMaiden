@@ -42,7 +42,7 @@ namespace Madam {
 
 	void Input::CursorPositionCallback(GLFWwindow* window, double xpos, double ypos)
 	{
-		glm::vec2 pos{ (float)ypos, (float)xpos };
+		glm::vec2 pos{ static_cast<float>(xpos), static_cast<float>(ypos) };
 		glm::vec2 previousPos = Input::Get().mousePosition;
 		float threshold = Input::Get().mouseThreshold;
 		float distance = glm::distance(previousPos, pos);

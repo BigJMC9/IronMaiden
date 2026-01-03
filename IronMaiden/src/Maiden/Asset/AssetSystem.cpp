@@ -13,7 +13,7 @@ namespace Madam
 	AssetManager::AssetManager(std::filesystem::path projectPath)
 	{
 		this->projectPath = projectPath;
-		registry = AssetRegistry();
+		m_registry = AssetRegistry();
 		LoadRegistry();
 		AssetImporter::Init();
 	}
@@ -55,15 +55,15 @@ namespace Madam
 
 	const AssetMetadata& AssetManager::GetMetadata(UUID uuid)
 	{
-		if (registry.contains(uuid)) {
-			return registry[uuid];
+		if (m_registry.contains(uuid)) {
+			return m_registry[uuid];
 		}
 		return s_NullMetadata;
 	}
 
 	const AssetMetadata& AssetManager::GetMetadata(std::filesystem::path path)
 	{
-		for (auto& [handle, metadata] : registry) {
+		for (auto& [handle, metadata] : m_registry) {
 			if (metadata.filepath == path)
 				return metadata;
 		}
@@ -77,15 +77,15 @@ namespace Madam
 
 	AssetMetadata& AssetManager::GetMutableMetadata(UUID uuid)
 	{
-		if (registry.contains(uuid)) {
-			return registry[uuid];
+		if (m_registry.contains(uuid)) {
+			return m_registry[uuid];
 		}
 		return s_NullMetadata;
 	}
 
 	AssetMetadata& AssetManager::GetMutableMetadata(std::filesystem::path path)
 	{
-		for (auto& [handle, metadata] : registry) {
+		for (auto& [handle, metadata] : m_registry) {
 			if (metadata.filepath == path) {
 				return metadata;
 			}
@@ -95,22 +95,22 @@ namespace Madam
 
 	void AssetManager::RemoveMetadata(UUID uuid)
 	{
-		registry.remove(uuid);
+		m_registry.remove(uuid);
 	}
 
 	void AssetManager::RemoveMetadata(std::filesystem::path path)
 	{
 		if (std::filesystem::is_directory(path)) {
-			for (auto& [handle, metadata] : registry) {
+			for (auto& [handle, metadata] : m_registry) {
 				if (Platform::isChildOf(path, metadata.filepath)) {
-					registry.remove(metadata.uuid);
+					m_registry.remove(metadata.uuid);
 				}
 			}
 		}
 		else {
-			for (auto& [handle, metadata] : registry) {
+			for (auto& [handle, metadata] : m_registry) {
 				if (metadata.filepath == path) {
-					registry.remove(metadata.uuid);
+					m_registry.remove(metadata.uuid);
 				}
 			}
 		}
@@ -118,8 +118,8 @@ namespace Madam
 
 	AssetMetadata& AssetManager::GetInternalMetadata(UUID uuid)
 	{
-		if (registry.contains(uuid)) {
-			return registry[uuid];
+		if (m_registry.contains(uuid)) {
+			return m_registry[uuid];
 		}
 
 		return s_NullMetadata;
@@ -130,11 +130,11 @@ namespace Madam
 		std::filesystem::path resourcePath = projectPath / std::filesystem::u8path(RegistryFile());
 		std::ifstream metadataFile;
 		if (Platform::OpenFile(metadataFile, Project::Get().getProjectInfo().assetMetaPath)) {
-			registry.Deserialize(metadataFile);
+			m_registry.Deserialize(metadataFile);
 			metadataFile.close();
 		}
 		else if (Platform::OpenFile(metadataFile, resourcePath)) {
-			registry.Deserialize(metadataFile);
+			m_registry.Deserialize(metadataFile);
 			metadataFile.close();
 		}
 		else {
@@ -151,12 +151,12 @@ namespace Madam
 		std::filesystem::path resourcePath = projectPath / std::filesystem::u8path(RegistryFile());
 		std::ofstream metadataFile;
 		if (Platform::OutputFile(metadataFile, Project::Get().getProjectInfo().assetMetaPath)) {
-			registry.Serialize(metadataFile);
+			m_registry.Serialize(metadataFile);
 			metadataFile.close();
 			return true;
 		}
 		else if (Platform::OutputFile(metadataFile, resourcePath)) {
-			registry.Serialize(metadataFile);
+			m_registry.Serialize(metadataFile);
 			metadataFile.close();
 			return true;
 		}
@@ -183,7 +183,7 @@ namespace Madam
 				if (!GetMetadata(entry.path()).IsValid()) {
 					SetMetaData(entry.path());
 				}
-				/*if (!registry.contains(entry.path()))
+				/*if (!m_registry.contains(entry.path()))
 				{
 					setMetaData(entry.path());
 				}*/
@@ -205,6 +205,6 @@ namespace Madam
 		metadata.filepath = path;
 		metadata.uuid = UUID();
 		metadata.assetType = assetExtensionMap[path.extension().string()];
-		registry[metadata.uuid] = metadata;
+		m_registry[metadata.uuid] = metadata;
 	}
 }

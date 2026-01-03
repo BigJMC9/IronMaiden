@@ -39,7 +39,25 @@ namespace Madam {
 
 		void Renderer::Deinit() 
 		{
-			FreeCommandBuffers();
+			//FreeCommandBuffers();
+			for (size_t i = 0; i < renderPasses.size(); i++)
+			{
+				vkDestroyRenderPass(device.device(), renderPasses[i], nullptr);
+				renderPasses.clear();
+			}
+			for (size_t i = 0; i < frames.size(); i++)
+			{
+				vkDestroyFramebuffer(device.device(), frames[i].images[0].frameBuffer, nullptr);
+				vkDestroyImageView(device.device(), frames[i].images[0].imageView, nullptr);
+				vkDestroyImage(device.device(), frames[i].images[0].image, nullptr);
+				vkFreeMemory(device.device(), frames[i].images[0].imageMemory, nullptr);
+				vkDestroyImageView(device.device(), frames[i].images[1].imageView, nullptr);
+				vkDestroyImage(device.device(), frames[i].images[1].image, nullptr);
+				vkFreeMemory(device.device(), frames[i].images[1].imageMemory, nullptr);
+				frames[i].images.clear();
+			}
+			frames.clear();
+			swapChain = nullptr;
 			//freeImageBuffers(0);
 			isRunning = false;
 			instance = nullptr;
@@ -128,10 +146,15 @@ namespace Madam {
 
 		}
 
-		void Renderer::FreeCommandBuffers() 
+		void Renderer::FreeCommandBuffers()
 		{
 			vkFreeCommandBuffers(device.device(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 			commandBuffers.clear();
+		}
+
+		void Renderer::DestroyCommandPool()
+		{
+			device.destroyCommandPool();
 		}
 
 		bool Renderer::BeginFrame() 

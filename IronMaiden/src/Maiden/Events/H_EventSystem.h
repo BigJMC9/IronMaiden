@@ -56,9 +56,9 @@ namespace Madam::Events {
 	public:
 
 		static EventSystem& Get() {
-			MADAM_CORE_ASSERT(instanceFlag, "EventSystem instance not created");
+			MADAM_CORE_ASSERT(instanceFlag, "EventSystem Instance not created");
 			if (instance == nullptr) {
-				MADAM_CORE_ERROR("EventSystem instance is null pointer");
+				MADAM_CORE_ERROR("EventSystem Instance is null pointer");
 			}
 			return *instance;
 		}

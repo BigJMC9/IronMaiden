@@ -51,15 +51,15 @@ namespace Madam {
 		static Ref<StaticMesh> Create(const std::filesystem::path& filepath);
 		static Ref<StaticMesh> Create(const MeshPrimatives primative);
 
-		virtual void bind(void* commandBuffer) = 0;
-		virtual void draw(void* commandBuffer) = 0;
+		virtual void Bind(void* commandBuffer) = 0;
+		virtual void Draw(void* commandBuffer) = 0;
 
-		std::filesystem::path GetFilepath() const { return _filepath; }
-		bool IsPrimative() const { return meshPrimative != MeshPrimatives::None; }
-		MeshPrimatives GetPrimative() const { return meshPrimative; }
+		std::filesystem::path GetFilepath() const { return m_filepath; }
+		bool IsPrimative() const { return mesh_primative != MeshPrimatives::None; }
+		MeshPrimatives GetPrimative() const { return mesh_primative; }
 		std::string GetPrimativeAsString() const 
 		{
-			switch (meshPrimative)
+			switch (mesh_primative)
 			{
 			case Madam::MeshPrimatives::None:
 				return "None";
@@ -84,9 +84,9 @@ namespace Madam {
 
 	protected:
 
-		bool isLoaded = false;
-		MeshFlags meshFlags;
-		std::filesystem::path _filepath;
-		MeshPrimatives meshPrimative = MeshPrimatives::None;
+		bool is_loaded = false;
+		MeshFlags mesh_flags;
+		std::filesystem::path m_filepath;
+		MeshPrimatives mesh_primative = MeshPrimatives::None;
 	};
 }

@@ -124,11 +124,67 @@ namespace Madam {
 		uint32_t subpass = 0;
 	};
 
+	struct ShaderModuleConfigInfo {
+	public:
+		explicit ShaderModuleConfigInfo(const std::string rawFilepath)
+		{
+			data = readFile(rawFilepath);
+		}
+
+		explicit ShaderModuleConfigInfo(const std::vector<uint32_t> rawData) : data{ rawData }
+		{
+
+		}
+
+		bool operator==(const null_t) const {
+			return data.size() == 0;
+		}
+		bool operator!=(const null_t) const {
+			return data.size() != 0;
+		}
+
+		std::vector<uint32_t> data;
+	private:
+		ShaderModuleConfigInfo() = default;
+
+		std::vector<uint32_t> readFile(const std::string& filepath) {
+			std::ifstream file{ filepath, std::ios::ate | std::ios::binary };
+			if (!file.is_open()) {
+				throw std::runtime_error("failed to open file: " + filepath);
+			}
+			size_t fileSize = static_cast<size_t>(file.tellg());
+			if (fileSize % sizeof(uint32_t) != 0) {
+				throw std::runtime_error("File size is not a multiple of uint32_t size");
+			}
+			std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
+			file.seekg(0);
+			file.read(reinterpret_cast<char*>(buffer.data()), fileSize);
+
+			file.close();
+			return buffer;
+		}
+		friend struct ShaderStageConfigInfo;
+	};
+
+	struct ShaderStageConfigInfo {
+	public:
+		ShaderModuleConfigInfo vertexModule;
+		ShaderModuleConfigInfo tessellationControlModule;
+		ShaderModuleConfigInfo tessellationEvaluationModule;
+		ShaderModuleConfigInfo geometryModule;
+		ShaderModuleConfigInfo fragmentModule;
+		ShaderModuleConfigInfo computeModule;
+		ShaderModuleConfigInfo rayGenerationModule;
+		ShaderModuleConfigInfo anyHitModule;
+		ShaderModuleConfigInfo intersectionModule;
+		ShaderModuleConfigInfo closestHitModule;
+		ShaderModuleConfigInfo missModule;
+		ShaderModuleConfigInfo callableModule;
+	};
+
 	class MADAM_API Pipeline {
 	public:
-		Pipeline(Device& device, const std::string& rawVertFilepath, const std::string& rawFragFilepath, const PipelineConfigInfo& configInfo);
-		Pipeline(Device& device, const std::vector<uint32_t>& rawVert, const std::vector<uint32_t>& rawFrag, const PipelineConfigInfo& configInfo);
-		Pipeline(Device& device, const PipelineConfigInfo& configInfo);
+		Pipeline(Device& device, const PipelineConfigInfo& pipelineConfigInfo, const ShaderStageConfigInfo& shaderConfigInfo);
 		~Pipeline();
 
 		Pipeline(const Pipeline&) = delete;
@@ -136,23 +192,32 @@ namespace Madam {
 
 		void bind(VkCommandBuffer commandBuffer);
 
-		static void setDescriptions(PipelineConfigInfo& configInfo);
-		static void enableAlphaBlending(PipelineConfigInfo& configInfo);
-		static void debugPipelineConfigInfo(const PipelineConfigInfo& configInfo);
+		static void setDescriptions(PipelineConfigInfo& pipelineConfigInfo);
+		static void enableAlphaBlending(PipelineConfigInfo& pipelineConfigInfo);
+		static void debugPipelineConfigInfo(const PipelineConfigInfo& pipelineConfigInfo);
+
+		static bool createShaderModule(Device& device, const ShaderModuleConfigInfo& configInfo, VkShaderModule* shaderModule);
+		static void destroyShaderModule(Device& device, VkShaderModule shaderModule);
 
 	private:
 		static std::vector<char> readFile(const std::string& filepath);
 
-		void createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo);
-		void createGraphicsPipeline(const std::vector<uint32_t>& rawVert, const std::vector<uint32_t>& rawFrag, const PipelineConfigInfo& configInfo);
-
-		void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule); //pointer to pointer
-		void createShaderModule(const std::vector<uint32_t>& code, VkShaderModule* shaderModule); //pointer to pointer
+		void createGraphicsPipeline(const PipelineConfigInfo& configInfo, const ShaderStageConfigInfo& shaderConfigInfo);
 		
 
-		Device& device; //outlive any instance of any class that depends on it so it will not crash the engine (aggregation)
-		VkPipeline graphicsPipeline; //typedef
-		VkShaderModule vertShaderModule;
-		VkShaderModule fragShaderModule;
+		Device& device;
+		VkPipeline graphicsPipeline;
+		VkShaderModule vertexShaderModule = nullptr;
+		VkShaderModule tessellationControlShaderModule = nullptr;
+		VkShaderModule tessellationEvaluationShaderModule = nullptr;
+		VkShaderModule geometryShaderModule = nullptr;
+		VkShaderModule fragmentShaderModule = nullptr;
+		VkShaderModule computeShaderModule = nullptr;
+		VkShaderModule rayGenerationShaderModule = nullptr;
+		VkShaderModule anyHitShaderModule = nullptr;
+		VkShaderModule intersectionShaderModule = nullptr;
+		VkShaderModule closestHitShaderModule = nullptr;
+		VkShaderModule missShaderModule = nullptr;
+		VkShaderModule callableShaderModule = nullptr;
 	};
 }

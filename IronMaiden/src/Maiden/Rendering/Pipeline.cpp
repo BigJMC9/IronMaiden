@@ -6,21 +6,56 @@
 #include "../Asset/AssetUtils.h"
 
 namespace Madam {
-	//In future seperate the Pipeline and config part
-	Pipeline::Pipeline(Device& device, const std::string& rawVertFilepath, const std::string& rawFragFilepath, const PipelineConfigInfo& configInfo) : device{ device } {
-		std::string vertFilepath = "resources\\" + rawVertFilepath;
-		std::string fragFilepath = "resources\\" + rawFragFilepath;
-		createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
+
+	bool Pipeline::createShaderModule(Device& device, const ShaderModuleConfigInfo& configInfo, VkShaderModule* shaderModule)
+	{
+		if (configInfo == null)
+		{
+			return false;
+		}
+		VkShaderModuleCreateInfo createInfo = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		createInfo.codeSize = configInfo.data.size() * sizeof(int32_t);
+		createInfo.pCode = (uint32_t*)configInfo.data.data();
+		VkResult result = vkCreateShaderModule(device.device(), &createInfo, nullptr, shaderModule);
+		if (result != VK_SUCCESS) {
+			return false;
+		}
+		else
+		{
+			return true;
+		}
 	}
 
-	Pipeline::Pipeline(Device& device, const std::vector<uint32_t>& rawVert, const std::vector<uint32_t>& rawFrag, const PipelineConfigInfo& configInfo) : device{ device } {
-		createGraphicsPipeline(rawVert, rawFrag, configInfo);
+	void Pipeline::destroyShaderModule(Device& device, VkShaderModule shaderModule)
+	{
+		if (shaderModule != VK_NULL_HANDLE)
+		{
+			vkDestroyShaderModule(device.device(), shaderModule, nullptr);
+			shaderModule = VK_NULL_HANDLE;
+		}
+	}
+
+	//In future seperate the Pipeline and config part
+	Pipeline::Pipeline(Device& device, const PipelineConfigInfo& pipelineConfigInfo, const ShaderStageConfigInfo& shaderConfigInfo) : device{ device } {
+		createGraphicsPipeline(pipelineConfigInfo, shaderConfigInfo);
 	}
 
 	Pipeline::~Pipeline() {
-		vkDestroyShaderModule(device.device(), vertShaderModule, nullptr);
-		vkDestroyShaderModule(device.device(), fragShaderModule, nullptr);
+		destroyShaderModule(device, vertexShaderModule);
+		destroyShaderModule(device, tessellationControlShaderModule);
+		destroyShaderModule(device, tessellationEvaluationShaderModule);
+		destroyShaderModule(device, geometryShaderModule);
+		destroyShaderModule(device, fragmentShaderModule);
+		destroyShaderModule(device, computeShaderModule);
+		destroyShaderModule(device, rayGenerationShaderModule);
+		destroyShaderModule(device, anyHitShaderModule);
+		destroyShaderModule(device, intersectionShaderModule);
+		destroyShaderModule(device, closestHitShaderModule);
+		destroyShaderModule(device, missShaderModule);
+		destroyShaderModule(device, callableShaderModule);
 		vkDestroyPipeline(device.device(), graphicsPipeline, nullptr);
+		graphicsPipeline = VK_NULL_HANDLE;
 	}
 
 	std::vector<char> Pipeline::readFile(const std::string& filepath) {
@@ -40,35 +75,58 @@ namespace Madam {
 		return buffer;
 	}
 
+	void Pipeline::createGraphicsPipeline(const PipelineConfigInfo& pipelineConfigInfo, const ShaderStageConfigInfo& shaderConfigInfo) {
 
-	void Pipeline::createGraphicsPipeline(const std::vector<uint32_t>& rawVert, const std::vector<uint32_t>& rawFrag, const PipelineConfigInfo& configInfo) {
+		assert(pipelineConfigInfo.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline:: no pipelineLayout provided in configInfo");
+		assert(pipelineConfigInfo.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline:: no renderPass provided in configInfo");
 
-		assert(configInfo.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline:: no pipelineLayout provided in configInfo");
-		assert(configInfo.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline:: no renderPass provided in configInfo");
+		createShaderModule(device, shaderConfigInfo.vertexModule, &vertexShaderModule);
+		createShaderModule(device, shaderConfigInfo.geometryModule, &geometryShaderModule);
+		createShaderModule(device, shaderConfigInfo.fragmentModule, &fragmentShaderModule);
 
-		//Shader Modules should be moved to a shaderModule class, this way they can be swapped out when using them
-		createShaderModule(rawVert, &vertShaderModule);
-		createShaderModule(rawFrag, &fragShaderModule);
+		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+		
+		if (vertexShaderModule != nullptr)
+		{
+			VkPipelineShaderStageCreateInfo vertShaderStage;
+			vertShaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			vertShaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
+			vertShaderStage.module = vertexShaderModule;
+			vertShaderStage.pName = "main";
+			vertShaderStage.flags = 0;
+			vertShaderStage.pNext = nullptr;
+			vertShaderStage.pSpecializationInfo = nullptr;
+			shaderStages.push_back(vertShaderStage);
+		}
 
-		VkPipelineShaderStageCreateInfo shaderStages[2];
-		shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-		shaderStages[0].module = vertShaderModule;
-		shaderStages[0].pName = "main";
-		shaderStages[0].flags = 0;
-		shaderStages[0].pNext = nullptr;
-		shaderStages[0].pSpecializationInfo = nullptr;
+		if (geometryShaderModule != nullptr)
+		{
+			VkPipelineShaderStageCreateInfo geomShaderStage;
+			geomShaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			geomShaderStage.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+			geomShaderStage.module = geometryShaderModule;
+			geomShaderStage.pName = "main";
+			geomShaderStage.flags = 0;
+			geomShaderStage.pNext = nullptr;
+			geomShaderStage.pSpecializationInfo = nullptr;
+			shaderStages.push_back(geomShaderStage);
+		}
 
-		shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		shaderStages[1].module = fragShaderModule;
-		shaderStages[1].pName = "main";
-		shaderStages[1].flags = 0;
-		shaderStages[1].pNext = nullptr;
-		shaderStages[1].pSpecializationInfo = nullptr;
+		if (fragmentShaderModule != nullptr)
+		{
+			VkPipelineShaderStageCreateInfo fragShaderStage;
+			fragShaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			fragShaderStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+			fragShaderStage.module = fragmentShaderModule;
+			fragShaderStage.pName = "main";
+			fragShaderStage.flags = 0;
+			fragShaderStage.pNext = nullptr;
+			fragShaderStage.pSpecializationInfo = nullptr;
+			shaderStages.push_back(fragShaderStage);
+		}
 
-		auto& bindingDescriptions = configInfo.bindingDescriptions;
-		auto& attributeDesriptions = configInfo.attributeDescriptions;
+		auto& bindingDescriptions = pipelineConfigInfo.bindingDescriptions;
+		auto& attributeDesriptions = pipelineConfigInfo.attributeDescriptions;
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDesriptions.size());
@@ -79,116 +137,26 @@ namespace Madam {
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.stageCount = 2;
-		pipelineInfo.pStages = shaderStages;
+		pipelineInfo.stageCount = shaderStages.size();
+		pipelineInfo.pStages = shaderStages.data();
 		pipelineInfo.pVertexInputState = &vertexInputInfo;
-		pipelineInfo.pInputAssemblyState = &configInfo.inputAssemblyInfo;
-		pipelineInfo.pViewportState = &configInfo.viewportInfo;
-		pipelineInfo.pRasterizationState = &configInfo.rasterizationInfo;
-		pipelineInfo.pMultisampleState = &configInfo.multisampleInfo;
-		pipelineInfo.pColorBlendState = &configInfo.colorBlendInfo;
-		pipelineInfo.pDepthStencilState = &configInfo.depthStencilInfo;
-		pipelineInfo.pDynamicState = &configInfo.dynamicStateInfo;
+		pipelineInfo.pInputAssemblyState = &pipelineConfigInfo.inputAssemblyInfo;
+		pipelineInfo.pViewportState = &pipelineConfigInfo.viewportInfo;
+		pipelineInfo.pRasterizationState = &pipelineConfigInfo.rasterizationInfo;
+		pipelineInfo.pMultisampleState = &pipelineConfigInfo.multisampleInfo;
+		pipelineInfo.pColorBlendState = &pipelineConfigInfo.colorBlendInfo;
+		pipelineInfo.pDepthStencilState = &pipelineConfigInfo.depthStencilInfo;
+		pipelineInfo.pDynamicState = &pipelineConfigInfo.dynamicStateInfo;
 
-		pipelineInfo.layout = configInfo.pipelineLayout;
-		pipelineInfo.renderPass = configInfo.renderPass;
-		pipelineInfo.subpass = configInfo.subpass;
-
+		pipelineInfo.layout = pipelineConfigInfo.pipelineLayout;
+		pipelineInfo.renderPass = pipelineConfigInfo.renderPass;
+		pipelineInfo.subpass = pipelineConfigInfo.subpass;
 
 		pipelineInfo.basePipelineIndex = -1;
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-		//debugPipelineConfigInfo(configInfo);
 		if (vkCreateGraphicsPipelines(device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create graphics pipeline");
-		}
-	}
-
-	void Pipeline::createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo) {
-
-		assert(configInfo.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline:: no pipelineLayout provided in configInfo");
-		assert(configInfo.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline:: no renderPass provided in configInfo");
-
-		auto vertCode = readFile(vertFilepath);
-		auto fragCode = readFile(fragFilepath);
-
-		//Shader Modules should be moved to a shaderModule class, this way they can be swapped out when using them
-		createShaderModule(vertCode, &vertShaderModule);
-		createShaderModule(fragCode, &fragShaderModule);
-
-		VkPipelineShaderStageCreateInfo shaderStages[2];
-		shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-		shaderStages[0].module = vertShaderModule;
-		shaderStages[0].pName = "main";
-		shaderStages[0].flags = 0;
-		shaderStages[0].pNext = nullptr;
-		shaderStages[0].pSpecializationInfo = nullptr;
-
-		shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		shaderStages[1].module = fragShaderModule;
-		shaderStages[1].pName = "main";
-		shaderStages[1].flags = 0;
-		shaderStages[1].pNext = nullptr;
-		shaderStages[1].pSpecializationInfo = nullptr;
-
-		auto& bindingDescriptions = configInfo.bindingDescriptions;
-		auto& attributeDesriptions = configInfo.attributeDescriptions;
-		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDesriptions.size());
-		vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
-		vertexInputInfo.pVertexAttributeDescriptions = attributeDesriptions.data();
-		vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
-
-
-		VkGraphicsPipelineCreateInfo pipelineInfo{};
-		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.stageCount = 2;
-		pipelineInfo.pStages = shaderStages;
-		pipelineInfo.pVertexInputState = &vertexInputInfo;
-		pipelineInfo.pInputAssemblyState = &configInfo.inputAssemblyInfo;
-		pipelineInfo.pViewportState = &configInfo.viewportInfo;
-		pipelineInfo.pRasterizationState = &configInfo.rasterizationInfo;
-		pipelineInfo.pMultisampleState = &configInfo.multisampleInfo;
-		pipelineInfo.pColorBlendState = &configInfo.colorBlendInfo;
-		pipelineInfo.pDepthStencilState = &configInfo.depthStencilInfo;
-		pipelineInfo.pDynamicState = &configInfo.dynamicStateInfo;
-
-		pipelineInfo.layout = configInfo.pipelineLayout;
-		pipelineInfo.renderPass = configInfo.renderPass;
-		pipelineInfo.subpass = configInfo.subpass;
-
-
-		pipelineInfo.basePipelineIndex = -1;
-		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-
-		//debugPipelineConfigInfo(configInfo);
-		if (vkCreateGraphicsPipelines(device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create graphics pipeline");
-		}
-	}
-
-	void Pipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule) {
-		VkShaderModuleCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		createInfo.codeSize = code.size();
-		createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
-
-		if (vkCreateShaderModule(device.device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create shader module");
-		}
-	}
-
-	void Pipeline::createShaderModule(const std::vector<uint32_t>& code, VkShaderModule* shaderModule) {
-		VkShaderModuleCreateInfo createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		createInfo.codeSize = code.size() * sizeof(int32_t);
-		createInfo.pCode = (uint32_t*)code.data();
-
-		if (vkCreateShaderModule(device.device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create shader module");
 		}
 	}
 
@@ -197,23 +165,23 @@ namespace Madam {
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 	}
 
-	void Pipeline::setDescriptions(PipelineConfigInfo& configInfo) {
+	void Pipeline::setDescriptions(PipelineConfigInfo& pipelineConfigInfo) {
 
-		configInfo.bindingDescriptions = VulkanStaticMesh::Vertex::GetBindingDescriptions();
-		configInfo.attributeDescriptions = VulkanStaticMesh::Vertex::GetAttributeDescriptions();
+		pipelineConfigInfo.bindingDescriptions = VulkanStaticMesh::Vertex::GetBindingDescriptions();
+		pipelineConfigInfo.attributeDescriptions = VulkanStaticMesh::Vertex::GetAttributeDescriptions();
 	}
 
-	void Pipeline::enableAlphaBlending(PipelineConfigInfo& configInfo) {
-		configInfo.colorBlendAttachment.blendEnable = VK_TRUE;
-		configInfo.colorBlendAttachment.colorWriteMask =
+	void Pipeline::enableAlphaBlending(PipelineConfigInfo& pipelineConfigInfo) {
+		pipelineConfigInfo.colorBlendAttachment.blendEnable = VK_TRUE;
+		pipelineConfigInfo.colorBlendAttachment.colorWriteMask =
 			VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
 			VK_COLOR_COMPONENT_A_BIT;
-		configInfo.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-		configInfo.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-		configInfo.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-		configInfo.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		configInfo.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		configInfo.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+		pipelineConfigInfo.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		pipelineConfigInfo.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		pipelineConfigInfo.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+		pipelineConfigInfo.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		pipelineConfigInfo.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		pipelineConfigInfo.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 	}
 
 	void Pipeline::debugPipelineConfigInfo(const PipelineConfigInfo& configInfo) {

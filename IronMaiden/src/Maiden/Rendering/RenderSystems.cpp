@@ -26,6 +26,7 @@ namespace Madam {
 
 		RenderLayer::~RenderLayer() {
 			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+			pipelineLayout = VK_NULL_HANDLE;
 		}
 
         void RenderLayer::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
@@ -54,8 +55,41 @@ namespace Madam {
 			Pipeline::setDescriptions(pipelineConfig);
 			pipelineConfig.renderPass = renderPass;
 			pipelineConfig.pipelineLayout = pipelineLayout;
-			pipeline = std::make_unique<Pipeline>(device, "shaders\\simple_shader.vert.spv", "shaders\\simple_shader.frag.spv", pipelineConfig);
+
+			ShaderStageConfigInfo shaderStageConfigInfo;
+			shaderStageConfigInfo.vertexModule = ShaderModuleConfigInfo("resources\\shaders\\simple_shader.vert.spv");
+			shaderStageConfigInfo.fragmentModule = ShaderModuleConfigInfo("resources\\shaders\\simple_shader.frag.spv");
+
+			pipeline = CreateScope<Pipeline>(device, pipelineConfig, shaderStageConfigInfo);
         }
+
+		void RenderLayer::updatePipelineState()
+		{
+			if (oldPipeline != nullptr)
+			{
+				if (tick >= 5)
+				{
+					vkDestroyPipelineLayout(device.device(), oldPipelineLayout, nullptr);
+					oldPipelineLayout = VK_NULL_HANDLE;
+					oldPipeline = nullptr;
+					tick = 0;
+				}
+				else
+				{
+					tick++;
+				}
+			}
+		}
+
+		void RenderLayer::recreatePipeline(VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
+		{
+			oldPipeline = std::move(pipeline);
+			oldPipelineLayout = pipelineLayout;
+			pipeline = nullptr;
+			pipelineLayout = VK_NULL_HANDLE;
+			createPipelineLayout(globalSetLayout);
+			createPipeline(renderPass);
+		}
 
 		void RenderLayer::render(FrameInfo& frameInfo) {
 			pipeline->bind(frameInfo.commandBuffer);
@@ -69,23 +103,27 @@ namespace Madam {
 				&frameInfo.globalDescriptorSet,
 				0,
 				nullptr);
-			entt::registry& entities = frameInfo.scene->Reg();
-			auto group = entities.view<CTransform, CMeshRenderer>();
-			for (auto entity : group)
+			if (!frameInfo.renderScene.registry)
 			{
-				auto [transform, meshRenderer] = group.get<CTransform, CMeshRenderer>(entity);
+				isFirstFrame = false;
+				return;
+			}
 
+			entt::registry& entities = *frameInfo.renderScene.registry;
+			for (auto entity : frameInfo.renderScene.meshEntities)
+			{
 				if (!entities.valid(entity)) {
 					std::cerr << "Error, entity is not valid" << std::endl;
 					continue;
 				}
-				if (meshRenderer.GetMesh() == nullptr) continue;
 
-				Ref<CMaterial> material = meshRenderer.GetMaterial();
-				if (material != nullptr) continue;
+				auto& meshRenderer = entities.get<CMeshRenderer>(entity);
+				if (meshRenderer.GetMesh() == nullptr) continue;
+				if (entities.any_of<CMaterial>(entity)) continue;
 
 				DefaultPushConstantData push{};
-				push.modelMatrix = frameInfo.scene->GetWorldTransform(frameInfo.scene->Reg().get<CUniqueIdentifier>(entity).uuid);
+				UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
+				push.modelMatrix = frameInfo.scene->GetWorldTransform(uuid);
 				//push.modelMatrix[3][1] = -push.modelMatrix[3][1];
 				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
 
@@ -96,8 +134,122 @@ namespace Madam {
 					0,
 					sizeof(DefaultPushConstantData),
 					&push);
-				meshRenderer.GetMesh()->bind(frameInfo.commandBuffer);
-				meshRenderer.GetMesh()->draw(frameInfo.commandBuffer);
+				meshRenderer.GetMesh()->Bind(frameInfo.commandBuffer);
+				meshRenderer.GetMesh()->Draw(frameInfo.commandBuffer);
+			}
+			isFirstFrame = false;
+		}
+
+		/*
+		------------------Custom Render Layer-----------------
+		*/
+
+		CustomLayer::CustomLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
+			: RenderLayer(device, renderPass, globalSetLayout, _name) {
+			createPipelineLayout(globalSetLayout);
+			createPipeline(renderPass);
+		}
+
+		CustomLayer::~CustomLayer() {
+			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+			pipelineLayout = VK_NULL_HANDLE;
+		}
+
+		void CustomLayer::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+			VkPushConstantRange pushConstantRange{};
+			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+			pushConstantRange.offset = 0;
+			pushConstantRange.size = sizeof(Q13Constants);
+
+			//Change for different layout
+			std::vector<VkDescriptorSetLayout> descriptorSetLayout
+			{
+				globalSetLayout
+			};
+
+			VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayout.size());
+			pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.data();
+			pipelineLayoutInfo.pushConstantRangeCount = 1;
+			pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+			if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+				throw std::runtime_error("Failed to create pipeline layout!");
+			}
+		}
+
+		void CustomLayer::createPipeline(VkRenderPass renderPass) {
+			assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+
+			PipelineConfigInfo pipelineConfig{};
+			Pipeline::setDescriptions(pipelineConfig);
+
+			pipelineConfig.renderPass = renderPass;
+			pipelineConfig.pipelineLayout = pipelineLayout;
+
+			ShaderStageConfigInfo shaderStageConfigInfo;
+			shaderStageConfigInfo.vertexModule = ShaderModuleConfigInfo("resources\\shaders\\Q13.vert.spv");
+			shaderStageConfigInfo.fragmentModule = ShaderModuleConfigInfo("resources\\shaders\\Q13.frag.spv");
+
+			pipeline = CreateScope<Pipeline>(device, pipelineConfig, shaderStageConfigInfo);
+		}
+
+		void CustomLayer::render(FrameInfo& frameInfo) {
+			pipeline->bind(frameInfo.commandBuffer);
+
+			vkCmdBindDescriptorSets(
+				frameInfo.commandBuffer,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				pipelineLayout,
+				0,
+				1,
+				&frameInfo.globalDescriptorSet,
+				0,
+				nullptr);
+
+			if (!frameInfo.renderScene.registry)
+			{
+				return;
+			}
+
+			entt::registry& entities = *frameInfo.renderScene.registry;
+			for (auto entity : frameInfo.renderScene.meshEntities) {
+
+				if (!entities.valid(entity)) {
+					std::cerr << "Error, entity is not valid" << std::endl;
+					continue;
+				}
+
+				auto& meshRenderer = entities.get<CMeshRenderer>(entity);
+				CMaterial material;
+				if (entities.any_of<CMaterial>(entity))
+				{
+					material = entities.get<CMaterial>(entity);
+				}
+				else
+				{
+					continue;
+				}
+				if (material.is_custom == false) continue;
+
+				Q13Constants push{};
+				UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
+				push.modelMatrix = frameInfo.scene->GetWorldTransform(uuid);
+				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
+				//MADAM_CORE_INFO("ax: {0}, dx0: {1}, dx1: {2}", material.ax, material.dx0, material.dx1);
+				push.dx0 = material.dx0;
+				push.dx1 = material.dx1;
+				push.dx2 = material.dx2;
+				push.dx3 = material.dx3;
+				vkCmdPushConstants(
+					frameInfo.commandBuffer,
+					pipelineLayout,
+					VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+					0,
+					sizeof(Q13Constants),
+					&push);
+				meshRenderer.GetMesh()->Bind(frameInfo.commandBuffer);
+				meshRenderer.GetMesh()->Draw(frameInfo.commandBuffer);
 			}
 			isFirstFrame = false;
 		}
@@ -114,6 +266,7 @@ namespace Madam {
 
 		GridRenderLayer::~GridRenderLayer() {
 			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+			pipelineLayout = VK_NULL_HANDLE;
 		}
 
 		void GridRenderLayer::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
@@ -159,7 +312,12 @@ namespace Madam {
 			pipelineConfig.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
 			pipelineConfig.depthStencilInfo.stencilTestEnable = VK_FALSE;
 			//pipelineConfig.rasterizationInfo.depthClampEnable = VK_TRUE;
-			pipeline = std::make_unique<Pipeline>(device, "shaders/grid_shader.vert.spv", "shaders/grid_shader.frag.spv", pipelineConfig);
+
+			ShaderStageConfigInfo shaderStageConfigInfo;
+			shaderStageConfigInfo.vertexModule = ShaderModuleConfigInfo("resources\\shaders\\grid_shader.vert.spv");
+			shaderStageConfigInfo.fragmentModule = ShaderModuleConfigInfo("resources\\shaders\\grid_shader.frag.spv");
+
+			pipeline = CreateScope<Pipeline>(device, pipelineConfig, shaderStageConfigInfo);
 		}
 
 		void GridRenderLayer::render(FrameInfo& frameInfo) {
@@ -203,6 +361,7 @@ namespace Madam {
 
 		SkyboxRenderLayer::~SkyboxRenderLayer() {
 			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+			pipelineLayout = VK_NULL_HANDLE;
 		}
 
 		void SkyboxRenderLayer::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
@@ -247,7 +406,12 @@ namespace Madam {
 			pipelineConfig.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
 			pipelineConfig.depthStencilInfo.stencilTestEnable = VK_FALSE;
 			//pipelineConfig.rasterizationInfo.depthClampEnable = VK_TRUE;
-			pipeline = std::make_unique<Pipeline>(device, "shaders/skybox_shader_1.2.vert.spv", "shaders/skybox_shader_1.2.frag.spv", pipelineConfig);
+
+			ShaderStageConfigInfo shaderStageConfigInfo;
+			shaderStageConfigInfo.vertexModule = ShaderModuleConfigInfo("resources\\shaders\\skybox_shader_1.2.vert.spv");
+			shaderStageConfigInfo.fragmentModule = ShaderModuleConfigInfo("resources\\shaders\\skybox_shader_1.2.frag.spv");
+
+			pipeline = CreateScope<Pipeline>(device, pipelineConfig, shaderStageConfigInfo);
 		}
 
 		void SkyboxRenderLayer::render(FrameInfo& frameInfo) {
@@ -266,8 +430,8 @@ namespace Madam {
 			VkDescriptorSet descriptorSet1;
 			DescriptorWriter(*skyboxRenderSystemLayout, frameInfo.frameDescriptorPool)
 				//.writeBuffer(0, &skyboxBuffer->descriptorInfo())
-				.writeImage(0, (VkDescriptorImageInfo*)std::static_pointer_cast<VulkanTexture>(noiseTexture)->GetDescriptorInfo())
-				.build(descriptorSet1);
+				.WriteImage(0, (VkDescriptorImageInfo*)std::static_pointer_cast<VulkanTexture>(noiseTexture)->GetDescriptorInfo())
+				.Build(descriptorSet1);
 
 			vkCmdBindDescriptorSets(
 				frameInfo.commandBuffer,
@@ -279,8 +443,8 @@ namespace Madam {
 				0,
 				nullptr);
 
-			skybox->bind(frameInfo.commandBuffer);
-			skybox->draw(frameInfo.commandBuffer);
+			skybox->Bind(frameInfo.commandBuffer);
+			skybox->Draw(frameInfo.commandBuffer);
 			isFirstFrame = false;
 		}
 
@@ -296,6 +460,7 @@ namespace Madam {
 
 		TextureRenderLayer::~TextureRenderLayer() {
 			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+			pipelineLayout = VK_NULL_HANDLE;
 		}
 
 		void TextureRenderLayer::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
@@ -335,11 +500,12 @@ namespace Madam {
 			Pipeline::setDescriptions(pipelineConfig);
 			pipelineConfig.renderPass = renderPass;
 			pipelineConfig.pipelineLayout = pipelineLayout;
-			pipeline = std::make_unique<Pipeline>(
-				device,
-				"shaders\\texture_shader.vert.spv",
-				"shaders\\texture_shader.frag.spv",
-				pipelineConfig);
+
+			ShaderStageConfigInfo shaderStageConfigInfo;
+			shaderStageConfigInfo.vertexModule = ShaderModuleConfigInfo("resources\\shaders\\texture_shader.vert.spv");
+			shaderStageConfigInfo.fragmentModule = ShaderModuleConfigInfo("resources\\shaders\\texture_shader.frag.spv");
+
+			pipeline = CreateScope<Pipeline>(device, pipelineConfig, shaderStageConfigInfo);
 		}
 
 		void TextureRenderLayer::render(FrameInfo& frameInfo) {
@@ -355,12 +521,14 @@ namespace Madam {
 				0,
 				nullptr);
 
-			entt::registry& entities = frameInfo.scene->Reg();
-			auto group = entities.view<CTransform, CMeshRenderer>();
+			if (!frameInfo.renderScene.registry)
+			{
+				return;
+			}
 
-			for (auto entity : group) {
+			entt::registry& entities = *frameInfo.renderScene.registry;
 
-				auto [transform, meshRenderer] = group.get<CTransform, CMeshRenderer>(entity);
+			for (auto entity : frameInfo.renderScene.meshEntities) {
 
 				if (!entities.valid(entity)) {
 					std::cerr << "Error, entity is not valid" << std::endl;
@@ -369,24 +537,25 @@ namespace Madam {
 				// skip objects that don't have both a model and texture
 				//JcvbMeshRenderer* meshRenderer = obj.getComponent<JcvbMeshRenderer>();
 				//if (meshRenderer == nullptr) continue;
+				auto& meshRenderer = entities.get<CMeshRenderer>(entity);
 				Ref<CMaterial> material = meshRenderer.GetMaterial();
 				if (material == nullptr) continue;
-				if (material->diffuseMap == nullptr) continue;
+				if (material->diffuse_map == nullptr) continue;
 
 				// writing descriptor set each frame can slow performance
 				// would be more efficient to implement some sort of caching
 				// Edit implement descriptor set pool
-				auto imageInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->diffuseMap->GetDescriptorInfo();
-				auto normalInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->normalMap->GetDescriptorInfo();
-				auto ambientOcclusionInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->ambientOcclusionMap->GetDescriptorInfo();
-				auto glossInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->glossMap->GetDescriptorInfo();
+				auto imageInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->diffuse_map->GetDescriptorInfo();
+				auto normalInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->normal_map->GetDescriptorInfo();
+				auto ambientOcclusionInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->ambient_occlusion_map->GetDescriptorInfo();
+				auto glossInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->gloss_map->GetDescriptorInfo();
 				VkDescriptorSet descriptorSet1;
 				DescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
-					.writeImage(0, imageInfo)
-					.writeImage(1, normalInfo)
-					.writeImage(2, ambientOcclusionInfo)
-					.writeImage(3, glossInfo)
-					.build(descriptorSet1);
+					.WriteImage(0, imageInfo)
+					.WriteImage(1, normalInfo)
+					.WriteImage(2, ambientOcclusionInfo)
+					.WriteImage(3, glossInfo)
+					.Build(descriptorSet1);
 
 				vkCmdBindDescriptorSets(
 					frameInfo.commandBuffer,
@@ -399,7 +568,8 @@ namespace Madam {
 					nullptr);
 
 				DefaultPushConstantData push{};
-				push.modelMatrix = frameInfo.scene->GetWorldTransform(frameInfo.scene->Reg().get<CUniqueIdentifier>(entity).uuid);
+				UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
+				push.modelMatrix = frameInfo.scene->GetWorldTransform(uuid);
 				//push.modelMatrix[3][1] = -push.modelMatrix[3][1];
 				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
 
@@ -411,8 +581,8 @@ namespace Madam {
 					sizeof(DefaultPushConstantData),
 					&push);
 
-				meshRenderer.GetMesh()->bind(frameInfo.commandBuffer);
-				meshRenderer.GetMesh()->draw(frameInfo.commandBuffer);
+				meshRenderer.GetMesh()->Bind(frameInfo.commandBuffer);
+				meshRenderer.GetMesh()->Draw(frameInfo.commandBuffer);
 			}
 
 			isFirstFrame = false;
@@ -431,6 +601,7 @@ namespace Madam {
 
 		PointLightRenderLayer::~PointLightRenderLayer() {
 			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+			pipelineLayout = VK_NULL_HANDLE;
 		}
 
 		void PointLightRenderLayer::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
@@ -468,14 +639,19 @@ namespace Madam {
 			pipelineConfig.bindingDescriptions.clear();
 			pipelineConfig.renderPass = renderPass;
 			pipelineConfig.pipelineLayout = pipelineLayout;
-			pipeline = std::make_unique<Pipeline>(device, "shaders/point_light.vert.spv", "shaders/point_light.frag.spv", pipelineConfig);
+
+			ShaderStageConfigInfo shaderStageConfigInfo;
+			shaderStageConfigInfo.vertexModule = ShaderModuleConfigInfo("resources\\shaders\\point_light.vert.spv");
+			shaderStageConfigInfo.fragmentModule = ShaderModuleConfigInfo("resources\\shaders\\point_light.frag.spv");
+
+			pipeline = CreateScope<Pipeline>(device, pipelineConfig, shaderStageConfigInfo);
 		}
 
 		/*void PointLightRenderLayer::preRender(FrameInfo& frameInfo) {
 			auto rotateLight = glm::rotate(glm::mat4(1.f), frameInfo.frameTime/ 5.0f, { 0.f, -1.f, 0.f });
 			int lightIndex = 0;
 
-			entt::registry& entities = frameInfo.scene->Reg();
+			entt::registry& entities = frameInfo.scene->GetRegistry();
 			
 			auto group = entities.view<Transform, PointLight>();
 			for (auto entity : group)
@@ -498,16 +674,20 @@ namespace Madam {
 
 		void PointLightRenderLayer::render(FrameInfo& frameInfo) {
 
+			if (!frameInfo.renderScene.registry)
+			{
+				return;
+			}
+
 			std::map<float, entt::entity> sorted;
-			entt::registry& entities = frameInfo.scene->Reg();
+			entt::registry& entities = *frameInfo.renderScene.registry;
 
 			//This could absolutely be speed up if put on another thread and done before the rendering call
-			auto group = entities.view<CTransform, CPointLight>();
-			for (entt::entity entity : group) {
-				auto [transform, pointLight] = group.get<CTransform, CPointLight>(entity);
+			for (entt::entity entity : frameInfo.renderScene.pointLightEntities) {
+				auto& pointLight = entities.get<CPointLight>(entity);
 
 				UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
-				glm::mat4 worldTransform = Application::Get().GetScene().GetWorldTransform(uuid);
+				glm::mat4 worldTransform = frameInfo.scene->GetWorldTransform(uuid);
 				glm::vec3 worldTranslation = glm::vec3(worldTransform[3][0], worldTransform[3][1], worldTransform[3][2]);
 
 				auto offset = Rendering::CameraHandle::GetMain().GetPosition() - worldTranslation;
@@ -530,12 +710,12 @@ namespace Madam {
 			for (auto it = sorted.rbegin(); it != sorted.rend(); ++it)
 			{
 				entt::entity entity = it->second;
-				auto [transform, pointLight] = entities.get<CTransform, CPointLight>(entity);
+				auto& pointLight = entities.get<CPointLight>(entity);
 				PointLightPushConstants push{};
 				//glm::vec3 adjustedTranslation = transform.translation;
 				//adjustedTranslation.y = -transform.translation.y;
 				UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
-				glm::mat4 worldTransform = Application::Get().GetScene().GetWorldTransform(uuid);
+				glm::mat4 worldTransform = frameInfo.scene->GetWorldTransform(uuid);
 				glm::vec3 worldTranslation = glm::vec3(worldTransform[3][0], worldTransform[3][1], worldTransform[3][2]);
 				push.position = glm::vec4(worldTranslation, 1.f);
 				push.color = glm::vec4(pointLight.color, pointLight.intensity);
@@ -600,6 +780,14 @@ namespace Madam {
 						"Render System"
 					));
 				MADAM_CORE_INFO("Default Render Layer Complete");
+				/*renderSystems.push_back(std::make_unique<CustomLayer>
+					(
+						device,
+						renderer.GetMainRenderPass(),
+						globalSetLayout->getDescriptorSetLayout(),
+						"Custom Render System"
+					));
+				MADAM_CORE_INFO("Custom Render Layer Complete");*/
 				renderSystems.push_back(std::make_unique<GridRenderLayer>
 					(
 						device,
@@ -625,6 +813,7 @@ namespace Madam {
 
 		void RenderStack::render(FrameInfo& frameInfo) {
 			for (auto& system : renderSystems) {
+				system->updatePipelineState();
 				system->render(frameInfo);
 			}
 		}
@@ -632,6 +821,14 @@ namespace Madam {
 		bool RenderStack::switchRenderSystems(int first, int second) {
 			std::swap(renderSystems[first], renderSystems[second]);
 			return true;
+		}
+
+		void RenderStack::reloadPipeline(int renderLayer, VkRenderPass renderPass, Scope<DescriptorSetLayout>& globalDescriptorSetLayout)
+		{
+			if (renderLayer >= 0 && 0 < renderSystems.size())
+			{
+				renderSystems[renderLayer]->recreatePipeline(renderPass, globalDescriptorSetLayout->getDescriptorSetLayout());
+			}
 		}
 	}
 }

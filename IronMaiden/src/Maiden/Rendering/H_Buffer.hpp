@@ -9,48 +9,48 @@ namespace Madam {
 
     class Buffer {
     public:
-        Buffer(Device& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment = 1);
+        Buffer(Device& device, VkDeviceSize instance_size, uint32_t instance_count, VkBufferUsageFlags usage_flags, VkMemoryPropertyFlags memory_property_flags, VkDeviceSize min_offset_alignment = 1);
         ~Buffer();
 
         Buffer(const Buffer&) = delete;
         Buffer& operator=(const Buffer&) = delete;
 
-        VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-        void unmap();
+        VkResult Map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+        void Unmap();
 
-        void writeToBuffer(void* data, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-        VkResult flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-        VkDescriptorBufferInfo descriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-        VkResult invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+        void WriteToBuffer(void* data, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+        VkResult Flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+        VkDescriptorBufferInfo DescriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+        VkResult Invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 
-        void writeToIndex(void* data, int index);
-        VkResult flushIndex(int index);
-        VkDescriptorBufferInfo descriptorInfoForIndex(int index);
-        VkResult invalidateIndex(int index);
+        void WriteToIndex(void* data, int index);
+        VkResult FlushIndex(int index);
+        VkDescriptorBufferInfo DescriptorInfoForIndex(int index);
+        VkResult InvalidateIndex(int index);
 
-        VkBuffer getBuffer() const { return buffer; }
-        void* getMappedMemory() const { return mapped; }
-        uint32_t getInstanceCount() const { return instanceCount; }
-        VkDeviceSize getInstanceSize() const { return instanceSize; }
-        VkDeviceSize getAlignmentSize() const { return instanceSize; }
-        VkBufferUsageFlags getUsageFlags() const { return usageFlags; }
-        VkMemoryPropertyFlags getMemoryPropertyFlags() const { return memoryPropertyFlags; }
-        VkDeviceSize getBufferSize() const { return bufferSize; }
+        VkBuffer GetBuffer() const { return m_buffer; }
+        void* GetMappedMemory() const { return m_mapped; }
+        uint32_t GetInstanceCount() const { return m_instance_count; }
+        VkDeviceSize GetInstanceSize() const { return m_instance_size; }
+        VkDeviceSize GetAlignmentSize() const { return m_instance_size; }
+        VkBufferUsageFlags GetUsageFlags() const { return m_usage_flags; }
+        VkMemoryPropertyFlags GetMemoryPropertyFlags() const { return m_memory_property_flags; }
+        VkDeviceSize GetBufferSize() const { return m_buffer_size; }
 
     private:
-        static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
+        static VkDeviceSize GetAlignment(VkDeviceSize instance_size, VkDeviceSize min_offset_alignment);
 
-        Device& device;
-        void* mapped = nullptr;
-        VkBuffer buffer = VK_NULL_HANDLE;
-        VkDeviceMemory memory = VK_NULL_HANDLE;
+        Device& m_device;
+        void* m_mapped = nullptr;
+        VkBuffer m_buffer = VK_NULL_HANDLE;
+        VkDeviceMemory m_memory = VK_NULL_HANDLE;
 
-        VkDeviceSize bufferSize;
-        uint32_t instanceCount;
-        VkDeviceSize instanceSize;
-        VkDeviceSize alignmentSize;
-        VkBufferUsageFlags usageFlags;
-        VkMemoryPropertyFlags memoryPropertyFlags;
+        VkDeviceSize m_buffer_size;
+        uint32_t m_instance_count;
+        VkDeviceSize m_instance_size;
+        VkDeviceSize m_alignment_size;
+        VkBufferUsageFlags m_usage_flags;
+        VkMemoryPropertyFlags m_memory_property_flags;
     };
 
 }

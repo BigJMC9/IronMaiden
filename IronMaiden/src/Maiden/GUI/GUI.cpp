@@ -256,17 +256,19 @@ namespace Madam::UI {
 		pendingEntityDeletion = CreateRef<Entity>(Entity());
 	}
 
+	//Fix please, descriptorsets and image are not be deallocated
 	GUI::~GUI() {
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
+		guiPool = nullptr;
 	}
 
 	void GUI::OnAttach() {
 		Device& device = Rendering::Renderer::GetDevice();
 		guiPool =
 			DescriptorPool::Builder(device)
-			.setMaxSets(1000) //Maximun number of frames being rendered
+			.setMaxSets(1000)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000)
@@ -292,7 +294,7 @@ namespace Madam::UI {
 		Style(io); 
 
 		init_info = &Rendering::Renderer::Get().GetImGuiInitInfo();
-		init_info->DescriptorPool = guiPool.get()->descriptorPool;
+		init_info->DescriptorPool = guiPool.get()->descriptor_pool;
 		init_info->MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info->RenderPass = Rendering::Renderer::Get().GetSwapChainRenderPass();
 
@@ -374,7 +376,7 @@ namespace Madam::UI {
 		ImGui_ImplGlfw_Shutdown();
 		ImGui_ImplVulkan_Shutdown();
 		init_info = &Rendering::Renderer::Get().GetImGuiInitInfo();
-		init_info->DescriptorPool = guiPool.get()->descriptorPool;
+		init_info->DescriptorPool = guiPool.get()->descriptor_pool;
 		init_info->MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info->RenderPass = Rendering::Renderer::Get().GetSwapChainRenderPass();
 		ImGui_ImplGlfw_InitForVulkan(Application::Get().GetWindow().getGLFWwindow(), true);
@@ -494,6 +496,10 @@ namespace Madam::UI {
 		if (windowStates & RENDER_SETTINGS_WINDOW) {
 			RenderingSettings();
 		}
+		if (windowStates & DEBUG_INFO_WINDOW)
+		{
+			DebugWindow();
+		}
 		Viewport();
 		Hierarchy();
 		Inspector();
@@ -521,7 +527,7 @@ namespace Madam::UI {
 				}
 				if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {
 					if (OpenFileDialog(sceneDir, L"scene", L"scene")) {
-						if (!Application::GetSceneSerializer()->Deserialize(sceneDir))
+						if (Application::Get().LoadScene(sceneDir) != IRM_SUCCESS)
 						{
 							MADAM_ERROR("Unable to Load Scene");
 						}
@@ -536,18 +542,21 @@ namespace Madam::UI {
 					if (sceneDir.empty())
 					{
 						if (SaveFileDialog(sceneDir, L"scene", L"scene")) {
-							Application::GetSceneSerializer()->Serialize(sceneDir);
+							MADAM_CORE_INFO("Current Directory: {0}", std::filesystem::current_path().string());
+							Application::Get().SaveScene(sceneDir);
+							MADAM_CORE_INFO("After SaveScene Current Directory: {0}", std::filesystem::current_path().string());
 						}
 						else {
 							// User canceled or error occurred
 							ShowMessageBox(L"Could not save scene.", L"Info", MB_OK | MB_ICONINFORMATION);
 						}
 					}
-					Application::GetSceneSerializer()->Serialize("temp.scene");
+					Application::Get().SaveScene("temp.scene");
 				}
 				if (ImGui::MenuItem("Save As..")) {
 					if (SaveFileDialog(sceneDir, L"scene", L"scene")) {
-						Application::GetSceneSerializer()->Serialize(sceneDir);
+						MADAM_CORE_INFO("Current Directory: {0}", std::filesystem::current_path().string());
+						Application::Get().SaveScene(sceneDir);
 					}
 					else {
 						// User canceled or error occurred
@@ -572,6 +581,10 @@ namespace Madam::UI {
 				if (ImGui::MenuItem("Render Settings")) 
 				{
 					windowStates |= RENDER_SETTINGS_WINDOW;
+				}
+				if (ImGui::MenuItem("Debug Information"))
+				{
+					windowStates |= DEBUG_INFO_WINDOW;
 				}
 				ImGui::EndMenu();
 			}
@@ -656,7 +669,7 @@ namespace Madam::UI {
 					std::string path = ConvertWideToUtf8(wPath);
 
 					MADAM_CORE_INFO("Opening scene: " + path);
-					if (!Application::GetSceneSerializer()->Deserialize(path))
+					if (Application::Get().LoadScene(path) != VK_SUCCESS)
 					{
 						MADAM_ERROR("Unable to Load Scene");
 					}
@@ -695,7 +708,7 @@ namespace Madam::UI {
 				
 				UUID parentUUID = selectedEntity->GetComponent<CRelationship>().parent;
 				glm::mat4 parentTransform;
-				glm::mat4 transform = selectedEntity->GetComponent<CTransform>().transform();
+				glm::mat4 transform = selectedEntity->GetComponent<CTransform>().TransformMatrix();
 
 				if (parentUUID != null)
 				{
@@ -757,7 +770,7 @@ namespace Madam::UI {
 			Application::Get().GetScene().GetAllEntitiesWith<CMetadata>().each([&](auto entityId, auto& gameObject)
 			{
 				Entity entity {entityId, &Application::Get().GetScene()};
-				if (entity.GetComponent<CRelationship>().parent == null && entity.GetComponent<CMetadata>().isHiddenEntity != true)
+				if (entity.GetComponent<CRelationship>().parent == null && entity.GetComponent<CMetadata>().is_hidden_entity != true)
 				{
 					DrawEntityNode(entity);
 				}
@@ -849,16 +862,27 @@ namespace Madam::UI {
 				}
 				if (ImGui::BeginPopup("AddComponent")) 
 				{
-					if (ImGui::MenuItem("Camera")) {
+					const bool hasCamera = selectedEntity->HasComponent<CCamera>();
+					const bool hasMeshRenderer = selectedEntity->HasComponent<CMeshRenderer>();
+					const bool hasPointLight = selectedEntity->HasComponent<CPointLight>();
+					const bool hasMaterial = selectedEntity->HasComponent<CMaterial>();
+
+					if (ImGui::MenuItem("Camera", nullptr, false, !hasCamera)) {
 						selectedEntity->AddComponent<CCamera>();
 						ImGui::CloseCurrentPopup();
 					}
-					if (ImGui::MenuItem("Mesh Renderer")) {
+					if (ImGui::MenuItem("Mesh Renderer", nullptr, false, !hasMeshRenderer)) {
 						selectedEntity->AddComponent<CMeshRenderer>();
 						ImGui::CloseCurrentPopup();
 					}
-					if (ImGui::MenuItem("Point Light")) {
+					if (ImGui::MenuItem("Point Light", nullptr, false, !hasPointLight)) {
 						selectedEntity->AddComponent<CPointLight>();
+						ImGui::CloseCurrentPopup();
+					}
+					if (ImGui::MenuItem("Material", nullptr, false, !hasMaterial)) {
+						selectedEntity->AddComponent<CMaterial>();
+						CMaterial& mat = selectedEntity->GetComponent<CMaterial>();
+						mat.is_custom = true;
 						ImGui::CloseCurrentPopup();
 					}
 					ImGui::EndPopup();
@@ -1092,7 +1116,10 @@ namespace Madam::UI {
 					if (ImGui::MenuItem("Scene"))
 					{
 						//Update this
-						Application::GetSceneSerializer()->Serialize(activeDir);
+						if (Application::Get().SaveScene(activeDir) != IRM_SUCCESS)
+						{
+							MADAM_ERROR("Unable to create scene");
+						}
 					}
 					if (ImGui::MenuItem("Script"))
 					{
@@ -1267,6 +1294,44 @@ namespace Madam::UI {
 		}
 	}
 
+	void GUI::DebugWindow()
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		auto boldFont = io.Fonts->Fonts[1];
+		bool isWindowOpened;
+		if (ImGui::Begin("Debug Info Window", &isWindowOpened))
+		{
+
+			const ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth;
+			const ImGuiTreeNodeFlags settingListFlags = headerFlags | ImGuiTreeNodeFlags_Leaf;
+			ImGui::Columns(2, "Settings");
+
+			ImGui::Separator();
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
+			bool project_info = ImGui::TreeNodeEx("Project Info", settingListFlags, "Project Information");
+
+			if (project_info)
+			{
+
+				ImGui::PopStyleVar();
+				ImGui::TreePop();
+				ImGui::NextColumn();
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
+				std::string text = "Project Directory: " + Application::Get().GetConfig().projectsDirectory.string();
+				ImGui::Text(text.c_str());
+				text = "Current Working Directory: " + std::filesystem::current_path().string();
+				ImGui::Text(text.c_str());
+				ImGui::PopStyleVar();
+			}
+				
+		}
+		ImGui::End();
+		if (!isWindowOpened)
+		{
+			windowStates &= ~DEBUG_INFO_WINDOW;
+		}
+	}
+
 	void GUI::DrawEntityNode(Entity entity) {
 		auto name = entity.GetComponent<CMetadata>().name;
 
@@ -1350,7 +1415,7 @@ namespace Madam::UI {
 		}
 
 		if (opened) {
-			if (entity.HasComponent<CRelationship>() && entity.GetComponent<CMetadata>().isHiddenEntity != true)
+			if (entity.HasComponent<CRelationship>() && entity.GetComponent<CMetadata>().is_hidden_entity != true)
 			{
 				for each (UUID child in entity.GetComponent<CRelationship>().children) {
 					Entity childEntity = Application::Get().GetScene().GetEntity(child);
@@ -1566,7 +1631,16 @@ namespace Madam::UI {
 			}
 
 			if (open) {
-				ImGui::Text("Mesh Filter");
+				ImGui::Checkbox("custom", &material.is_custom);
+				ImGui::DragFloat("ax", &material.ax, 0.1f, -10.0f, 10.0f);
+				ImGui::DragFloat("dx0", &material.dx0, 0.1f, -10.0f, 10.0f);
+				ImGui::DragFloat("dx1", &material.dx1, 0.1f, -10.0f, 10.0f);
+				ImGui::DragFloat("dx2", &material.dx2, 0.1f, -10.0f, 10.0f);
+				ImGui::DragFloat("dx3", &material.dx3, 0.1f, -10.0f, 10.0f);
+				if (ImGui::Button("Reload Shader", ImVec2{ 100, lineHeight }))
+				{
+					Application::Get().ReloadShaders();
+				}
 				ImGui::TreePop();
 			}
 
@@ -1799,7 +1873,12 @@ namespace Madam::UI {
 			MADAM_CORE_ERROR("Failed to create pipeline layout!");
 		}
 		Device& device = Rendering::Renderer::GetDevice();
-		viewportPipelineInfo.pipeline = CreateRef<Pipeline>(device, vertCode, fragCode, configInfo);
+
+		ShaderStageConfigInfo shaderStageConfigInfo;
+		shaderStageConfigInfo.vertexModule = ShaderModuleConfigInfo(vertCode);
+		shaderStageConfigInfo.fragmentModule = ShaderModuleConfigInfo(fragCode);
+
+		viewportPipelineInfo.pipeline = CreateRef<Pipeline>(device, configInfo, shaderStageConfigInfo);
 		viewportPipelineInfo.layout = configInfo.pipelineLayout;
 	}
 

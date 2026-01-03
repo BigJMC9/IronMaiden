@@ -26,15 +26,15 @@ namespace std {
 
 namespace Madam
 {
-	VulkanStaticMesh::VulkanStaticMesh(const std::filesystem::path& filepath) : _device{ Rendering::Renderer::GetDevice() }
+	VulkanStaticMesh::VulkanStaticMesh(const std::filesystem::path& file_path) : m_device{ Rendering::Renderer::GetDevice() }
 	{
-		meshPrimative = MeshPrimatives::None;
-		_filepath = filepath;
+		mesh_primative = MeshPrimatives::None;
+		m_filepath = file_path;
 
-		if (filepath.extension().string() == ".obj") {
+		if (file_path.extension().string() == ".obj") {
 			LoadOBJ();
 		}
-		else if (filepath.extension().string() == ".fbx") {
+		else if (file_path.extension().string() == ".fbx") {
 			LoadFBX();
 		}
 		else {
@@ -42,15 +42,16 @@ namespace Madam
 		}
 	}
 
-	VulkanStaticMesh::VulkanStaticMesh(const MeshPrimatives primative) : _device{ Rendering::Renderer::GetDevice() }
+	VulkanStaticMesh::VulkanStaticMesh(const MeshPrimatives primative) : m_device{ Rendering::Renderer::GetDevice() }
 	{
-		meshPrimative = primative;
+		mesh_primative = primative;
 		LoadPrimative(primative);
 	}
 
 	VulkanStaticMesh::~VulkanStaticMesh()
 	{
-		
+		m_vertex_buffer = nullptr;
+		m_index_buffer = nullptr;
 	}
 
 	void VulkanStaticMesh::LoadOBJ() 
@@ -62,9 +63,9 @@ namespace Madam
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
 
-		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, _filepath.string().c_str())) {
-			MADAM_CORE_ERROR("Could not load: {0}", _filepath.string().c_str());
-			isLoaded = false;
+		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, m_filepath.string().c_str())) {
+			MADAM_CORE_ERROR("Could not load: {0}", m_filepath.string().c_str());
+			is_loaded = false;
 			return;
 		}
 
@@ -125,13 +126,13 @@ namespace Madam
 			CreateIndexBuffers(indices);
 		}
 
-		isLoaded = true;
+		is_loaded = true;
 	}
 
 	void VulkanStaticMesh::LoadFBX()
 	{
 		MADAM_CORE_NOT_IMPL("Load FBX file.");
-		isLoaded = true;
+		is_loaded = true;
 	}
 
 	void VulkanStaticMesh::LoadPrimative(const MeshPrimatives primative)
@@ -140,94 +141,94 @@ namespace Madam
 		{
 			MADAM_CORE_ERROR("Cannot load a primative that does not exist.");
 		}
-		_filepath = meshPrimativeFilepaths[(uint8_t)primative];
+		m_filepath = meshPrimativeFilepaths[(uint8_t)primative];
 		LoadOBJ();
 	}
 
 	void VulkanStaticMesh::CreateVertexBuffers(const std::vector<Vertex>& vertices)
 	{
-		vertexCount = static_cast<uint32_t>(vertices.size());
-		MADAM_CORE_ASSERT(vertexCount >= 3, "Vertex count must be atleast 3");
-		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
+		m_vertex_count = static_cast<uint32_t>(vertices.size());
+		MADAM_CORE_ASSERT(m_vertex_count >= 3, "Vertex count must be atleast 3");
+		VkDeviceSize bufferSize = sizeof(vertices[0]) * m_vertex_count;
 		uint32_t vertexSize = sizeof(vertices[0]);
 
 		Buffer stagingBuffer{
-			_device,
+			m_device,
 			vertexSize,
-			vertexCount,
+			m_vertex_count,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		};
 
-		stagingBuffer.map();
-		stagingBuffer.writeToBuffer((void*)vertices.data());
+		stagingBuffer.Map();
+		stagingBuffer.WriteToBuffer((void*)vertices.data());
 
-		vertexBuffer = std::make_unique<Buffer>(
-			_device,
+		m_vertex_buffer = std::make_unique<Buffer>(
+			m_device,
 			vertexSize,
-			vertexCount,
+			m_vertex_count,
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 		);
 
-		_device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
+		m_device.copyBuffer(stagingBuffer.GetBuffer(), m_vertex_buffer->GetBuffer(), bufferSize);
 	}
 
 	void VulkanStaticMesh::CreateIndexBuffers(const std::vector<uint32_t>& indices)
 	{
-		indexCount = static_cast<uint32_t>(indices.size());
-		hasIndexBuffer = indexCount > 0;
+		m_index_count = static_cast<uint32_t>(indices.size());
+		has_index_buffer = m_index_count > 0;
 
-		if (!hasIndexBuffer) {
+		if (!has_index_buffer) {
 			return;
 		}
-		VkDeviceSize bufferSize = sizeof(indices[0]) * indexCount;
+		VkDeviceSize bufferSize = sizeof(indices[0]) * m_index_count;
 		uint32_t indexSize = sizeof(indices[0]);
 
 		Buffer stagingBuffer
 		{
-			_device,
+			m_device,
 			indexSize,
-			indexCount,
+			m_index_count,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		};
 
-		stagingBuffer.map();
-		stagingBuffer.writeToBuffer((void*)indices.data());
+		stagingBuffer.Map();
+		stagingBuffer.WriteToBuffer((void*)indices.data());
 
-		indexBuffer = std::make_unique<Buffer>(_device, indexSize, indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		m_index_buffer = std::make_unique<Buffer>(m_device, indexSize, m_index_count, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		_device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
+		m_device.copyBuffer(stagingBuffer.GetBuffer(), m_index_buffer->GetBuffer(), bufferSize);
 	}
 
-	void VulkanStaticMesh::draw(void* commandBuffer) {
+	void VulkanStaticMesh::Draw(void* commandBuffer) {
 
 		VkCommandBuffer cmdBuffer = static_cast<VkCommandBuffer>(commandBuffer);
 
-		if (hasIndexBuffer) {
-			vkCmdDrawIndexed(cmdBuffer, indexCount, 1, 0, 0, 0);
+		if (has_index_buffer) {
+			vkCmdDrawIndexed(cmdBuffer, m_index_count, 1, 0, 0, 0);
 		}
 		else {
-			vkCmdDraw(cmdBuffer, vertexCount, 1, 0, 0);
+			vkCmdDraw(cmdBuffer, m_vertex_count, 1, 0, 0);
 		}
 	}
 
 	//Move to render system and change to get the VertexBuffer
-	void VulkanStaticMesh::bind(void* commandBuffer)
+	void VulkanStaticMesh::Bind(void* commandBuffer)
 	{
-		if (!isLoaded)
+		if (!is_loaded)
 		{
 			return;
 		}
 		VkCommandBuffer cmdBuffer = static_cast<VkCommandBuffer>(commandBuffer);
 
-		VkBuffer buffers[] = { vertexBuffer->getBuffer() };
+		VkBuffer buffers[] = { m_vertex_buffer->GetBuffer() };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, buffers, offsets);
 
-		if (hasIndexBuffer) {
-			vkCmdBindIndexBuffer(cmdBuffer, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		if (has_index_buffer) {
+			vkCmdBindIndexBuffer(cmdBuffer, m_index_buffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		}
 	}
 

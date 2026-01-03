@@ -16,48 +16,47 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-namespace Madam {
+namespace Madam
+{
 
-	Application* Application::instance = nullptr;
+	Application* Application::Instance = nullptr;
 	bool Application::instanceFlag = false;
 
-	Application::Application() {
-		
-		Init();
-		//Data to be shared among all objects (UBO)
-		globalPool = 
-			DescriptorPool::Builder(device)
-				.setMaxSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT) //Maximun number of frames being rendered
-				.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT)
-				.build();
+	Application::Application()
+	{
 
-		// build frame descriptor pools
-		// ???
-		// Should be in descriptor Manager
-		// framePools.resize(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT); //Maximun number of frames being rendered
+		Init();
+		globalPool = DescriptorPool::Builder(device)
+			.setMaxSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT)
+			.build();
+
 		auto framePoolBuilder = DescriptorPool::Builder(device)
 			.setMaxSets(1000) //Storage allocation
 			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
 			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
-		for (int i = 0; i < Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
-			 Scope<DescriptorPool> framePool = framePoolBuilder.build();
-			 framePools.emplace_back(std::move(framePool));
+		for (int i = 0; i < Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			Scope<DescriptorPool> framePool = framePoolBuilder.build();
+			framePools.emplace_back(std::move(framePool));
 		}
-		
-		_scene = std::make_shared<Scene>();
-		pSceneSerializer = new SceneSerializer(_scene, device);
+
+		m_sceneManager.SetActiveScene(CreateRef<Scene>());
 	}
 
-	Application::~Application() {
-		if (isRunning) {
+	Application::~Application()
+	{
+		if (isRunning)
+		{
 			MADAM_CORE_WARN("Application prematurally shutdown");
 			Deinit();
 		}
 	}
 
-	void Application::Init() {
-		instance = this;
+	void Application::Init()
+	{
+		Instance = this;
 		instanceFlag = true;
 		ConfigureApp();
 		window.init(config.windowWidth, config.windowHeight, config.windowName);
@@ -66,41 +65,46 @@ namespace Madam {
 		isRunning = true;
 	}
 
-	void Application::Deinit() {
-		renderStack.deinit();
+	void Application::Deinit()
+	{
 		renderer.Deinit();
 		window.deinit();
-		delete pSceneSerializer;
+		device.deinit();
 		isRunning = false;
 	}
 
 	void Application::AddSurface(Scope<EngineInterface> _surface)
 	{
-		pSurface = std::move(_surface);
+		p_surface = std::move(_surface);
 		MADAM_CORE_INFO("EngineInterface added");
 	}
 
 	Application& Application::Get()
 	{
-		MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-		return *instance;
+		MADAM_CORE_ASSERT(instanceFlag, "Application Instance not created");
+		return *Instance;
 	}
 
 	Application* Application::GetPtr()
 	{
-		MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-		return instance;
+		MADAM_CORE_ASSERT(instanceFlag, "Application Instance not created");
+		return Instance;
 	}
 
-	SceneSerializer* Application::GetSceneSerializer()
+	IrmResult Application::LoadScene(std::filesystem::path file_path)
 	{
-		MADAM_CORE_ASSERT(instanceFlag, "Application instance not created");
-		return instance->pSceneSerializer;
+		return m_sceneManager.LoadScene(file_path);
 	}
 
-	void Application::Run() {
+	IrmResult Application::SaveScene(std::filesystem::path file_path)
+	{
+		return m_sceneManager.SaveScene(file_path);
+	}
 
-		Scope<UI::GUI> pGUI = std::make_unique<UI::GUI>();
+	void Application::Run()
+	{
+
+		Scope<UI::GUI> p_gui = std::make_unique<UI::GUI>();
 		std::vector < Scope<Buffer>> uboBuffers(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
 		MADAM_CORE_INFO("uboBuffers Created");
 		for (int i = 0; i < uboBuffers.size(); i++)
@@ -111,7 +115,7 @@ namespace Madam {
 				1,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-			uboBuffers[i]->map();
+			uboBuffers[i]->Map();
 		}
 		MADAM_CORE_INFO("uboBuffers mapped");
 		Scope<DescriptorSetLayout> globalSetLayout = DescriptorSetLayout::Builder(device)
@@ -120,99 +124,119 @@ namespace Madam {
 
 		std::vector<VkDescriptorSet> globalDescriptorSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
 		MADAM_CORE_INFO("globalSetLayout vector populated");
-		for (int i = 0; i < globalDescriptorSets.size(); i++) {
-			auto bufferInfo = uboBuffers[i]->descriptorInfo();
+		for (int i = 0; i < globalDescriptorSets.size(); i++)
+		{
+			auto bufferInfo = uboBuffers[i]->DescriptorInfo();
 			DescriptorWriter(*globalSetLayout, *globalPool)
-				.writeBuffer(0, &bufferInfo)
-				.build(globalDescriptorSets[i]);
+				.WriteBuffer(0, &bufferInfo)
+				.Build(globalDescriptorSets[i]);
 		}
 		MADAM_CORE_INFO("globalSetLayout vector");
-		renderStack.initialize(globalSetLayout);
-		MADAM_CORE_INFO("renderStack initialized");
-		firstFrame = true;
+		render_stack.initialize(globalSetLayout);
+		MADAM_CORE_INFO("render_stack initialized");
+		first_frame = true;
 
-		if (device.device() != VK_NULL_HANDLE) {
+		if (device.device() != VK_NULL_HANDLE)
+		{
 			MADAM_CORE_INFO("Device is not null");
 		}
-		else {
+		else
+		{
 			MADAM_CORE_INFO("Device is null");
 		}
-		pSurface->OnAttach();
-		pGUI->OnAttach();
+		p_surface->OnAttach();
+		p_gui->OnAttach();
 
 		time.StartTime();
 
-		while (!window.shouldClose()) {
+		while (!window.shouldClose())
+		{
 			glfwPollEvents();
 			time.UpdateTime();
+			if (reload_shaders == true)
+			{
+				render_stack.reloadPipeline(3, renderer.GetMainRenderPass(), globalSetLayout);
+				reload_shaders = false;
+			}
+			p_surface->OnUpdate();
+			p_gui->OnUpdate();
+			Scene& activeScene = m_sceneManager.GetActiveScene();
+			activeScene.Update();
 
-			pSurface->OnUpdate();
-			pGUI->OnUpdate();
-			_scene->Update();
-
-			if (renderer.BeginFrame()) {
-				auto commandBuffer = renderer.BeginCommandBuffer();
-				int frameIndex = renderer.GetFrameIndex();
-				framePools[frameIndex]->resetPool();
+			if (renderer.BeginFrame())
+			{
+				activeScene.BuildRenderScene(m_renderScene);
+				auto command_buffer = renderer.BeginCommandBuffer();
+				int frame_index = renderer.GetFrameIndex();
+				framePools[frame_index]->resetPool();
 				GlobalUbo ubo{};
-				FrameInfo frameInfo {
-					frameIndex,
+				FrameInfo frameInfo{
+					frame_index,
 					time.GetFrameTime(),
-					commandBuffer,
-					globalDescriptorSets[frameIndex],
-					* framePools[frameIndex],
-					_scene,
-					ubo};
+					command_buffer,
+					globalDescriptorSets[frame_index],
+					*framePools[frame_index],
+					m_sceneManager.GetActiveSceneRef(),
+					m_renderScene,
+					ubo };
 
 				//Should be done in renderer
 				Rendering::CameraHandle& camera = Rendering::CameraHandle::GetMain();
 				frameInfo.ubo.projection = camera.GetProjection();
 				frameInfo.ubo.view = camera.GetView();
 				frameInfo.ubo.inverseView = camera.GetInverseView();
-				
+
 				//This Specific Behaviour should be done by a proper render system obj (after renderstack and layers are refactored)
-				auto group = _scene->Reg().view<CTransform, CPointLight>();
+				entt::registry& entities = *m_renderScene.registry;
 				int lightIndex = 0;
-				for (auto entity : group)
+				for (auto entity : m_renderScene.pointLightEntities)
 				{
-					auto [transform, pointLight] = group.get<CTransform, CPointLight>(entity);
+					auto& pointLight = entities.get<CPointLight>(entity);
 
 					//copy light to ubo
 
-					UUID uuid = _scene->Reg().get<CUniqueIdentifier>(entity).uuid;
-					glm::mat4 worldTransform = Application::Get().GetScene().GetWorldTransform(uuid);
+					UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
+					glm::mat4 worldTransform = activeScene.GetWorldTransform(uuid);
 					glm::vec3 worldTranslation = glm::vec3(worldTransform[3][0], worldTransform[3][1], worldTransform[3][2]);
 					frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(worldTranslation, 1.f);
 					frameInfo.ubo.pointLights[lightIndex].color = glm::vec4(pointLight.color, pointLight.intensity);
 
-					lightIndex ++;
+					lightIndex++;
 				}
 				frameInfo.ubo.numLights = lightIndex;
-				uboBuffers[frameIndex]->writeToBuffer(&frameInfo.ubo);
-				uboBuffers[frameIndex]->flush();
+				uboBuffers[frame_index]->WriteToBuffer(&frameInfo.ubo);
+				uboBuffers[frame_index]->Flush();
 
 				// render
-				_scene->Render();
-				renderer.BeginRenderPass(commandBuffer, 0);
-				renderStack.render(frameInfo);
-				renderer.EndRenderPass(commandBuffer);
-				renderer.PipelineBarrier(commandBuffer, false, false, frameIndex, 0);
-				renderer.BeginSwapChainRenderPass(commandBuffer);
-				renderer.EndSwapChainRenderPass(commandBuffer);
+				activeScene.Render();
+				renderer.BeginRenderPass(command_buffer, 0);
+				render_stack.render(frameInfo);
+				renderer.EndRenderPass(command_buffer);
+				renderer.PipelineBarrier(command_buffer, false, false, frame_index, 0);
+				renderer.BeginSwapChainRenderPass(command_buffer);
+				renderer.EndSwapChainRenderPass(command_buffer);
 				renderer.EndFrame();
-				
-				if (firstFrame) {
-					firstFrame = false;
+
+				if (first_frame)
+				{
+					first_frame = false;
 				}
 			}
 		}
-		
+
 		MADAM_CORE_INFO("Closing Program");
-		framePools.clear();
-		globalPool.reset();
-		SaveSession();
 		vkDeviceWaitIdle(device.device());
-		pGUI = nullptr;
+		renderer.FreeCommandBuffers();
+		renderer.DestroyCommandPool();
+		render_stack.deinit();
+		framePools.clear();
+		globalDescriptorSets.clear();
+		globalSetLayout = nullptr;
+		uboBuffers.clear();
+		globalPool.reset();
+		m_sceneManager.SetActiveScene(nullptr);
+		SaveSession();
+		p_gui = nullptr;
 		Deinit();
 	}
 
@@ -266,7 +290,7 @@ namespace Madam {
 				std::string value = line.substr(line.find(':') + 2);
 				if (key == "LastProject")
 				{
-					if (Project::loadProject(std::filesystem::u8path(value))) 
+					if (Project::loadProject(std::filesystem::u8path(value)))
 					{
 						config.windowName += " - " + config.version + " - " + Project::Get().getProjectInfo().projectName;
 					}
@@ -321,7 +345,8 @@ namespace Madam {
 		Project::saveProject();
 	}
 
-	void Application::Quit() {
+	void Application::Quit()
+	{
 		window.quit();
 	}
 }
