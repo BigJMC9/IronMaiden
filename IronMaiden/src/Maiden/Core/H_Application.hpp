@@ -64,6 +64,7 @@ namespace Madam
 		Rendering::RenderStack& GetMasterRenderSystem() { return render_stack; }
 
 		Scene& GetScene() { return m_sceneManager.GetActiveScene(); }
+		Ref<Scene> GetSceneRef() { return m_sceneManager.GetActiveSceneRef(); }
 		const Time& GetTime() const { return time; }
 		DescriptorPool& GetMaterialDescriptorPool() { return *materialPool; }
 		ApplicationInfo GetConfig()

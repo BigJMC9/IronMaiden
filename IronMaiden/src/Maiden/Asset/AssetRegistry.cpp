@@ -16,9 +16,7 @@ namespace YAML {
 	{
 		static Node encode(const Madam::UUID& uuid)
 		{
-			Node node;
-			node.push_back((std::string)uuid);
-			return node;
+			return Node((std::string)uuid);
 		}
 
 		static bool decode(const Node& node, Madam::UUID& uuid)
@@ -44,9 +42,12 @@ namespace YAML {
 		static bool decode(const Node& node, Madam::AssetMetadata& metadata)
 		{
 			metadata.uuid = node["UUID"].as<Madam::UUID>();
-			metadata.assetType = Madam::assetTypeMap[node["Type"].as<std::string>()];
+			auto type = Madam::assetTypeMap.find(node["Type"].as<std::string>());
+			if (type == Madam::assetTypeMap.end())
+				return false;
+			metadata.assetType = type->second;
 			metadata.filepath = std::filesystem::u8path(node["File"].as<std::string>());
-			metadata.isGPUObject = node["IsGPUObject"].as<bool>();
+			metadata.isGPUObject = node["IsGPUObject"].as<bool>(false);
 			return true;
 		}
 	};
@@ -124,42 +125,36 @@ namespace Madam
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 		file << out.c_str();
-		return true;
+		file.flush();
+		return out.good() && file.good();
 	}
 
 	bool AssetRegistry::Deserialize(std::ifstream& file)
 	{
-		assetRegistry.clear();
-		YAML::Node node = YAML::Load(file);
-		if (!node["m_registry"])
+		try
 		{
-			MADAM_CORE_ERROR("AssetRegistry node does not exist");
-			return false;
-		}
-		else if (node["m_registry"].IsNull())
-		{
-			MADAM_CORE_ERROR("AssetRegistry node is null");
-			return false;
-		}
-		else
-		{
-			for (const auto& metadata : node["m_registry"])
+			YAML::Node node = YAML::Load(file);
+			YAML::Node entries = node["m_registry"];
+			if (!entries || (!entries.IsNull() && !entries.IsSequence()))
+				return false;
+			std::unordered_map<UUID, AssetMetadata> loaded;
+			if (entries.IsSequence())
 			{
-				if (!metadata)
+				for (const auto& entry : entries)
 				{
-					MADAM_CORE_ERROR("AssetMetadata node does not exist");
-				}
-				else if (metadata.IsNull())
-				{
-					MADAM_CORE_ERROR("AssetMetadata node is null");
-				}
-				else
-				{
-					AssetMetadata assetMetadata = metadata.as<AssetMetadata>();
-					assetRegistry[assetMetadata.uuid] = assetMetadata;
+					AssetMetadata metadata = entry.as<AssetMetadata>();
+					if (!metadata.IsValid() || metadata.filepath.empty() || loaded.count(metadata.uuid))
+						return false;
+					loaded.emplace(metadata.uuid, std::move(metadata));
 				}
 			}
+			assetRegistry = std::move(loaded);
+			return true;
 		}
-		return true;
+		catch (const YAML::Exception& e)
+		{
+			MADAM_CORE_ERROR("Asset registry could not be parsed: {0}", e.what());
+			return false;
+		}
 	}
 }

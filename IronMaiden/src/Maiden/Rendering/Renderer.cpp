@@ -40,22 +40,9 @@ namespace Madam {
 		void Renderer::Deinit() 
 		{
 			//FreeCommandBuffers();
-			for (size_t i = 0; i < renderPasses.size(); i++)
-			{
-				vkDestroyRenderPass(device.device(), renderPasses[i], nullptr);
-				renderPasses.clear();
-			}
-			for (size_t i = 0; i < frames.size(); i++)
-			{
-				vkDestroyFramebuffer(device.device(), frames[i].images[0].frameBuffer, nullptr);
-				vkDestroyImageView(device.device(), frames[i].images[0].imageView, nullptr);
-				vkDestroyImage(device.device(), frames[i].images[0].image, nullptr);
-				vkFreeMemory(device.device(), frames[i].images[0].imageMemory, nullptr);
-				vkDestroyImageView(device.device(), frames[i].images[1].imageView, nullptr);
-				vkDestroyImage(device.device(), frames[i].images[1].image, nullptr);
-				vkFreeMemory(device.device(), frames[i].images[1].imageMemory, nullptr);
-				frames[i].images.clear();
-			}
+			DestroyMainRenderImages();
+			for (auto pass : renderPasses) vkDestroyRenderPass(device.device(), pass, nullptr);
+			renderPasses.clear();
 			frames.clear();
 			swapChain = nullptr;
 			//freeImageBuffers(0);
@@ -72,8 +59,8 @@ namespace Madam {
 			auto extent = window.getExtent();
 			while (extent.width == 0 || extent.height == 0) 
 			{
-				auto extent = window.getExtent();
 				glfwWaitEvents();
+				extent = window.getExtent();
 			}
 			vkDeviceWaitIdle(device.device());
 
@@ -97,7 +84,7 @@ namespace Madam {
 				windowData.windowName = window.getName();
 				window.resetWindowResizedFlag();
 				//temporary, update this
-				bool isRecreate = false;
+				bool isRecreate = frames.size() != swapChain->imageCount();
 				for (size_t i = 0; i < frames.size(); i++)
 				{
 					if (frames[i].width != swapChain->getSwapChainExtent().width || frames[i].height != swapChain->getSwapChainExtent().height) 
@@ -108,16 +95,7 @@ namespace Madam {
 				}
 				if (isRecreate) 
 				{
-					for (size_t i = 0; i < frames.size(); i++)
-					{ 
-						vkDestroyFramebuffer(device.device(), frames[i].images[0].frameBuffer, nullptr);
-						vkDestroyImageView(device.device(), frames[i].images[0].imageView, nullptr);
-						vkDestroyImage(device.device(), frames[i].images[0].image, nullptr);
-						vkFreeMemory(device.device(), frames[i].images[0].imageMemory, nullptr);
-						vkDestroyImageView(device.device(), frames[i].images[1].imageView, nullptr);
-						vkDestroyImage(device.device(), frames[i].images[1].image, nullptr);
-						vkFreeMemory(device.device(), frames[i].images[1].imageMemory, nullptr);
-					}
+					DestroyMainRenderImages();
 					frames.clear();
 					frames.resize(swapChain->imageCount());
 					CreateMainRenderPass();
@@ -189,7 +167,7 @@ namespace Madam {
 				MADAM_CORE_ERROR("Failed to record command buffer!");
 			}
 
-			auto result = swapChain->submitCommandBuffers(&commandBuffer, &currentCommandBufferIndex);
+			auto result = swapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
 			//mapImageBuffer(currentFrameIndex);
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized()) 
 			{
@@ -225,14 +203,16 @@ namespace Madam {
 		{
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = renderPasses[renderIndex];
+			renderPassInfo.renderPass = renderPasses[0];
 			renderPassInfo.framebuffer = frames[currentFrameIndex].images[renderIndex].frameBuffer;
 
 			renderPassInfo.renderArea.offset = { 0, 0 };
 			renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 			
 			std::array<VkClearValue, 2> clearValues{};
-			clearValues[0].color = { 0.01f, 0.01f, 0.01f, 1.0f };
+			clearValues[0].color = renderIndex == 2
+				? VkClearColorValue{ { 0.0f, 0.0f, 0.0f, 1.0f } }
+				: VkClearColorValue{ { 0.01f, 0.01f, 0.01f, 1.0f } };
 			clearValues[1].depthStencil = { 1.0f, 0 };
 			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 			renderPassInfo.pClearValues = clearValues.data();
@@ -337,10 +317,27 @@ namespace Madam {
 		}
 
 
+		void Renderer::DestroyMainRenderImages()
+		{
+			for (auto& frame : frames)
+			{
+				for (auto& image : frame.images)
+				{
+					if (image.frameBuffer) vkDestroyFramebuffer(device.device(), image.frameBuffer, nullptr);
+					if (image.imageView) vkDestroyImageView(device.device(), image.imageView, nullptr);
+					if (image.image) vkDestroyImage(device.device(), image.image, nullptr);
+					if (image.imageMemory) vkFreeMemory(device.device(), image.imageMemory, nullptr);
+				}
+				frame.images.clear();
+			}
+		}
+
 		void Renderer::CreateMainRenderImages() 
 		{
 			for (size_t i = 0; i < frames.size(); i++)
 			{
+				for (int target = 0; target < 2; ++target)
+				{
 				VkImage image;
 				VkImageCreateInfo imageInfo{};
 				imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -358,11 +355,6 @@ namespace Madam {
 				imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 				imageInfo.flags = 0;
 
-				if (vkCreateImage(device.device(), &imageInfo, nullptr, &image) != VK_SUCCESS) 
-				{
-					throw std::runtime_error("Failed to create image!");
-				}
-
 				VkDeviceMemory imageMemory;
 				device.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 
@@ -379,7 +371,7 @@ namespace Madam {
 				viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 				viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 				viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-				viewInfo.components.a = VK_COMPONENT_SWIZZLE_ONE;
+				viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
 				ImageInfo imageData;
 				imageData.image = image;
@@ -437,6 +429,7 @@ namespace Madam {
 				}
 
 				frames[i].images.push_back(depthImageData);
+				}
 			}
 			//std::vector<ImageView> renderImages;
 
@@ -484,6 +477,8 @@ namespace Madam {
 		{
 
 			MADAM_CORE_INFO("Creating Main Render Pass");
+			for (auto pass : renderPasses) vkDestroyRenderPass(device.device(), pass, nullptr);
+			renderPasses.clear();
 			CreateMainRenderImages();
 
 			VkAttachmentDescription colorAttachment{};
@@ -536,7 +531,11 @@ namespace Madam {
 
 			for (size_t i = 0; i < frames.size(); i++)
 			{
-				std::array<VkImageView, 2> imageAttachments = { frames[i].images[0].imageView, frames[i].images[1].imageView };
+				for (int target = 0; target < 2; ++target)
+				{
+				const int colorIndex = target * 2;
+				std::array<VkImageView, 2> imageAttachments = {
+					frames[i].images[colorIndex].imageView, frames[i].images[colorIndex + 1].imageView };
 
 
 				VkFramebufferCreateInfo framebufferInfo = {};
@@ -553,10 +552,11 @@ namespace Madam {
 					device.device(),
 					&framebufferInfo,
 					nullptr,
-					&frames[i].images[0].frameBuffer
+					&frames[i].images[colorIndex].frameBuffer
 				) != VK_SUCCESS)
 				{
 					throw std::runtime_error("failed to create framebuffer!");
+				}
 				}
 			}
 		}
@@ -609,7 +609,7 @@ namespace Madam {
 			}
 			else 
 			{
-				barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+				barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
 				vkCmdPipelineBarrier

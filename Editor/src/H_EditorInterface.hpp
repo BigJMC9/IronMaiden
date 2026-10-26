@@ -2,6 +2,7 @@
 
 #include <Maiden.hpp>
 #include "Scripting/H_ScriptEngine.hpp"
+#include <optional>
 
 namespace Madam {
 	class EditorLayer : public EngineInterface {
@@ -18,6 +19,7 @@ namespace Madam {
 		//Entity viewerObject;
 		bool isFirst = true;
 		std::shared_ptr<Scripting::ScriptEngine> scriptEngine = nullptr;
-		std::shared_ptr<Scene> scene = nullptr;
+		std::shared_ptr<Scene> editorScene = nullptr;
+		std::optional<UUID> editorCameraId;
 	};
 }

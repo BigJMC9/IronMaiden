@@ -55,7 +55,8 @@ namespace Madam
 
 	void Project::init()
 	{
-		assetManager = new AssetManager(projectDirectory);
+		assetManager = new AssetManager(projectDirectory, projectInfo.assetMetaPath);
+		projectInfo.assetMetaPath = assetManager->GetRegistryLocation();
 	}
 
 	Project& Project::Get()
@@ -113,7 +114,7 @@ namespace Madam
 		confFile << "ProjectName: " << config.projectName << std::endl;
 		confFile << "ProjectVersion: " << config.projectVersion << std::endl;
 		confFile << "ProjectAuthor: " << config.projectAuthor << std::endl;
-		std::filesystem::path assetMetaPath = projectConfigDirectory / "Resources" / "Resources.mmeta";
+		std::filesystem::path assetMetaPath = std::filesystem::path("Resources") / "Resources.mmeta";
 		confFile << "AssetPackLocation: " << assetMetaPath.string() << std::endl;
 		confFile.close();
 
@@ -132,14 +133,16 @@ namespace Madam
 
 	bool Project::loadProject(std::filesystem::path projectDirectory)
 	{
+		if (!std::filesystem::is_regular_file(projectDirectory / "ProjectInfo.conf"))
+			return false;
 		Project* temp = new Project(projectDirectory);
-		if (temp->instanceFlag)
+		if (instance == temp)
 		{
 			return true;
 		}
 		else
 		{
-			clear();
+			delete temp;
 			return false;
 		}
 	}
@@ -178,12 +181,12 @@ namespace Madam
 		confFile << "ProjectName: " << projectInfo.projectName << std::endl;
 		confFile << "ProjectVersion: " << projectInfo.projectVersion << std::endl;
 		confFile << "ProjectAuthor: " << projectInfo.projectAuthor << std::endl;
-		std::filesystem::path assetMetaPath = projectInfo.assetMetaPath;
+		std::filesystem::path assetMetaPath = projectInfo.assetMetaPath.empty()
+			? std::filesystem::path("Resources") / "Resources.mmeta" : projectInfo.assetMetaPath;
 		confFile << "AssetPackLocation: " << assetMetaPath.string() << std::endl;
 		confFile.close();
 
-		Project::Get().assetManager->SaveMetaData();
-		return true;
+		return Project::Get().assetManager->SaveMetaData();
 	}
 
 	ProjectInfo Project::getProjectInfo() const

@@ -5,6 +5,7 @@
 #include "../Core/H_Application.hpp"
 #include "../Project/H_Project.h"
 #include "../Asset/H_AssetSystem.h"
+#include "../Asset/H_MaterialAsset.h"
 //#include "H_components.hpp"
 
 //libs
@@ -470,20 +471,23 @@ namespace Madam {
 			out << YAML::BeginMap;
 
 			CMaterial& material = entity.GetComponent<CMaterial>();
-			out << YAML::Key << "Shader" << YAML::Value << material.shader;
-			out << YAML::Key << "Diffuse" << YAML::Value << material.diffuse_map->GetUUID();
-			out << YAML::Key << "Normal" << YAML::Value << material.normal_map->GetUUID();
-			out << YAML::Key << "AO" << YAML::Value << material.ambient_occlusion_map->GetUUID();
-			out << YAML::Key << "Gloss" << YAML::Value << material.gloss_map->GetUUID();
+			if (material.shader)
+				out << YAML::Key << "Shader" << YAML::Value << material.shader;
+			out << YAML::Key << "Diffuse" << YAML::Value << (material.diffuse_map ? (std::string)material.diffuse_map->GetUUID() : "");
+			out << YAML::Key << "Normal" << YAML::Value << (material.normal_map ? (std::string)material.normal_map->GetUUID() : "");
+			out << YAML::Key << "AO" << YAML::Value << (material.ambient_occlusion_map ? (std::string)material.ambient_occlusion_map->GetUUID() : "");
+			out << YAML::Key << "Gloss" << YAML::Value << (material.gloss_map ? (std::string)material.gloss_map->GetUUID() : "");
 			out << YAML::EndMap;
 		}
 
-		if (entity.HasComponent<CMeshRenderer>()) {
+		if (entity.HasComponent<CMeshRenderer>() && entity.GetComponent<CMeshRenderer>().GetMesh()) {
 			out << YAML::Key << "MeshRenderer";
 			out << YAML::BeginMap;
 
 			CMeshRenderer& meshRenderer = entity.GetComponent<CMeshRenderer>();
-			out << YAML::Key << "Material" << YAML::Value << "true";
+			out << YAML::Key << "Material" << YAML::Value << entity.HasComponent<CMaterial>();
+			if (meshRenderer.materialAsset != null)
+				out << YAML::Key << "MaterialAsset" << YAML::Value << (std::string)meshRenderer.materialAsset;
 			out << YAML::Key << "IsPrimative" << YAML::Value << meshRenderer.GetMesh()->IsPrimative();
 			if (!meshRenderer.GetMesh()->IsPrimative())
 			{
@@ -494,6 +498,14 @@ namespace Madam {
 				out << YAML::Key << "StaticMesh" << YAML::Value << meshRenderer.GetMesh()->GetPrimativeAsString();
 			}
 			MADAM_CORE_INFO(meshRenderer.GetMesh()->GetFilepath().string());
+			out << YAML::EndMap;
+		}
+
+		if (entity.HasComponent<CCSharpScript>()) {
+			const auto& script = entity.GetComponent<CCSharpScript>();
+			out << YAML::Key << "CSharpScript" << YAML::Value << YAML::BeginMap;
+			out << YAML::Key << "Asset" << YAML::Value << (std::string)script.script;
+			out << YAML::Key << "Class" << YAML::Value << script.className;
 			out << YAML::EndMap;
 		}
 
@@ -522,6 +534,7 @@ namespace Madam {
 			out << YAML::Key << "ViewPosition" << YAML::Value << camera.GetPosition();
 			out << YAML::Key << "ViewDirection" << YAML::Value << glm::vec3(0.f); //temporary solution
 			out << YAML::Key << "Main" << YAML::Value << camera.cameraHandle->IsMain();
+			out << YAML::Key << "EditorOnly" << YAML::Value << camera.editorOnly;
 			out << YAML::EndMap;
 		}
 
@@ -661,19 +674,25 @@ namespace Madam {
 					auto materialNode = entity["Material"];
 					if (materialNode) {
 						CMaterial& material = deserializedEntity.AddComponent<CMaterial>();
-						CShader shader = materialNode["Shader"].as<CShader>();
-						material.shader = std::make_shared<CShader>(shader);
-						UUID uuid = materialNode["Diffuse"].as<UUID>();
-						TextureData textureData;
-						material.diffuse_map = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
-						uuid = materialNode["Normal"].as<UUID>();
-						material.normal_map = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
-						uuid = materialNode["AO"].as<UUID>();
-						material.ambient_occlusion_map = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
-						uuid = materialNode["Gloss"].as<UUID>();
-						material.gloss_map = std::static_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+						if (materialNode["Shader"])
+							material.shader = std::make_shared<CShader>(materialNode["Shader"].as<CShader>());
+						auto loadTexture = [&materialNode](const char* key) -> Ref<Texture>
+						{
+							UUID uuid(materialNode[key].as<std::string>(""));
+							return uuid == null ? nullptr : std::dynamic_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(uuid));
+						};
+						material.diffuse_map = loadTexture("Diffuse");
+						material.normal_map = loadTexture("Normal");
+						material.ambient_occlusion_map = loadTexture("AO");
+						material.gloss_map = loadTexture("Gloss");
 					}
 
+					auto scriptNode = entity["CSharpScript"];
+					if (scriptNode) {
+						auto& script = deserializedEntity.AddComponent<CCSharpScript>();
+						script.script = UUID(scriptNode["Asset"].as<std::string>(""));
+						script.className = scriptNode["Class"].as<std::string>("");
+					}
 					auto pointLightNode = entity["PointLight"];
 					if (pointLightNode) {
 						CPointLight& pointLight = deserializedEntity.AddComponent<CPointLight>();
@@ -684,7 +703,7 @@ namespace Madam {
 
 					auto meshRendererNode = entity["MeshRenderer"];
 					if (meshRendererNode) {
-						std::string material = meshRendererNode["Material"].as<std::string>();
+						bool hasLegacyMaterial = meshRendererNode["Material"].as<bool>(false);
 						CMeshRenderer& meshRenderer = deserializedEntity.AddComponent<CMeshRenderer>();
 						bool isPrimative = meshRendererNode["IsPrimative"].as<bool>();
 						if (!isPrimative)
@@ -697,13 +716,15 @@ namespace Madam {
 							MeshPrimatives primative = static_cast<MeshPrimatives>(meshPrimativesMap[meshRendererNode["StaticMesh"].as<std::string>()]);
 							deserializedEntity.GetComponent<CMeshRenderer>().mesh = StaticMesh::Create(primative);
 						}
-						if (material == "true") {
-
-							if (deserializedEntity.HasComponent<CMaterial>()) {
-								deserializedEntity.GetComponent<CMeshRenderer>().material = std::make_shared<CMaterial>(deserializedEntity.GetComponent<CMaterial>());
-							}
-
+						if (meshRendererNode["MaterialAsset"])
+						{
+							meshRenderer.materialAsset = UUID(meshRendererNode["MaterialAsset"].as<std::string>());
+							auto materialAsset = std::dynamic_pointer_cast<MaterialAsset>(Project::Get().getAssetManager().GetAsset(meshRenderer.materialAsset));
+							if (materialAsset)
+								meshRenderer.material = materialAsset->GetRuntimeMaterial(Project::Get().getAssetManager());
 						}
+						else if (hasLegacyMaterial && deserializedEntity.HasComponent<CMaterial>())
+							meshRenderer.material = std::make_shared<CMaterial>(deserializedEntity.GetComponent<CMaterial>());
 					}
 
 					auto cameraNode = entity["Camera"];
@@ -723,12 +744,15 @@ namespace Madam {
 							cameraData.projectionType = Rendering::CameraData::ProjectionType::None;
 						}
 						CCamera& camera = deserializedEntity.AddComponent<CCamera>(cameraData);
+						camera.editorOnly = cameraNode["EditorOnly"].as<bool>(
+							deserializedEntity.GetComponent<CMetadata>().name == "Editor Camera");
+						if (camera.editorOnly)
+							deserializedEntity.GetComponent<CMetadata>().is_hidden_entity = true;
 						camera.cameraHandle->SetProjection();
 
 						camera.cameraHandle->SetViewDirection(cameraNode["ViewPosition"].as<glm::vec3>(), cameraNode["ViewDirection"].as<glm::vec3>());
 						if (cameraNode["Main"].as<bool>()) {
 							camera.cameraHandle->SetMain();
-							deserializedEntity.GetComponent<CMetadata>().is_hidden_entity = true;
 							isMain = true;
 						}
 					}

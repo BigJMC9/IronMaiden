@@ -6,6 +6,7 @@
 #include "../Rendering/Vulkan/H_VulkanTexture.h"
 
 #include <filesystem>
+#include <functional>
 
 #define IMGUI_ENABLE_DOCKING
 #define IMGUI_ENABLE_VIEWPORTS
@@ -80,6 +81,7 @@ namespace Madam::UI {
 		//Windows
 		void DockingSpace();
 		void Viewport();
+		void Game();
 		void Hierarchy();
 		void Inspector();
 		void Project();
@@ -103,13 +105,18 @@ namespace Madam::UI {
 		void DrawEntityNode(Entity entity);
 		void DrawEntityComponents(Entity entity);
 		void DrawAssetInfo(Ref<Asset>& asset);
+		void DrawAssetReference(const char* label, UUID current, AssetType type,
+			const std::function<void(UUID)>& onSelect);
+		void DrawMaterialThumbnail(UUID handle, const char* buttonId, ImVec2 size);
 		void DrawPipelineSettings(const Ref<Rendering::RenderLayer> pipeline, int index);
 
 		std::string TruncateTextToFit(const std::string& text, float maxWidth);
 
 		void CreateViewportPipeline();
+		void RefreshRenderTargetDescriptors();
 
-		ImGui_ImplVulkan_InitInfo* init_info = nullptr;
+		ImGui_ImplVulkan_InitInfo initInfo{};
+		ImGui_ImplVulkan_InitInfo* init_info = &initInfo;
 		Ref<DescriptorPool> guiPool = nullptr;
 		
 		float uiTime = 0.0f;
@@ -134,28 +141,44 @@ namespace Madam::UI {
 
 		std::vector<ImFont*> fonts;
 		ImGuiStyle style;
+		ImGuiID dockspaceId = 0;
+		ImVec2 viewportImageTopLeft{ 0, 0 };
+		ImVec2 viewportImageSize{ 0, 0 };
 
 		PipelineInfo viewportPipelineInfo;
 		ImDrawCallback viewportCallback = nullptr;
 
 		//Descriptors
 		VkDescriptorSet viewportSet = nullptr;
+		VkDescriptorSet gameSet = nullptr;
+		std::vector<VkDescriptorSet> viewportSets;
+		std::vector<VkDescriptorSet> gameSets;
 		VkSampler viewportSampler = nullptr;
 
 		std::unordered_map<std::string, IconInfo> icons;
 		std::unordered_map<UUID, IconInfo> loadedIconTextures;
+		char assetPickerSearch[256] = {};
+		std::string shaderCompileFeedback;
+		UUID shaderCompileAsset = UUID("");
 		std::filesystem::path popupContextSelectedItem;
 		bool isPopupContextOpen = false;
+		std::filesystem::path renameTarget;
+		std::array<char, 256> renameName{};
+		std::string renameError;
+		bool openRenamePopup = false;
 
-#define ICON_SIZE 6
+#define ICON_SIZE 9
 		std::filesystem::path iconFilepaths[ICON_SIZE] =
 		{
-			"resources\\icons\\PlayButton.png",
-			"resources\\icons\\PauseButton.png",
-			"resources\\icons\\StopButton.png",
-			"resources\\icons\\Folder.png",
-			"resources\\icons\\File.png",
-			"resources\\icons\\Scene.png"
+			"resources\\icons\\godot-raster\\PlayButton.png",
+			"resources\\icons\\godot-raster\\PauseButton.png",
+			"resources\\icons\\godot-raster\\StopButton.png",
+			"resources\\icons\\godot-raster\\Folder.png",
+			"resources\\icons\\godot-raster\\File.png",
+			"resources\\icons\\godot-raster\\Scene.png",
+			"resources\\icons\\godot-raster\\Script.png",
+			"resources\\icons\\godot-raster\\Shader.png",
+			"resources\\icons\\godot-raster\\Camera.png"
 		};
 
 		template<typename T, typename U>

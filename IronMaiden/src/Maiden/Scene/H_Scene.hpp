@@ -63,6 +63,8 @@ namespace Madam
 		void RemoveParentEntityRelationship(Entity child);
 
 		Entity GetMainCameraEntity();
+		Entity GetEditorCameraEntity();
+		Entity GetGameCameraEntity();
 
 		template<typename... Components>
 		auto GetAllEntitiesWith()

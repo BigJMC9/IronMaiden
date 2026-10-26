@@ -162,12 +162,15 @@ project "Editor"
     { 
         "bin/" .. outputdir .. "/IronMaiden",
         "%{LibDir.yaml_cpp}",
+        "%{LibDir.spdlog}",
+		"%{LibDir.VulkanSDK}",
     }
 
     links
     {
         "IronMaiden.lib",
-        "%{Lib.yaml_cpp}"
+        "%{Lib.yaml_cpp}",
+        "%{Lib.spdlog}"
     }
 
     filter "action:vs*"
@@ -187,12 +190,16 @@ project "Editor"
         postbuildcommands
         {
             "call \"compile.bat\"",
-            "C:\\Windows\\System32\\xcopy \"%{wks.location}Editor\\resources\\\" \"%{wks.location}bin\\" .. outputdir .. "\\Editor\\resources\\\" /E /I /Y"
+			"copy /Y \"%{VULKAN_SDK}\\Bin\\shaderc_shared.dll\" \"%{cfg.targetdir}\\\"",
+			"copy /Y \"%{VULKAN_SDK}\\Bin\\shaderc_sharedd.dll\" \"%{cfg.targetdir}\\\"",
+            "C:\\Windows\\System32\\xcopy \"resources\\*\" \"%{cfg.targetdir}\\resources\" /E /I /Y",
+			"dotnet build \"Managed\\Maiden.ScriptHost\\Maiden.ScriptHost.csproj\" --configuration Release --output \"%{cfg.targetdir}\\Managed\" --nologo --verbosity quiet"
         }
 
     filter "configurations:Debug"
         symbols "on"
         staticruntime "off"
+        links { "shaderc_sharedd.lib" }
         defines { 
             "YAML_CPP_DLL";
             "MADAM_DEBUG";
@@ -200,6 +207,7 @@ project "Editor"
 
     filter "configurations:Release"
         optimize "on"
+        links { "shaderc_shared.lib" }
         defines {
             "YAML_CPP_DLL";
             "MADAM_RELEASE";
@@ -208,7 +216,67 @@ project "Editor"
     filter "configurations:Dist"
         optimize "on"
         symbols "off"
+        links { "shaderc_shared.lib" }
         defines {
             "YAML_CPP_DLL";
             "MADAM_DIST";
         }
+
+group("Tests")
+project "AssetTests"
+    location "Tests"
+    kind "ConsoleApp"
+    language "C++"
+    cppdialect "C++17"
+    staticruntime "off"
+    targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+    objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+    files { "Tests/**.cpp", "Editor/src/Scripting/ScriptEngine.cpp" }
+    includedirs {
+        "IronMaiden/src",
+        "IronMaiden",
+		"%{IncludeDir.VulkanSDK}",
+		"%{IncludeDir.glfw}",
+		"%{IncludeDir.imgui}",
+        "%{IncludeDir.spdlog}",
+        "%{IncludeDir.yaml_cpp}",
+        "%{IncludeDir.glm}",
+        "%{IncludeDir.entt}",
+		"%{IncludeDir.imguizmo}"
+    }
+    libdirs {
+        "bin/" .. outputdir .. "/IronMaiden",
+        "%{LibDir.yaml_cpp}",
+        "%{LibDir.spdlog}",
+        "%{LibDir.VulkanSDK}",
+        "%{LibDir.glfw}",
+        "%{LibDir.imgui}"
+    }
+    links {
+        "IronMaiden.lib",
+        "%{Lib.yaml_cpp}",
+        "%{Lib.spdlog}",
+        "%{Lib.Vulkan}",
+        "%{Lib.glfw}",
+        "%{Lib.imgui}"
+    }
+    postbuildcommands {
+        "dotnet build \"../Editor/Managed/Maiden.ScriptHost/Maiden.ScriptHost.csproj\" --configuration Release --output \"%{cfg.targetdir}\\Managed\" --nologo --verbosity quiet"
+    }
+    filter "action:vs*"
+        buildoptions { "/utf-8" }
+    filter "system:windows"
+        systemversion "latest"
+        defines { "MADAM_PLATFORM_WINDOWS", "SPDLOG_COMPILED_LIB", "_CRT_SECURE_NO_WARNINGS" }
+    filter "configurations:Debug"
+        symbols "on"
+        defines { "MADAM_DEBUG", "YAML_CPP_DLL" }
+		links { "shaderc_sharedd.lib" }
+    filter "configurations:Release"
+        optimize "on"
+        defines { "MADAM_RELEASE", "YAML_CPP_DLL" }
+		links { "shaderc_shared.lib" }
+    filter "configurations:Dist"
+        optimize "on"
+        defines { "MADAM_DIST", "YAML_CPP_DLL" }
+		links { "shaderc_shared.lib" }

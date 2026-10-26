@@ -1,6 +1,7 @@
 #include "maidenpch.hpp"
 #include "H_Window.hpp"
 #include "dwmapi.h"
+#pragma comment(lib, "dwmapi.lib")
 
 namespace Madam {
 
@@ -40,6 +41,16 @@ namespace Madam {
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 		window = glfwCreateWindow((int)data.width, (int)data.height, data.windowName.c_str(), nullptr, nullptr);
+		if (window)
+		{
+			const HWND hwnd = glfwGetWin32Window(window);
+			const BOOL dark = TRUE;
+			const COLORREF caption = RGB(25, 35, 48);
+			const COLORREF text = RGB(226, 235, 244);
+			DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));
+			DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, &caption, sizeof(caption));
+			DwmSetWindowAttribute(hwnd, DWMWA_TEXT_COLOR, &text, sizeof(text));
+		}
 		glfwSetWindowUserPointer(window, this);
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	}
@@ -63,8 +74,9 @@ namespace Madam {
 		CursorState cursorMode = (CursorState)glfwGetInputMode(window, GLFW_CURSOR);
 		if (cursorMode != cursorState)
 		{
+			if (cursorState == CursorState::DISABLED)
+				glfwGetCursorPos(window, &cursorX, &cursorY);
 			glfwSetInputMode(window, GLFW_CURSOR, (int32_t)cursorState);
-			glfwGetCursorPos(window, &cursorX, &cursorY);
 		}
 	}
 

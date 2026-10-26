@@ -26,4 +26,13 @@ namespace Madam
 		}
 
 	};
+
+	class SourceAsset final : public Asset
+	{
+	public:
+		explicit SourceAsset(AssetType sourceType) : type(sourceType) {}
+		AssetType GetAssetType() const override { return type; }
+	private:
+		AssetType type;
+	};
 }

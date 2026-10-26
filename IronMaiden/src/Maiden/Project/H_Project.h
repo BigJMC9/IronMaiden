@@ -39,6 +39,7 @@ namespace Madam
 		void init();
 	public:
 		static Project& Get();
+		static bool HasActive() { return instance != nullptr && instance->assetManager != nullptr; }
 		static void clear();
 
 		static bool createProject(ProjectConfig config);

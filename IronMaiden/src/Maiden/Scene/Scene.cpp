@@ -39,6 +39,13 @@ namespace Madam
 
 	Scene::~Scene()
 	{
+		auto scripts = m_registry.view<CNativeScript>();
+		for (auto entity : scripts)
+		{
+			auto& script = scripts.get<CNativeScript>(entity);
+			if (script.Instance && script.destroy_script)
+				script.destroy_script(&script);
+		}
 		m_registry.clear();
 		m_entity_map.clear();
 	}
@@ -58,6 +65,8 @@ namespace Madam
 		}
 
 		CopyComponent(AllComponents{}, new_scene->GetRegistry(), m_registry, entt_map);
+		for (auto entity : new_scene->GetRegistry().view<CNativeScript>())
+			new_scene->GetRegistry().get<CNativeScript>(entity).Instance = nullptr;
 
 		return new_scene;
 	}
@@ -329,17 +338,57 @@ namespace Madam
 
 	Entity Scene::GetMainCameraEntity()
 	{
-		for (size_t i = 0; i <= 1; i++)
+		auto entities = GetAllEntitiesWith<CCamera>();
+		for (auto entity : entities)
 		{
-			auto entities = GetAllEntitiesWith<CCamera>();
-			for (auto entity : entities)
-			{
-				if (entities.get<CCamera>(entity).cameraHandle->IsMain())
-				{
-					return Entity(entity, this);
-				}
-			}
-			Rendering::CameraHandle::GetMain();
+			const auto& camera = entities.get<CCamera>(entity);
+			if (camera.cameraHandle && camera.cameraHandle->IsMain())
+				return Entity(entity, this);
+		}
+
+		// Scene copies own camera handles. The global main handle may still belong to
+		// the previous scene, so select a camera from this scene before using it.
+		for (auto entity : entities)
+		{
+			auto& camera = entities.get<CCamera>(entity);
+			if (!camera.cameraHandle) continue;
+			camera.cameraHandle->SetMain();
+			return Entity(entity, this);
+		}
+
+		auto camera = GetEditorCameraEntity();
+		camera.GetComponent<CCamera>().cameraHandle->SetMain();
+		return camera;
+	}
+
+	Entity Scene::GetEditorCameraEntity()
+	{
+		auto cameras = GetAllEntitiesWith<CCamera, CTransform>();
+		for (auto handle : cameras)
+		{
+			const auto& camera = cameras.get<CCamera>(handle);
+			if (camera.editorOnly && camera.cameraHandle)
+				return Entity(handle, this);
+		}
+
+		Entity camera = CreateEntity("Editor Camera", true);
+		camera.GetComponent<CTransform>().translation.z = -2.5f;
+		auto& component = camera.AddComponent<CCamera>(Rendering::CameraHandle::GetDefaultCameraData());
+		component.editorOnly = true;
+		component.cameraHandle->SetViewYXZ(camera.GetComponent<CTransform>().translation,
+			camera.GetComponent<CTransform>().rotation);
+		component.cameraHandle->SetProjection();
+		return camera;
+	}
+
+	Entity Scene::GetGameCameraEntity()
+	{
+		auto cameras = GetAllEntitiesWith<CCamera, CTransform>();
+		for (auto handle : cameras)
+		{
+			const auto& camera = cameras.get<CCamera>(handle);
+			if (!camera.editorOnly && camera.cameraHandle)
+				return Entity(handle, this);
 		}
 		return Entity();
 	}

@@ -8,6 +8,16 @@ namespace Madam
 	{
 		s_Serializers.clear();
 		s_Serializers[AssetType::TEXTURE] = CreateScope<TextureSerializer>();
+		s_Serializers[AssetType::MATERIAL] = CreateScope<MaterialSerializer>();
+		s_Serializers[AssetType::MESH] = CreateScope<MeshSerializer>();
+	}
+
+	bool AssetImporter::Serialize(const AssetMetadata& metadata, const Ref<Asset>& asset)
+	{
+		auto serializer = s_Serializers.find(metadata.assetType);
+		if (serializer == s_Serializers.end() || !asset || asset->GetAssetType() != metadata.assetType)
+			return false;
+		return serializer->second->serialize(metadata, asset);
 	}
 
 	bool AssetImporter::tryLoadData(const AssetMetadata& metadata, Ref<Asset>& asset)

@@ -4,6 +4,24 @@
 
 namespace Madam
 {
+	// Compile one shader stage for a material pipeline.
+	std::vector<uint32_t> VulkanShaderCompiler::CompileStage(const std::filesystem::path& path,
+		VkShaderStageFlagBits stage, std::string* diagnostic)
+	{
+		std::ifstream file(path);
+		if (!file)
+		{
+			if (diagnostic) *diagnostic = "Unable to open shader: " + path.string();
+			MADAM_CORE_ERROR("Unable to open shader: {0}", path.string());
+			return {};
+		}
+		std::stringstream source;
+		source << file.rdbuf();
+		const auto kind = stage == VK_SHADER_STAGE_VERTEX_BIT ? shaderc_glsl_vertex_shader :
+			(stage == VK_SHADER_STAGE_FRAGMENT_BIT ? shaderc_glsl_fragment_shader : shaderc_glsl_infer_from_source);
+		return CompileToSPV(path.string(), source.str(), kind, diagnostic);
+	}
+
 	std::map<VkShaderStageFlagBits, std::vector<uint32_t>> VulkanShaderCompiler::Compile(const std::filesystem::path& shaderSourcePath)
 	{
 		std::map<VkShaderStageFlagBits, std::vector<uint32_t>> shaderCode;
@@ -39,15 +57,19 @@ namespace Madam
 		return shaderCode;
 	}
 
-	std::vector<uint32_t> VulkanShaderCompiler::CompileToSPV(const std::string& fileName, const std::string& source, shaderc_shader_kind kind)
+	std::vector<uint32_t> VulkanShaderCompiler::CompileToSPV(const std::string& fileName, const std::string& source,
+		shaderc_shader_kind kind, std::string* diagnostic)
 	{
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options; 
 		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(source, kind, fileName.c_str(), options);
 
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
+			if (diagnostic) *diagnostic = result.GetErrorMessage();
 			MADAM_CORE_ERROR("Shader Compilation Error: {0}", result.GetErrorMessage());
+			return {};
 		}
+		if (diagnostic) *diagnostic = result.GetErrorMessage();
 
 		// Return SPIR-V binary
 		return { result.cbegin(), result.cend() };

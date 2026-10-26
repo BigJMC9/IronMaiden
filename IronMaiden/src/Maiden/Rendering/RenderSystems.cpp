@@ -1,6 +1,10 @@
 #include "maidenpch.hpp"
 #include "H_RenderSystems.hpp"
 #include "../Core/H_Application.hpp"
+#include "Vulkan/ShaderCompilation/H_VulkanShaderCompiler.h"
+#include "../Asset/H_ShaderDefinition.h"
+#include "../Asset/H_AssetSystem.h"
+#include "../Project/H_Project.h"
 
 //May need overhaul since a pipeline may need to be created for each shader
 //Each shader needs a pipeline. Shader variants can use the same pipeline but ubershader has to be used which can cause a performance hit to the GPU.
@@ -13,6 +17,21 @@
 //Refactor to remove Device
 namespace Madam {
 	namespace Rendering {
+		static bool MaterialTexturesReady(const Ref<CMaterial>& material)
+		{
+			if (!material)
+				return false;
+			if (!material->shaderDriven)
+				return material->diffuse_map && material->normal_map &&
+					material->ambient_occlusion_map && material->gloss_map;
+			if (!material->shaderValid)
+				return false;
+			if (material->textureBindings.size() != material->expectedTextureCount)
+				return false;
+			for (const auto& [binding, texture] : material->textureBindings)
+				if (!texture) return false;
+			return true;
+		}
 		/*
 		------------------Render System------------------
 		*/
@@ -119,7 +138,13 @@ namespace Madam {
 
 				auto& meshRenderer = entities.get<CMeshRenderer>(entity);
 				if (meshRenderer.GetMesh() == nullptr) continue;
-				if (entities.any_of<CMaterial>(entity)) continue;
+				const auto material = meshRenderer.GetMaterial();
+				if (meshRenderer.materialAsset == null)
+				{
+					if (entities.any_of<CMaterial>(entity) || material) continue;
+				}
+				else if (MaterialTexturesReady(material))
+					continue;
 
 				DefaultPushConstantData push{};
 				UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
@@ -299,9 +324,9 @@ namespace Madam {
 			PipelineConfigInfo pipelineConfig{};
 			Pipeline::setDescriptions(pipelineConfig);
 			pipelineConfig.enableAlphaBlending();
-			//Pipeline::enableAlphaBlending(pipelineConfig);
-
-			//pipelineConfig.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+			// The scene target is opaque. Preserve its alpha while blending grid lines.
+			pipelineConfig.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+			pipelineConfig.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 			pipelineConfig.attributeDescriptions.clear();
 			pipelineConfig.bindingDescriptions.clear();
 			pipelineConfig.renderPass = renderPass;
@@ -465,11 +490,32 @@ namespace Madam {
 		}
 
 		TextureRenderLayer::~TextureRenderLayer() {
+			ClearShaderPipelines();
 			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
 			pipelineLayout = VK_NULL_HANDLE;
 		}
 
+		void TextureRenderLayer::ClearShaderPipelines()
+		{
+			for (auto& [path, state] : shaderPipelines)
+			{
+				state.pipeline.reset();
+				if (state.layout != VK_NULL_HANDLE)
+					vkDestroyPipelineLayout(device.device(), state.layout, nullptr);
+			}
+			shaderPipelines.clear();
+			failedShaders.clear();
+		}
+
+		void TextureRenderLayer::recreatePipeline(VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
+		{
+			vkDeviceWaitIdle(device.device());
+			ClearShaderPipelines();
+			RenderLayer::recreatePipeline(renderPass, globalSetLayout);
+		}
+
 		void TextureRenderLayer::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+			globalLayout = globalSetLayout;
 			VkPushConstantRange pushConstantRange{};
 			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 			pushConstantRange.offset = 0;
@@ -500,6 +546,7 @@ namespace Madam {
 		}
 
 		void TextureRenderLayer::createPipeline(VkRenderPass renderPass) {
+			activeRenderPass = renderPass;
 			assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
 			PipelineConfigInfo pipelineConfig{};
@@ -514,83 +561,171 @@ namespace Madam {
 			pipeline = CreateScope<Pipeline>(device, pipelineConfig, shaderStageConfigInfo);
 		}
 
-		void TextureRenderLayer::render(FrameInfo& frameInfo) {
-			pipeline->bind(frameInfo.commandBuffer);
+		TextureRenderLayer::ShaderPipeline* TextureRenderLayer::GetShaderPipeline(const std::string& fragmentPath)
+		{
+			if (failedShaders.count(fragmentPath))
+				return nullptr;
+			auto cached = shaderPipelines.find(fragmentPath);
+			if (cached != shaderPipelines.end())
+				return &cached->second;
 
-			vkCmdBindDescriptorSets(
-				frameInfo.commandBuffer,
-				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				pipelineLayout,
-				0,
-				1,
-				&frameInfo.globalDescriptorSet,
-				0,
-				nullptr);
-
-			if (!frameInfo.renderScene.registry)
+			const auto definition = ReadMaterialShader(fragmentPath,
+				std::filesystem::absolute("resources/shaders/texture_shader.vert"));
+			if (!definition.IsValid())
 			{
-				return;
+				MADAM_CORE_ERROR("Material shader {0}: {1}", fragmentPath, definition.error);
+				failedShaders.insert(fragmentPath);
+				return nullptr;
+			}
+			std::vector<uint32_t> vertexCode;
+			std::vector<uint32_t> fragmentCode;
+			if (Project::HasActive())
+			{
+				auto& assets = Project::Get().getAssetManager();
+				const auto& metadata = assets.GetMetadata(definition.fragmentPath);
+				if (metadata.IsValid() && metadata.assetType == AssetType::SHADER)
+				{
+					std::string diagnostic;
+					if (!assets.CompileShader(metadata.uuid, &diagnostic))
+					{
+						MADAM_CORE_ERROR("Material shader {0}: {1}", fragmentPath, diagnostic);
+						failedShaders.insert(fragmentPath);
+						return nullptr;
+					}
+					const auto binaryDirectory = Project::Get().getProjectDirectory() / "Library" / "Shaders";
+					const auto name = (std::string)metadata.uuid;
+					const auto readBinary = [](const std::filesystem::path& path)
+					{
+						std::ifstream file(path, std::ios::binary | std::ios::ate);
+						const std::streamsize size = file ? static_cast<std::streamsize>(file.tellg()) : 0;
+						if (size <= 0 || size % sizeof(uint32_t) != 0)
+							return std::vector<uint32_t>{};
+						std::vector<uint32_t> code(static_cast<size_t>(size) / sizeof(uint32_t));
+						file.seekg(0);
+						file.read(reinterpret_cast<char*>(code.data()), static_cast<std::streamsize>(code.size() * sizeof(uint32_t)));
+						return file.good() ? code : std::vector<uint32_t>{};
+					};
+					vertexCode = readBinary(binaryDirectory / (name + ".vert.spv"));
+					fragmentCode = readBinary(binaryDirectory / (name + ".frag.spv"));
+				}
+			}
+			if (vertexCode.empty() && fragmentCode.empty())
+			{
+				vertexCode = VulkanShaderCompiler::CompileStage(definition.vertexPath, VK_SHADER_STAGE_VERTEX_BIT);
+				fragmentCode = VulkanShaderCompiler::CompileStage(definition.fragmentPath, VK_SHADER_STAGE_FRAGMENT_BIT);
+			}
+			if (vertexCode.empty() || fragmentCode.empty())
+			{
+				failedShaders.insert(fragmentPath);
+				return nullptr;
 			}
 
+			ShaderPipeline state;
+			try
+			{
+				DescriptorSetLayout::Builder builder(device);
+				for (const auto& input : definition.textures)
+					builder.addBinding(input.binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+				state.descriptorLayout = builder.build();
+
+				VkPushConstantRange push{};
+				push.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+				push.size = sizeof(DefaultPushConstantData);
+				VkDescriptorSetLayout layouts[] = { globalLayout, state.descriptorLayout->getDescriptorSetLayout() };
+				VkPipelineLayoutCreateInfo layoutInfo{};
+				layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+				layoutInfo.setLayoutCount = 2;
+				layoutInfo.pSetLayouts = layouts;
+				layoutInfo.pushConstantRangeCount = 1;
+				layoutInfo.pPushConstantRanges = &push;
+				if (vkCreatePipelineLayout(device.device(), &layoutInfo, nullptr, &state.layout) != VK_SUCCESS)
+					throw std::runtime_error("Could not create shader pipeline layout");
+
+				PipelineConfigInfo config;
+				Pipeline::setDescriptions(config);
+				config.renderPass = activeRenderPass;
+				config.pipelineLayout = state.layout;
+				ShaderStageConfigInfo stages;
+				stages.vertexModule = ShaderModuleConfigInfo(vertexCode);
+				stages.fragmentModule = ShaderModuleConfigInfo(fragmentCode);
+				state.pipeline = CreateScope<Pipeline>(device, config, stages);
+			}
+			catch (const std::exception& e)
+			{
+				MADAM_CORE_ERROR("Could not create material shader pipeline {0}: {1}", fragmentPath, e.what());
+				if (state.layout != VK_NULL_HANDLE)
+					vkDestroyPipelineLayout(device.device(), state.layout, nullptr);
+				failedShaders.insert(fragmentPath);
+				return nullptr;
+			}
+			return &shaderPipelines.emplace(fragmentPath, std::move(state)).first->second;
+		}
+
+		void TextureRenderLayer::render(FrameInfo& frameInfo) {
+			if (!frameInfo.renderScene.registry)
+				return;
+
 			entt::registry& entities = *frameInfo.renderScene.registry;
-
-			for (auto entity : frameInfo.renderScene.meshEntities) {
-
-				if (!entities.valid(entity)) {
-					std::cerr << "Error, entity is not valid" << std::endl;
+			for (auto entity : frameInfo.renderScene.meshEntities)
+			{
+				if (!entities.valid(entity))
 					continue;
-				}
-				// skip objects that don't have both a model and texture
-				//JcvbMeshRenderer* meshRenderer = obj.getComponent<JcvbMeshRenderer>();
-				//if (meshRenderer == nullptr) continue;
 				auto& meshRenderer = entities.get<CMeshRenderer>(entity);
-				Ref<CMaterial> material = meshRenderer.GetMaterial();
-				if (material == nullptr) continue;
-				if (material->diffuse_map == nullptr) continue;
+				if (!meshRenderer.GetMesh())
+					continue;
+				const Ref<CMaterial> material = meshRenderer.GetMaterial();
+				if (!MaterialTexturesReady(material))
+					continue;
 
-				const bool texturesChanged =
-					material->cached_diffuse_map.get() != material->diffuse_map.get() ||
-					material->cached_normal_map.get() != material->normal_map.get() ||
-					material->cached_ambient_occlusion_map.get() != material->ambient_occlusion_map.get() ||
-					material->cached_gloss_map.get() != material->gloss_map.get();
+				std::map<uint32_t, Ref<Texture>> bindings;
+				if (material->shaderFragmentPath.empty())
+					bindings = { {0, material->diffuse_map}, {1, material->normal_map},
+						{2, material->ambient_occlusion_map}, {3, material->gloss_map} };
+				else
+					bindings = material->textureBindings;
 
-				if (material->descriptor_set == VK_NULL_HANDLE || texturesChanged) {
-					auto imageInfo = (VkDescriptorImageInfo*)material->diffuse_map->GetDescriptorInfo();
-					auto normalInfo = (VkDescriptorImageInfo*)material->normal_map->GetDescriptorInfo();
-					auto ambientOcclusionInfo = (VkDescriptorImageInfo*)material->ambient_occlusion_map->GetDescriptorInfo();
-					auto glossInfo = (VkDescriptorImageInfo*)material->gloss_map->GetDescriptorInfo();
-
-					DescriptorWriter writer(*renderSystemLayout, Application::Get().GetMaterialDescriptorPool());
-					writer.WriteImage(0, imageInfo)
-						.WriteImage(1, normalInfo)
-						.WriteImage(2, ambientOcclusionInfo)
-						.WriteImage(3, glossInfo);
-
-					if (material->descriptor_set == VK_NULL_HANDLE) {
-						if (!writer.Build(material->descriptor_set)) {
-							MADAM_CORE_ERROR("Failed to allocate material descriptor set");
-							continue;
-						}
+				Pipeline* selectedPipeline = pipeline.get();
+				VkPipelineLayout selectedLayout = pipelineLayout;
+				DescriptorSetLayout* selectedDescriptorLayout = renderSystemLayout.get();
+				if (!material->shaderFragmentPath.empty())
+				{
+					auto custom = GetShaderPipeline(material->shaderFragmentPath);
+					if (!custom)
+					{
+						material->shaderValid = false;
+						continue;
 					}
-					else if (texturesChanged) {
-						writer.Overwrite(material->descriptor_set);
-					}
-
-					material->cached_diffuse_map = material->diffuse_map;
-					material->cached_normal_map = material->normal_map;
-					material->cached_ambient_occlusion_map = material->ambient_occlusion_map;
-					material->cached_gloss_map = material->gloss_map;
+					selectedPipeline = custom->pipeline.get();
+					selectedLayout = custom->layout;
+					selectedDescriptorLayout = custom->descriptorLayout.get();
 				}
 
-				vkCmdBindDescriptorSets(
-					frameInfo.commandBuffer,
-					VK_PIPELINE_BIND_POINT_GRAPHICS,
-					pipelineLayout,
-					1,  // first set
-					1,  // set count
-					&material->descriptor_set,
-					0,
-					nullptr);
+				selectedPipeline->bind(frameInfo.commandBuffer);
+				vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+					selectedLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+				if (!bindings.empty())
+				{
+					const bool texturesChanged = material->cachedTextureBindings != bindings;
+					if (material->descriptor_set == VK_NULL_HANDLE || texturesChanged)
+					{
+						DescriptorWriter writer(*selectedDescriptorLayout, Application::Get().GetMaterialDescriptorPool());
+						for (const auto& [binding, texture] : bindings)
+							writer.WriteImage(binding, static_cast<VkDescriptorImageInfo*>(texture->GetDescriptorInfo()));
+						if (material->descriptor_set == VK_NULL_HANDLE)
+						{
+							if (!writer.Build(material->descriptor_set))
+							{
+								MADAM_CORE_ERROR("Failed to allocate material descriptor set");
+								continue;
+							}
+						}
+						else
+							writer.Overwrite(material->descriptor_set);
+						material->cachedTextureBindings = bindings;
+					}
+					vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+						selectedLayout, 1, 1, &material->descriptor_set, 0, nullptr);
+				}
 
 				DefaultPushConstantData push{};
 				UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
@@ -600,7 +735,7 @@ namespace Madam {
 
 				vkCmdPushConstants(
 					frameInfo.commandBuffer,
-					pipelineLayout,
+					selectedLayout,
 					VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 					0,
 					sizeof(DefaultPushConstantData),
@@ -655,10 +790,9 @@ namespace Madam {
 			//Pipeline::setDescriptions(pipelineConfig);
 			pipelineConfig.enableAlphaBlending();
 			pipelineConfig.depthStencilInfo.depthWriteEnable = VK_FALSE;
-
-			// default color blending for this isn't physically accurate, but i like how it looks
-			// in this case better, and are current rendering for this isn't physically accurate anyway
-			// pipelineConfig.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+			// Keep the offscreen scene opaque so ImGui does not blend the light twice.
+			pipelineConfig.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+			pipelineConfig.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 
 			pipelineConfig.attributeDescriptions.clear();
 			pipelineConfig.bindingDescriptions.clear();
@@ -715,7 +849,7 @@ namespace Madam {
 				glm::mat4 worldTransform = frameInfo.scene->GetWorldTransform(uuid);
 				glm::vec3 worldTranslation = glm::vec3(worldTransform[3][0], worldTransform[3][1], worldTransform[3][2]);
 
-				auto offset = Rendering::CameraHandle::GetMain().GetPosition() - worldTranslation;
+				auto offset = glm::vec3(frameInfo.ubo.inverseView[3]) - worldTranslation;
 				float disSquared = glm::dot(offset, offset);
 				sorted[disSquared] = entity;
 			}
@@ -836,8 +970,9 @@ namespace Madam {
 			MADAM_CORE_INFO("Pushing Render Systems in vector is completed");
 		}
 
-		void RenderStack::render(FrameInfo& frameInfo) {
+		void RenderStack::render(FrameInfo& frameInfo, bool includeEditorGrid) {
 			for (auto& system : renderSystems) {
+				if (!includeEditorGrid && dynamic_cast<GridRenderLayer*>(system.get())) continue;
 				system->updatePipelineState();
 				system->render(frameInfo);
 			}

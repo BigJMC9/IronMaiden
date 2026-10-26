@@ -10,6 +10,8 @@
 #include "H_Pipeline.hpp"
 #include "H_Renderer.hpp"
 #include "../Core/H_CoreUtils.hpp"
+#include "../Asset/H_ShaderDefinition.h"
+#include <unordered_set>
 
 namespace Madam {
     //Create solution that don't involve using virtual functions.
@@ -54,7 +56,7 @@ namespace Madam {
 
 		public:
             RenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "Default");
-			~RenderLayer();
+            virtual ~RenderLayer();
 
 			std::string name = "Default";
 
@@ -128,15 +130,28 @@ namespace Madam {
 
         public:
             TextureRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name = "TextureLayer");
-            ~TextureRenderLayer();
+            ~TextureRenderLayer() override;
 
             void render(FrameInfo& frameInfo) override;
 
         protected:
             void createPipelineLayout(VkDescriptorSetLayout globalSetLayout) override;
             void createPipeline(VkRenderPass renderPass) override;
+			void recreatePipeline(VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) override;
 
             Scope<DescriptorSetLayout> renderSystemLayout;
+			struct ShaderPipeline
+			{
+				Scope<DescriptorSetLayout> descriptorLayout;
+				VkPipelineLayout layout = VK_NULL_HANDLE;
+				Scope<Pipeline> pipeline;
+			};
+			ShaderPipeline* GetShaderPipeline(const std::string& fragmentPath);
+			void ClearShaderPipelines();
+			std::unordered_map<std::string, ShaderPipeline> shaderPipelines;
+			std::unordered_set<std::string> failedShaders;
+			VkDescriptorSetLayout globalLayout = VK_NULL_HANDLE;
+			VkRenderPass activeRenderPass = VK_NULL_HANDLE;
         };
 
         class MADAM_API PointLightRenderLayer : public RenderLayer {
@@ -163,7 +178,7 @@ namespace Madam {
             void deinit();
 
             void initialize(Scope<DescriptorSetLayout>& globalSetLayout);
-            void render(FrameInfo& frameInfo);
+            void render(FrameInfo& frameInfo, bool includeEditorGrid = true);
             bool switchRenderSystems(int first, int second);
             void reloadPipeline(int renderLayer, VkRenderPass renderPass, Scope<DescriptorSetLayout>& globalDescriptorSetLayout);
             const std::vector<Ref<RenderLayer>>& getRenderLayers() const {

@@ -6,6 +6,8 @@
 #include "../Rendering/H_Buffer.hpp"
 #include "../GUI/H_GUI.hpp"
 #include "../Project/H_Project.h"
+#include "../Asset/H_AssetSystem.h"
+#include "../Asset/H_MaterialAsset.h"
 #include "../Platform/Platforms.hpp"
 
 #include <fstream>
@@ -27,12 +29,12 @@ namespace Madam
 
 		Init();
 		globalPool = DescriptorPool::Builder(device)
-			.setMaxSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT)
+			.setMaxSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
 			.build();
 
 		const uint32_t maxMaterialSets = 2000;
-		const uint32_t texturesPerMaterial = 4;
+		const uint32_t texturesPerMaterial = 32;
 		materialPool = DescriptorPool::Builder(device)
 			.setMaxSets(maxMaterialSets)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, maxMaterialSets * texturesPerMaterial)
@@ -113,6 +115,7 @@ namespace Madam
 
 		Scope<UI::GUI> p_gui = std::make_unique<UI::GUI>();
 		std::vector < Scope<Buffer>> uboBuffers(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
+		std::vector<Scope<Buffer>> gameUboBuffers(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
 		MADAM_CORE_INFO("uboBuffers Created");
 		for (int i = 0; i < uboBuffers.size(); i++)
 		{
@@ -123,6 +126,10 @@ namespace Madam
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 			uboBuffers[i]->Map();
+			gameUboBuffers[i] = std::make_unique<Buffer>(
+				device, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+			gameUboBuffers[i]->Map();
 		}
 		MADAM_CORE_INFO("uboBuffers mapped");
 		Scope<DescriptorSetLayout> globalSetLayout = DescriptorSetLayout::Builder(device)
@@ -130,13 +137,20 @@ namespace Madam
 			.build();
 
 		std::vector<VkDescriptorSet> globalDescriptorSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
+		std::vector<VkDescriptorSet> gameGlobalDescriptorSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
 		MADAM_CORE_INFO("globalSetLayout vector populated");
 		for (int i = 0; i < globalDescriptorSets.size(); i++)
 		{
 			auto bufferInfo = uboBuffers[i]->DescriptorInfo();
-			DescriptorWriter(*globalSetLayout, *globalPool)
+			if (!DescriptorWriter(*globalSetLayout, *globalPool)
 				.WriteBuffer(0, &bufferInfo)
-				.Build(globalDescriptorSets[i]);
+				.Build(globalDescriptorSets[i]))
+				throw std::runtime_error("Could not allocate the viewport camera descriptor set");
+			auto gameBufferInfo = gameUboBuffers[i]->DescriptorInfo();
+			if (!DescriptorWriter(*globalSetLayout, *globalPool)
+				.WriteBuffer(0, &gameBufferInfo)
+				.Build(gameGlobalDescriptorSets[i]))
+				throw std::runtime_error("Could not allocate the game camera descriptor set");
 		}
 		MADAM_CORE_INFO("globalSetLayout vector");
 		render_stack.initialize(globalSetLayout);
@@ -162,7 +176,18 @@ namespace Madam
 			time.UpdateTime();
 			if (reload_shaders == true)
 			{
+				render_stack.reloadPipeline(1, renderer.GetMainRenderPass(), globalSetLayout);
 				render_stack.reloadPipeline(3, renderer.GetMainRenderPass(), globalSetLayout);
+				if (Project::HasActive())
+				{
+					auto& assets = Project::Get().getAssetManager();
+					for (const auto& entry : assets.ListAssets(AssetType::MATERIAL))
+					{
+						auto material = std::dynamic_pointer_cast<MaterialAsset>(assets.GetAsset(entry.handle));
+						if (material)
+							material->GetRuntimeMaterial(assets);
+					}
+				}
 				reload_shaders = false;
 			}
 			p_surface->OnUpdate();
@@ -220,6 +245,36 @@ namespace Madam
 				render_stack.render(frameInfo);
 				renderer.EndRenderPass(command_buffer);
 				renderer.PipelineBarrier(command_buffer, false, false, frame_index, 0);
+				Entity gameCameraEntity = activeScene.GetGameCameraEntity();
+				renderer.BeginRenderPass(command_buffer, 2);
+				if (gameCameraEntity)
+				{
+					auto cameraData = gameCameraEntity.GetComponent<CCamera>().GetCameraData();
+					if (cameraData.projectionType == Rendering::CameraData::ProjectionType::Perspective)
+						cameraData.perspective.aspect = renderer.GetAspectRatio();
+					else if (cameraData.projectionType == Rendering::CameraData::ProjectionType::Orthographic)
+						cameraData.orthographic.aspect = renderer.GetAspectRatio();
+					Rendering::CameraHandle gameCamera(cameraData);
+					const auto& gameTransform = gameCameraEntity.GetComponent<CTransform>();
+					glm::vec3 worldPosition = gameTransform.translation;
+					glm::quat worldRotation = gameTransform.rotation;
+					glm::vec3 worldScale, worldSkew;
+					glm::vec4 worldPerspective;
+					glm::decompose(activeScene.GetWorldTransform(gameCameraEntity), worldScale,
+						worldRotation, worldPosition, worldSkew, worldPerspective);
+					gameCamera.SetViewYXZ(worldPosition, glm::normalize(worldRotation));
+					gameCamera.SetProjection();
+					FrameInfo gameFrameInfo = frameInfo;
+					gameFrameInfo.globalDescriptorSet = gameGlobalDescriptorSets[frame_index];
+					gameFrameInfo.ubo.projection = gameCamera.GetProjection();
+					gameFrameInfo.ubo.view = gameCamera.GetView();
+					gameFrameInfo.ubo.inverseView = gameCamera.GetInverseView();
+					gameUboBuffers[frame_index]->WriteToBuffer(&gameFrameInfo.ubo);
+					gameUboBuffers[frame_index]->Flush();
+					render_stack.render(gameFrameInfo, false);
+				}
+				renderer.EndRenderPass(command_buffer);
+				renderer.PipelineBarrier(command_buffer, false, false, frame_index, 2);
 				renderer.BeginSwapChainRenderPass(command_buffer);
 				renderer.EndSwapChainRenderPass(command_buffer);
 				renderer.EndFrame();
@@ -238,8 +293,10 @@ namespace Madam
 		render_stack.deinit();
 		framePools.clear();
 		globalDescriptorSets.clear();
+		gameGlobalDescriptorSets.clear();
 		globalSetLayout = nullptr;
 		uboBuffers.clear();
+		gameUboBuffers.clear();
 		materialPool.reset();
 		globalPool.reset();
 		m_sceneManager.SetActiveScene(nullptr);

@@ -7,6 +7,7 @@
 #include "../Rendering/H_Texture.h"
 #include "ScriptableEntity.hpp"
 #include "../Rendering/H_Camera.hpp"
+#include <map>
 
 #define INCLUDE_GLM_UTILS
 #include "../Core/H_Logger.hpp"
@@ -53,6 +54,7 @@ namespace Madam
 		CCamera(const CCamera& source)
 		{
 			cameraHandle = CreateRef<Rendering::CameraHandle>(source.cameraHandle->GetCameraData());
+			editorOnly = source.editorOnly;
 		};
 
 		const glm::mat4& GetProjection() const
@@ -96,6 +98,7 @@ namespace Madam
 		}
 
 		Ref<Rendering::CameraHandle> cameraHandle = nullptr;
+		bool editorOnly = false;
 	};
 
 	struct CTag
@@ -146,6 +149,12 @@ namespace Madam
 		Ref<Texture> normal_map = nullptr;
 		Ref<Texture> ambient_occlusion_map = nullptr;
 		Ref<Texture> gloss_map = nullptr;
+		std::string shaderFragmentPath;
+		bool shaderDriven = false;
+		bool shaderValid = false;
+		std::map<uint32_t, Ref<Texture>> textureBindings;
+		std::map<uint32_t, Ref<Texture>> cachedTextureBindings;
+		size_t expectedTextureCount = 0;
 
 		VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
 		Ref<Texture> cached_diffuse_map = nullptr;
@@ -170,6 +179,7 @@ namespace Madam
 		CMeshRenderer() = default;
 
 		Ref<StaticMesh> mesh = nullptr;
+		UUID materialAsset = UUID("");
 
 		// Update so no dangling pointer
 		Ref<CMaterial> material = nullptr; 
@@ -289,6 +299,12 @@ namespace Madam
 		}
 	};
 
+	struct CCSharpScript
+	{
+		UUID script = UUID("");
+		std::string className;
+	};
+
 	struct CNativeScript
 	{
 
@@ -327,6 +343,6 @@ namespace Madam
 	struct ComponentGroup {};
 
 	using AllComponents =
-		ComponentGroup<CTransform, CMeshRenderer, CCamera, CPointLight, CNativeScript>;
+		ComponentGroup<CTransform, CMeshRenderer, CCamera, CPointLight, CNativeScript, CCSharpScript>;
 }
 #endif

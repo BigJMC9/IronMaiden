@@ -12,7 +12,7 @@ namespace Madam
 	//should be macros
 
 	inline std::string RegistryFile() {
-		return resource + "\\" + metadata + metadataExtension;
+		return resource + "/" + metadata + metadataExtension;
 	}
 
 	enum class AssetFlags : uint16_t
@@ -67,6 +67,7 @@ namespace Madam
 		{".hs", AssetType::SHADER},
 		{".ds", AssetType::SHADER},
 		{".cpp", AssetType::SCRIPT},
+		{".cs", AssetType::SCRIPT},
 		{".obj", AssetType::MESH},
 		{".fbx", AssetType::MESH},
 	};

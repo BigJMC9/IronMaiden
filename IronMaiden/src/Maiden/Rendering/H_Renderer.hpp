@@ -12,10 +12,10 @@ namespace Madam {
 
 		struct ImageInfo {
 			std::string debugName;
-			VkImageView imageView;
-			VkImage image;
-			VkDeviceMemory imageMemory;
-			VkFramebuffer frameBuffer;
+			VkImageView imageView = VK_NULL_HANDLE;
+			VkImage image = VK_NULL_HANDLE;
+			VkDeviceMemory imageMemory = VK_NULL_HANDLE;
+			VkFramebuffer frameBuffer = VK_NULL_HANDLE;
 		};
 		struct Frame {
 			std::vector<ImageInfo> images;
@@ -71,6 +71,11 @@ namespace Madam {
 			{
 				return frames[currentFrameIndex].images[index].imageView;
 			}
+			VkImageView GetImageViewForFrame(int frame, int index) const
+			{
+				return frames[frame].images[index].imageView;
+			}
+			int GetNextFrameIndex() const { return currentFrameIndex; }
 
 			uint32_t GetViewportWidth() const 
 			{ 
@@ -146,6 +151,7 @@ namespace Madam {
 		private:
 			void CreateCommandBuffers();
 			void CreateMainRenderImages();
+			void DestroyMainRenderImages();
 			void CreateMainRenderPass();
 			void RecreateSwapChain();
 
@@ -159,7 +165,6 @@ namespace Madam {
 
 			uint32_t currentImageIndex = 0;
 			int currentFrameIndex = 0;
-			uint32_t currentCommandBufferIndex = 0;
 			int renderpassIndex = -1;
 			bool isFrameStarted = false;
 			bool isRunning = false;

@@ -8,22 +8,30 @@ namespace Madam
 	class AssetSerializer
 	{
 	public:
-		virtual void serialize(const AssetMetadata& metadata, const Ref<Asset>& asset) const = 0;
+		virtual ~AssetSerializer() = default;
+		virtual bool serialize(const AssetMetadata& metadata, const Ref<Asset>& asset) const = 0;
 		virtual bool tryLoadData(const AssetMetadata& metadata, Ref<Asset>& asset) const = 0;
 	};
 
 	class TextureSerializer : public AssetSerializer
 	{
 	public:
-		virtual void serialize(const AssetMetadata& metadata, const Ref<Asset>& asset) const override {}
+		bool serialize(const AssetMetadata& metadata, const Ref<Asset>& asset) const override { return false; }
 		virtual bool tryLoadData(const AssetMetadata& metadata, Ref<Asset>& asset) const override;
 	};
 
 	class MeshSerializer : public AssetSerializer
 	{
 	public:
-		virtual void serialize(const AssetMetadata& metadata, const Ref<Asset>& asset) const override {}
+		bool serialize(const AssetMetadata& metadata, const Ref<Asset>& asset) const override { return false; }
 		virtual bool tryLoadData(const AssetMetadata& metadata, Ref<Asset>& asset) const override;
+	};
+
+	class MaterialSerializer : public AssetSerializer
+	{
+	public:
+		bool serialize(const AssetMetadata& metadata, const Ref<Asset>& asset) const override;
+		bool tryLoadData(const AssetMetadata& metadata, Ref<Asset>& asset) const override;
 	};
 
 	/*class SceneAssetSerializer : public AssetSerializer

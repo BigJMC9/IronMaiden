@@ -1,113 +1,52 @@
 #pragma once
+
 #include <Maiden.hpp>
-#include <fstream>
 #include <filesystem>
+#include <string>
 
-namespace Madam {
-	namespace Scripting {
+namespace Madam::Scripting
+{
+	class ScriptEngine
+	{
+	public:
+		ScriptEngine() = default;
+		~ScriptEngine();
 
-		struct WindowsError {
-			DWORD errorCode;
-			std::string errorMsg;
-			LPVOID lpMsgBuf;
+		bool Start(const std::filesystem::path& projectDirectory, Ref<Scene> scene);
+		void Update(float deltaTime);
+		void Stop();
+		bool IsRunning() const { return running; }
 
-			std::string ToString() {
-				return std::to_string(errorCode) + ": " + errorMsg;
-			}
+	private:
+		struct NativeCallbacks
+		{
+			int(__cdecl* getPosition)(uint32_t, float*, float*, float*);
+			int(__cdecl* setPosition)(uint32_t, float, float, float);
+			void(__cdecl* log)(int, const char*);
 		};
 
-		class ScriptEngine {
-		public:
-			ScriptEngine();
-			~ScriptEngine();
+		using ManagedStart = int(__cdecl*)(const char*, const NativeCallbacks*);
+		using ManagedCreate = int(__cdecl*)(uint32_t, const char*);
+		using ManagedUpdate = void(__cdecl*)(float);
+		using ManagedStop = void(__cdecl*)();
 
-			//void Compile();
-			bool Runtime(Entity entity);
-			void Update();
-			bool Import(Entity entity);
+		bool BuildScripts(const std::filesystem::path& projectDirectory,
+			std::filesystem::path& assemblyPath);
+		bool LoadHost();
+		bool ResolveManagedMethods();
+		static int __cdecl GetPosition(uint32_t entity, float* x, float* y, float* z);
+		static int __cdecl SetPosition(uint32_t entity, float x, float y, float z);
+		static void __cdecl Log(int level, const char* message);
 
-			void OnCreateScript(std::string file);
-			void OnDeleteScript();
-			void RescanScripts();
-
-			void ShowScripts() {
-				for (auto& script : scripts) {
-					MADAM_INFO("{0} at: {1}", script.first, script.second);
-				}
-			}
-
-			bool CheckImportStatus() {
-				return isImported;
-			}
-
-		private:
-
-			typedef void (*SetAppInstance)(Application* app);
-			typedef CNativeScript(*BindType)(std::string);
-
-			bool isImported = false;
-			HINSTANCE hGetProcIDDLL = NULL;
-			std::wstring stringToWSTR(const std::string& s) {
-				int size_needed = MultiByteToWideChar(CP_UTF8, 0, &s[0], (int)s.size(), NULL, 0);
-				std::wstring wstrTo(size_needed, 0);
-				MultiByteToWideChar(CP_UTF8, 0, &s[0], (int)s.size(), &wstrTo[0], size_needed);
-				return wstrTo;
-			}
-
-			WindowsError GetWindowsError() {
-				WindowsError windowsError = { GetLastError(), "", nullptr };
-
-				FormatMessage(
-					FORMAT_MESSAGE_ALLOCATE_BUFFER |
-					FORMAT_MESSAGE_FROM_SYSTEM |
-					FORMAT_MESSAGE_IGNORE_INSERTS,
-					NULL,
-					windowsError.errorCode,
-					MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-					(LPTSTR)&windowsError.lpMsgBuf,
-					0,
-					NULL
-				);
-				std::wstring wideStr((wchar_t*)windowsError.lpMsgBuf);
-				std::string narrowStr(wideStr.begin(), wideStr.end());
-				windowsError.errorMsg = narrowStr;
-				return windowsError;
-			}
-
-			void ReleaseLibrary();
-			void CreateCMDProcess(std::string path);
-
-			std::string ReadClassName(std::string path);
-			void UpdateBehaviour();
-			bool CopyScript(std::string src, std::string dest);
-			std::map<std::string, std::string> scripts;
-
-			std::vector<std::string> formatIF(std::string _class) {
-				return std::vector<std::string> { 
-					"\t\tif (type == \"" + _class + "\") {",
-					"\t\t\tCNativeScript nsc;",
-					"\t\t\tnsc.Bind<" + _class + ">();",
-					"\t\t\treturn nsc;",
-					"\t\t}"
-				};
-			}
-
-			std::vector<std::string> formatELIF(std::string _class) {
-				return std::vector<std::string> {
-					"\t\telse if (type == \"" + _class + "\") {",
-					"\t\t\tCNativeScript nsc;",
-					"\t\t\tnsc.Bind<" + _class + ">();",
-					"\t\t\treturn nsc;",
-					"\t\t}"
-				};
-			}
-
-			std::vector<std::string> formatELSE{
-					"\t\telse {",
-					"\t\t\tstd::cout << \"No script found\" << std::endl;",
-					"\t\t\treturn CNativeScript();",
-					"\t\t}"
-			};
-		};
-	}
+		static ScriptEngine* activeInstance;
+		Ref<Scene> activeScene;
+		HMODULE hostfxr = nullptr;
+		void* loadAssembly = nullptr;
+		ManagedStart managedStart = nullptr;
+		ManagedCreate managedCreate = nullptr;
+		ManagedUpdate managedUpdate = nullptr;
+		ManagedStop managedStop = nullptr;
+		bool running = false;
+		bool managedRunning = false;
+	};
 }

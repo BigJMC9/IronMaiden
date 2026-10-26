@@ -12,6 +12,7 @@ namespace Madam
 		std::filesystem::path filepath;
 
 		bool isLoaded = false;
+		bool isMissing = false;
 		bool isGPUObject = false;
 		bool IsValid() const { return std::string(uuid) != ""; }
 	};

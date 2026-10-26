@@ -11,6 +11,8 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 #include <filesystem>
+#include <string>
+#include <vector>
 
 namespace fmt {
 
@@ -56,10 +58,20 @@ namespace fmt {
 
 namespace Madam
 {
+	class ConsoleSink;
+
+	struct ConsoleMessage
+	{
+		std::string text;
+		spdlog::level::level_enum level = spdlog::level::info;
+	};
+
 	class MADAM_API Logger 
 	{
 	public:
 		static void Init();
+		static std::vector<ConsoleMessage> GetConsoleMessages();
+		static void ClearConsoleMessages();
 
 		inline static Ref<spdlog::logger>& GetCoreLogger() { return s_CoreLogger; }
 		inline static Ref<spdlog::logger>& GetClientLogger() { return s_ClientLogger; }
@@ -69,6 +81,7 @@ namespace Madam
 		static Ref<spdlog::logger> s_CoreLogger;
 		static Ref<spdlog::logger> s_ClientLogger;
 		static Ref<spdlog::logger> s_FileLogger;
+		static Ref<ConsoleSink> s_ConsoleSink;
 	};
 };
 
