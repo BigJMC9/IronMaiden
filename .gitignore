@@ -385,3 +385,5 @@ prebuild.bld
 !vendors/*
 !Editor/resources/*
 !Editor/resources/models/*
+/_tmp_find.py
+/_tmp_range.py

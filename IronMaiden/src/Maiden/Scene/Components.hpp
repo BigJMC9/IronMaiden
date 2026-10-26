@@ -147,6 +147,12 @@ namespace Madam
 		Ref<Texture> ambient_occlusion_map = nullptr;
 		Ref<Texture> gloss_map = nullptr;
 
+		VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
+		Ref<Texture> cached_diffuse_map = nullptr;
+		Ref<Texture> cached_normal_map = nullptr;
+		Ref<Texture> cached_ambient_occlusion_map = nullptr;
+		Ref<Texture> cached_gloss_map = nullptr;
+
 		bool is_custom = false;
 		float ax = 1.0f;
 		float dx0 = 0.0f;

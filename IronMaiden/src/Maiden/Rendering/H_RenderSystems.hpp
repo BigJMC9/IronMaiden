@@ -121,6 +121,7 @@ namespace Madam {
             Scope<Buffer> skyboxBuffer;
             Ref<Texture> noiseTexture;
             Ref<StaticMesh> skybox = StaticMesh::Create("resources\\models\\skybox.obj");
+            VkDescriptorSet skyboxDescriptorSet = VK_NULL_HANDLE;
         };
 
         class MADAM_API TextureRenderLayer : public RenderLayer {

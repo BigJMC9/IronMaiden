@@ -65,6 +65,7 @@ namespace Madam
 
 		Scene& GetScene() { return m_sceneManager.GetActiveScene(); }
 		const Time& GetTime() const { return time; }
+		DescriptorPool& GetMaterialDescriptorPool() { return *materialPool; }
 		ApplicationInfo GetConfig()
 		{
 			return config;
@@ -198,6 +199,7 @@ namespace Madam
 
 		//Move this somewhere
 		Scope<DescriptorPool> globalPool{};
+		Scope<DescriptorPool> materialPool{};
 		std::vector<Scope<DescriptorPool>> framePools;
 
 		bool isRunning = false;

@@ -31,6 +31,13 @@ namespace Madam
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT)
 			.build();
 
+		const uint32_t maxMaterialSets = 2000;
+		const uint32_t texturesPerMaterial = 4;
+		materialPool = DescriptorPool::Builder(device)
+			.setMaxSets(maxMaterialSets)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, maxMaterialSets * texturesPerMaterial)
+			.build();
+
 		auto framePoolBuilder = DescriptorPool::Builder(device)
 			.setMaxSets(1000) //Storage allocation
 			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
@@ -233,6 +240,7 @@ namespace Madam
 		globalDescriptorSets.clear();
 		globalSetLayout = nullptr;
 		uboBuffers.clear();
+		materialPool.reset();
 		globalPool.reset();
 		m_sceneManager.SetActiveScene(nullptr);
 		SaveSession();

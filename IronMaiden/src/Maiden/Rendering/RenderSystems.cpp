@@ -387,6 +387,8 @@ namespace Madam {
 			if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 				throw std::runtime_error("Failed to create pipeline layout!");
 			}
+
+			skyboxDescriptorSet = VK_NULL_HANDLE;
 		}
 
 		void SkyboxRenderLayer::createPipeline(VkRenderPass renderPass) {
@@ -427,11 +429,15 @@ namespace Madam {
 				0,
 				nullptr);
 
-			VkDescriptorSet descriptorSet1;
-			DescriptorWriter(*skyboxRenderSystemLayout, frameInfo.frameDescriptorPool)
-				//.writeBuffer(0, &skyboxBuffer->descriptorInfo())
-				.WriteImage(0, (VkDescriptorImageInfo*)std::static_pointer_cast<VulkanTexture>(noiseTexture)->GetDescriptorInfo())
-				.Build(descriptorSet1);
+			if (skyboxDescriptorSet == VK_NULL_HANDLE) {
+				auto imageInfo = (VkDescriptorImageInfo*)std::static_pointer_cast<VulkanTexture>(noiseTexture)->GetDescriptorInfo();
+				if (!DescriptorWriter(*skyboxRenderSystemLayout, Application::Get().GetMaterialDescriptorPool())
+					.WriteImage(0, imageInfo)
+					.Build(skyboxDescriptorSet)) {
+					MADAM_CORE_ERROR("Failed to allocate skybox descriptor set");
+					return;
+				}
+			}
 
 			vkCmdBindDescriptorSets(
 				frameInfo.commandBuffer,
@@ -439,7 +445,7 @@ namespace Madam {
 				pipelineLayout,
 				1,  // first set
 				1,  // set count
-				&descriptorSet1,
+				&skyboxDescriptorSet,
 				0,
 				nullptr);
 
@@ -542,20 +548,39 @@ namespace Madam {
 				if (material == nullptr) continue;
 				if (material->diffuse_map == nullptr) continue;
 
-				// writing descriptor set each frame can slow performance
-				// would be more efficient to implement some sort of caching
-				// Edit implement descriptor set pool
-				auto imageInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->diffuse_map->GetDescriptorInfo();
-				auto normalInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->normal_map->GetDescriptorInfo();
-				auto ambientOcclusionInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->ambient_occlusion_map->GetDescriptorInfo();
-				auto glossInfo = (VkDescriptorImageInfo*)meshRenderer.GetMaterial()->gloss_map->GetDescriptorInfo();
-				VkDescriptorSet descriptorSet1;
-				DescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
-					.WriteImage(0, imageInfo)
-					.WriteImage(1, normalInfo)
-					.WriteImage(2, ambientOcclusionInfo)
-					.WriteImage(3, glossInfo)
-					.Build(descriptorSet1);
+				const bool texturesChanged =
+					material->cached_diffuse_map.get() != material->diffuse_map.get() ||
+					material->cached_normal_map.get() != material->normal_map.get() ||
+					material->cached_ambient_occlusion_map.get() != material->ambient_occlusion_map.get() ||
+					material->cached_gloss_map.get() != material->gloss_map.get();
+
+				if (material->descriptor_set == VK_NULL_HANDLE || texturesChanged) {
+					auto imageInfo = (VkDescriptorImageInfo*)material->diffuse_map->GetDescriptorInfo();
+					auto normalInfo = (VkDescriptorImageInfo*)material->normal_map->GetDescriptorInfo();
+					auto ambientOcclusionInfo = (VkDescriptorImageInfo*)material->ambient_occlusion_map->GetDescriptorInfo();
+					auto glossInfo = (VkDescriptorImageInfo*)material->gloss_map->GetDescriptorInfo();
+
+					DescriptorWriter writer(*renderSystemLayout, Application::Get().GetMaterialDescriptorPool());
+					writer.WriteImage(0, imageInfo)
+						.WriteImage(1, normalInfo)
+						.WriteImage(2, ambientOcclusionInfo)
+						.WriteImage(3, glossInfo);
+
+					if (material->descriptor_set == VK_NULL_HANDLE) {
+						if (!writer.Build(material->descriptor_set)) {
+							MADAM_CORE_ERROR("Failed to allocate material descriptor set");
+							continue;
+						}
+					}
+					else if (texturesChanged) {
+						writer.Overwrite(material->descriptor_set);
+					}
+
+					material->cached_diffuse_map = material->diffuse_map;
+					material->cached_normal_map = material->normal_map;
+					material->cached_ambient_occlusion_map = material->ambient_occlusion_map;
+					material->cached_gloss_map = material->gloss_map;
+				}
 
 				vkCmdBindDescriptorSets(
 					frameInfo.commandBuffer,
@@ -563,7 +588,7 @@ namespace Madam {
 					pipelineLayout,
 					1,  // first set
 					1,  // set count
-					&descriptorSet1,
+					&material->descriptor_set,
 					0,
 					nullptr);
 
