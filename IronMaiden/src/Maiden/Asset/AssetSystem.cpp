@@ -187,11 +187,40 @@ namespace Madam
 		const auto source = ResolveAssetPath(shader);
 		if (source.empty() || !std::filesystem::is_regular_file(source))
 		{
+			shaderDefinitions.erase(shader);
 			ShaderDefinition result;
 			result.error = "The selected shader is missing.";
 			return result;
 		}
-		return ReadMaterialShader(source, std::filesystem::absolute("resources/shaders/texture_shader.vert"));
+		const auto defaultVertex = std::filesystem::absolute("resources/shaders/texture_shader.vert");
+		auto companionVertex = source;
+		companionVertex.replace_extension(".vert");
+		const auto vertex = std::filesystem::is_regular_file(companionVertex)
+			? companionVertex : defaultVertex;
+		const auto stamp = [](const std::filesystem::path& path) {
+			std::error_code error;
+			const auto time = std::filesystem::last_write_time(path, error);
+			return error ? std::filesystem::file_time_type{} : time;
+		};
+		const auto size = [](const std::filesystem::path& path) {
+			std::error_code error;
+			const auto bytes = std::filesystem::file_size(path, error);
+			return error ? uintmax_t{ 0 } : bytes;
+		};
+		const auto sourceTime = stamp(source);
+		const auto vertexTime = stamp(vertex);
+		const auto sourceSize = size(source);
+		const auto vertexSize = size(vertex);
+		const auto cached = shaderDefinitions.find(shader);
+		if (cached != shaderDefinitions.end() && cached->second.source == source &&
+			cached->second.vertex == vertex && cached->second.sourceTime == sourceTime &&
+			cached->second.vertexTime == vertexTime && cached->second.sourceSize == sourceSize &&
+			cached->second.vertexSize == vertexSize)
+			return cached->second.definition;
+		auto definition = ReadMaterialShader(source, defaultVertex);
+		shaderDefinitions[shader] = { source, vertex, sourceTime, vertexTime,
+			sourceSize, vertexSize, definition };
+		return definition;
 	}
 
 	AssetType AssetManager::GetAssetType(UUID uuid)
@@ -362,6 +391,7 @@ namespace Madam
 
 	bool AssetManager::CompileShader(UUID shader, std::string* diagnostic) const
 	{
+		shaderDefinitions.erase(shader);
 		auto fail = [&](const std::string& message)
 		{
 			if (diagnostic) *diagnostic = message;
@@ -425,12 +455,8 @@ namespace Madam
 		const auto relative = NormalizeAssetPath(path);
 		if (relative.empty())
 			return s_NullMetadata;
-		for (const auto& [handle, metadata] : m_registry)
-		{
-			if (metadata.filepath == relative)
-				return metadata;
-		}
-		return s_NullMetadata;
+		const auto found = pathIndex.find(relative);
+		return found == pathIndex.end() ? s_NullMetadata : GetMetadata(found->second);
 	}
 
 	const AssetMetadata& AssetManager::GetMetadata(const Ref<Asset>& asset)
@@ -445,6 +471,8 @@ namespace Madam
 
 	void AssetManager::RemoveMetadata(UUID uuid)
 	{
+		if (m_registry.contains(uuid))
+			pathIndex.erase(m_registry.Get(uuid).filepath);
 		loadedAssets.erase(uuid);
 		m_registry.remove(uuid);
 	}
@@ -471,8 +499,8 @@ namespace Madam
 		if (oldRelative.empty() || newRelative.empty())
 			return false;
 
-		bool changed = false;
-		for (auto& [handle, metadata] : m_registry)
+		std::vector<std::pair<UUID, std::filesystem::path>> changes;
+		for (const auto& [handle, metadata] : m_registry)
 		{
 			if (!IsChildOrSame(oldRelative, metadata.filepath))
 				continue;
@@ -480,13 +508,27 @@ namespace Madam
 			const auto destination = suffix.empty() || suffix == "." ? newRelative : newRelative / suffix;
 			if (TypeForPath(destination) != metadata.assetType)
 				return false;
-			metadata.filepath = destination.lexically_normal();
+			changes.emplace_back(handle, destination.lexically_normal());
+		}
+		for (const auto& [handle, destination] : changes)
+		{
+			auto& metadata = m_registry[handle];
+			pathIndex.erase(metadata.filepath);
+			metadata.filepath = destination;
+			pathIndex[metadata.filepath] = handle;
 			metadata.isMissing = false;
 			metadata.isLoaded = false;
 			loadedAssets.erase(handle);
-			changed = true;
 		}
-		return changed;
+		return !changes.empty();
+	}
+
+	void AssetManager::RebuildPathIndex()
+	{
+		pathIndex.clear();
+		pathIndex.reserve(m_registry.count());
+		for (const auto& [handle, metadata] : m_registry)
+			pathIndex[metadata.filepath] = handle;
 	}
 
 	void AssetManager::LoadRegistry()
@@ -514,6 +556,7 @@ namespace Madam
 		}
 		for (const auto& handle : invalid)
 			RemoveMetadata(handle);
+		RebuildPathIndex();
 
 		if (ScanAssets() && registryWritable)
 			SaveMetaData();
@@ -619,5 +662,6 @@ namespace Madam
 		metadata.uuid = UUID();
 		metadata.assetType = type;
 		m_registry[metadata.uuid] = metadata;
+		pathIndex[metadata.filepath] = metadata.uuid;
 	}
 }

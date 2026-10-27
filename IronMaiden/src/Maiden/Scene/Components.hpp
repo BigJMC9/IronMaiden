@@ -153,10 +153,15 @@ namespace Madam
 		bool shaderDriven = false;
 		bool shaderValid = false;
 		std::map<uint32_t, Ref<Texture>> textureBindings;
-		std::map<uint32_t, Ref<Texture>> cachedTextureBindings;
 		size_t expectedTextureCount = 0;
-
-		VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
+		std::uint64_t descriptorLayoutVersion = 0;
+		struct DescriptorFrame
+		{
+			VkDescriptorSet set = VK_NULL_HANDLE;
+			std::uint64_t layoutVersion = 0;
+			std::map<uint32_t, Ref<Texture>> textures;
+		};
+		std::vector<DescriptorFrame> descriptorFrames;
 		Ref<Texture> cached_diffuse_map = nullptr;
 		Ref<Texture> cached_normal_map = nullptr;
 		Ref<Texture> cached_ambient_occlusion_map = nullptr;
@@ -200,9 +205,28 @@ namespace Madam
 		glm::vec3 color{ 1.0f, 1.0f, 1.0f };
 		float radius = 0.5f;
 		float intensity = 1.0f;
+		float range = 10.0f;
+		bool enabled = true;
 
 		CPointLight() = default;
 		CPointLight(const CPointLight&) = default;
+	};
+
+	struct CDirectionalLight
+	{
+		glm::vec3 color{ 1.0f };
+		float intensity = 1.0f;
+		bool enabled = true;
+	};
+
+	struct CSpotLight
+	{
+		glm::vec3 color{ 1.0f };
+		float intensity = 1.0f;
+		float range = 15.0f;
+		float innerAngle = 20.0f;
+		float outerAngle = 30.0f;
+		bool enabled = true;
 	};
 
 	struct CRelationship
@@ -324,6 +348,14 @@ namespace Madam
 		CNativeScript() = default;
 		CNativeScript(const CNativeScript&) = default;
 
+		void DestroyInstance()
+		{
+			if (!Instance) return;
+			if (onDestroy) onDestroy(Instance);
+			if (destroy_script) destroy_script(this);
+			else Instance = nullptr;
+		}
+
 		template<typename T>
 		void Bind()
 		{
@@ -343,6 +375,7 @@ namespace Madam
 	struct ComponentGroup {};
 
 	using AllComponents =
-		ComponentGroup<CTransform, CMeshRenderer, CCamera, CPointLight, CNativeScript, CCSharpScript>;
+		ComponentGroup<CTransform, CMeshRenderer, CCamera, CPointLight, CDirectionalLight,
+			CSpotLight, CNativeScript, CCSharpScript>;
 }
 #endif

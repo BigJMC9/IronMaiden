@@ -63,6 +63,8 @@ namespace Madam {
             virtual void render(FrameInfo& frameInfo);
 
 		protected:
+			RenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout,
+				std::string name, bool initializeBasePipeline);
             virtual void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
             virtual void createPipeline(VkRenderPass renderPass);
             virtual void recreatePipeline(VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);

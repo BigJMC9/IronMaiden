@@ -8,6 +8,7 @@
 #include "../Project/H_Project.h"
 #include "../Asset/H_AssetSystem.h"
 #include "../Asset/H_MaterialAsset.h"
+#include "../Rendering/H_ShadowSystem.hpp"
 #include "../Platform/Platforms.hpp"
 
 #include <fstream>
@@ -31,6 +32,7 @@ namespace Madam
 		globalPool = DescriptorPool::Builder(device)
 			.setMaxSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT * 4)
 			.build();
 
 		const uint32_t maxMaterialSets = 2000;
@@ -100,8 +102,20 @@ namespace Madam
 		return Instance;
 	}
 
+	void Application::SwitchScenes(Ref<Scene> scene)
+	{
+		if (m_sceneManager.GetActiveSceneRef() == scene) return;
+		// Scene components can own mesh and material GPU resources referenced by
+		// the frames already submitted to Vulkan.
+		vkDeviceWaitIdle(device.device());
+		m_renderScene.Clear();
+		m_sceneManager.SwitchScene(std::move(scene));
+	}
+
 	IrmResult Application::LoadScene(std::filesystem::path file_path)
 	{
+		vkDeviceWaitIdle(device.device());
+		m_renderScene.Clear();
 		return m_sceneManager.LoadScene(file_path);
 	}
 
@@ -114,6 +128,8 @@ namespace Madam
 	{
 
 		Scope<UI::GUI> p_gui = std::make_unique<UI::GUI>();
+		Rendering::ShadowSystem shadowSystem(device);
+		shadowSystem.Init();
 		std::vector < Scope<Buffer>> uboBuffers(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
 		std::vector<Scope<Buffer>> gameUboBuffers(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
 		MADAM_CORE_INFO("uboBuffers Created");
@@ -134,6 +150,8 @@ namespace Madam
 		MADAM_CORE_INFO("uboBuffers mapped");
 		Scope<DescriptorSetLayout> globalSetLayout = DescriptorSetLayout::Builder(device)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 			.build();
 
 		std::vector<VkDescriptorSet> globalDescriptorSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -142,13 +160,19 @@ namespace Madam
 		for (int i = 0; i < globalDescriptorSets.size(); i++)
 		{
 			auto bufferInfo = uboBuffers[i]->DescriptorInfo();
+			auto realtimeShadowInfo = shadowSystem.RealtimeDescriptor(i);
+			auto bakedShadowInfo = shadowSystem.BakedDescriptor();
 			if (!DescriptorWriter(*globalSetLayout, *globalPool)
 				.WriteBuffer(0, &bufferInfo)
+				.WriteImage(1, &realtimeShadowInfo)
+				.WriteImage(2, &bakedShadowInfo)
 				.Build(globalDescriptorSets[i]))
 				throw std::runtime_error("Could not allocate the viewport camera descriptor set");
 			auto gameBufferInfo = gameUboBuffers[i]->DescriptorInfo();
 			if (!DescriptorWriter(*globalSetLayout, *globalPool)
 				.WriteBuffer(0, &gameBufferInfo)
+				.WriteImage(1, &realtimeShadowInfo)
+				.WriteImage(2, &bakedShadowInfo)
 				.Build(gameGlobalDescriptorSets[i]))
 				throw std::runtime_error("Could not allocate the game camera descriptor set");
 		}
@@ -169,11 +193,22 @@ namespace Madam
 		p_gui->OnAttach();
 
 		time.StartTime();
+		const auto elapsedMs = [](const auto start, const auto end) {
+			return std::chrono::duration<float, std::milli>(end - start).count();
+		};
 
 		while (!window.shouldClose())
 		{
 			glfwPollEvents();
 			time.UpdateTime();
+			const float frameSeconds = time.GetFrameTime();
+			if (frameSeconds > 0.0f) {
+				const float sampleMs = frameSeconds * 1000.0f;
+				const float blend = 1.0f - std::exp(-8.0f * frameSeconds);
+				performanceStats.frameMs = performanceStats.frameMs == 0.0f ? sampleMs
+					: performanceStats.frameMs + (sampleMs - performanceStats.frameMs) * blend;
+				performanceStats.fps = 1000.0f / performanceStats.frameMs;
+			}
 			if (reload_shaders == true)
 			{
 				render_stack.reloadPipeline(1, renderer.GetMainRenderPass(), globalSetLayout);
@@ -190,14 +225,26 @@ namespace Madam
 				}
 				reload_shaders = false;
 			}
+			const auto updateStart = std::chrono::steady_clock::now();
 			p_surface->OnUpdate();
+			const auto surfaceEnd = std::chrono::steady_clock::now();
 			p_gui->OnUpdate();
+			const auto uiEnd = std::chrono::steady_clock::now();
 			Scene& activeScene = m_sceneManager.GetActiveScene();
 			activeScene.Update();
+			const auto sceneEnd = std::chrono::steady_clock::now();
+			shadowSystem.SyncBake(activeScene);
+			const auto bakeEnd = std::chrono::steady_clock::now();
+			performanceStats.surfaceCpuMs = elapsedMs(updateStart, surfaceEnd);
+			performanceStats.uiCpuMs = elapsedMs(surfaceEnd, uiEnd);
+			performanceStats.sceneCpuMs = elapsedMs(uiEnd, sceneEnd);
+			performanceStats.bakeCpuMs = elapsedMs(sceneEnd, bakeEnd);
+			performanceStats.updateCpuMs = elapsedMs(updateStart, bakeEnd);
 
 			if (renderer.BeginFrame())
 			{
 				activeScene.BuildRenderScene(m_renderScene);
+				performanceStats.meshCount = static_cast<uint32_t>(m_renderScene.meshEntities.size());
 				auto command_buffer = renderer.BeginCommandBuffer();
 				int frame_index = renderer.GetFrameIndex();
 				framePools[frame_index]->resetPool();
@@ -214,46 +261,50 @@ namespace Madam
 
 				//Should be done in renderer
 				Rendering::CameraHandle& camera = Rendering::CameraHandle::GetMain();
+				const auto viewportExtent = renderer.GetOffscreenExtent(0);
+				auto& editorCameraData = camera.GetMutableCameraData();
+				const float viewportAspect = static_cast<float>(viewportExtent.width) / viewportExtent.height;
+				if (editorCameraData.projectionType == Rendering::CameraData::ProjectionType::Perspective)
+					editorCameraData.perspective.aspect = viewportAspect;
+				else if (editorCameraData.projectionType == Rendering::CameraData::ProjectionType::Orthographic)
+					editorCameraData.orthographic.aspect = viewportAspect;
+				camera.SetProjection();
 				frameInfo.ubo.projection = camera.GetProjection();
 				frameInfo.ubo.view = camera.GetView();
 				frameInfo.ubo.inverseView = camera.GetInverseView();
 
-				//This Specific Behaviour should be done by a proper render system obj (after renderstack and layers are refactored)
-				entt::registry& entities = *m_renderScene.registry;
-				int lightIndex = 0;
-				for (auto entity : m_renderScene.pointLightEntities)
-				{
-					auto& pointLight = entities.get<CPointLight>(entity);
-
-					//copy light to ubo
-
-					UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
-					glm::mat4 worldTransform = activeScene.GetWorldTransform(uuid);
-					glm::vec3 worldTranslation = glm::vec3(worldTransform[3][0], worldTransform[3][1], worldTransform[3][2]);
-					frameInfo.ubo.pointLights[lightIndex].position = glm::vec4(worldTranslation, 1.f);
-					frameInfo.ubo.pointLights[lightIndex].color = glm::vec4(pointLight.color, pointLight.intensity);
-
-					lightIndex++;
-				}
-				frameInfo.ubo.numLights = lightIndex;
+				const auto shadowStart = std::chrono::steady_clock::now();
+				const auto shadowResult = shadowSystem.Prepare(activeScene, m_renderScene, frameInfo.ubo,
+					static_cast<uint32_t>(frame_index), command_buffer);
+				performanceStats.shadowCpuMs = elapsedMs(shadowStart, std::chrono::steady_clock::now());
+				performanceStats.shadowDrawCalls = shadowResult.drawCalls;
+				performanceStats.shadowRendered = shadowResult.rendered;
+				performanceStats.shadowCached = shadowResult.cached;
+				performanceStats.lightCount = frameInfo.ubo.numLights +
+					frameInfo.ubo.numDirectionalLights + frameInfo.ubo.numSpotLights;
 				uboBuffers[frame_index]->WriteToBuffer(&frameInfo.ubo);
 				uboBuffers[frame_index]->Flush();
 
 				// render
 				activeScene.Render();
+				const auto viewportStart = std::chrono::steady_clock::now();
 				renderer.BeginRenderPass(command_buffer, 0);
 				render_stack.render(frameInfo);
 				renderer.EndRenderPass(command_buffer);
+				performanceStats.viewportCpuMs = elapsedMs(viewportStart, std::chrono::steady_clock::now());
 				renderer.PipelineBarrier(command_buffer, false, false, frame_index, 0);
 				Entity gameCameraEntity = activeScene.GetGameCameraEntity();
+				const auto gameStart = std::chrono::steady_clock::now();
 				renderer.BeginRenderPass(command_buffer, 2);
 				if (gameCameraEntity)
 				{
 					auto cameraData = gameCameraEntity.GetComponent<CCamera>().GetCameraData();
+					const auto gameExtent = renderer.GetOffscreenExtent(2);
+					const float gameAspect = static_cast<float>(gameExtent.width) / gameExtent.height;
 					if (cameraData.projectionType == Rendering::CameraData::ProjectionType::Perspective)
-						cameraData.perspective.aspect = renderer.GetAspectRatio();
+						cameraData.perspective.aspect = gameAspect;
 					else if (cameraData.projectionType == Rendering::CameraData::ProjectionType::Orthographic)
-						cameraData.orthographic.aspect = renderer.GetAspectRatio();
+						cameraData.orthographic.aspect = gameAspect;
 					Rendering::CameraHandle gameCamera(cameraData);
 					const auto& gameTransform = gameCameraEntity.GetComponent<CTransform>();
 					glm::vec3 worldPosition = gameTransform.translation;
@@ -274,6 +325,8 @@ namespace Madam
 					render_stack.render(gameFrameInfo, false);
 				}
 				renderer.EndRenderPass(command_buffer);
+				performanceStats.gameCpuMs = gameCameraEntity
+					? elapsedMs(gameStart, std::chrono::steady_clock::now()) : 0.0f;
 				renderer.PipelineBarrier(command_buffer, false, false, frame_index, 2);
 				renderer.BeginSwapChainRenderPass(command_buffer);
 				renderer.EndSwapChainRenderPass(command_buffer);
@@ -288,20 +341,26 @@ namespace Madam
 
 		MADAM_CORE_INFO("Closing Program");
 		vkDeviceWaitIdle(device.device());
+		shadowSystem.SyncBake(m_sceneManager.GetActiveScene());
 		renderer.FreeCommandBuffers();
 		renderer.DestroyCommandPool();
 		render_stack.deinit();
+		shadowSystem.Shutdown();
 		framePools.clear();
 		globalDescriptorSets.clear();
 		gameGlobalDescriptorSets.clear();
 		globalSetLayout = nullptr;
 		uboBuffers.clear();
 		gameUboBuffers.clear();
+		SaveSession();
+		// Release editor, scene and asset GPU resources while the Vulkan device is alive.
+		p_gui.reset();
+		p_surface.reset();
+		m_renderScene.Clear();
+		m_sceneManager.SetActiveScene(nullptr);
+		Project::clear();
 		materialPool.reset();
 		globalPool.reset();
-		m_sceneManager.SetActiveScene(nullptr);
-		SaveSession();
-		p_gui = nullptr;
 		Deinit();
 	}
 

@@ -43,8 +43,7 @@ namespace Madam
 		for (auto entity : scripts)
 		{
 			auto& script = scripts.get<CNativeScript>(entity);
-			if (script.Instance && script.destroy_script)
-				script.destroy_script(&script);
+			script.DestroyInstance();
 		}
 		m_registry.clear();
 		m_entity_map.clear();
@@ -53,6 +52,7 @@ namespace Madam
 	Ref<Scene> Scene::Copy()
 	{
 		Ref<Scene> new_scene = CreateRef<Scene>();
+		new_scene->lighting = lighting;
 		std::unordered_map<UUID, entt::entity> entt_map;
 
 		auto id_view = m_registry.view<CUniqueIdentifier>();
@@ -89,6 +89,12 @@ namespace Madam
 		{
 			out.pointLightEntities.push_back(entity);
 		}
+		auto directionalLightView = m_registry.view<CTransform, CDirectionalLight>();
+		for (auto entity : directionalLightView)
+			out.directionalLightEntities.push_back(entity);
+		auto spotLightView = m_registry.view<CTransform, CSpotLight>();
+		for (auto entity : spotLightView)
+			out.spotLightEntities.push_back(entity);
 	}
 
 	Entity Scene::CreateErrorEntity()
@@ -187,6 +193,8 @@ namespace Madam
 
 			parentEntity.GetComponent<CRelationship>().children = children;
 		}
+		if (entity.HasComponent<CNativeScript>())
+			entity.GetComponent<CNativeScript>().DestroyInstance();
 		m_entity_map.erase(uuid);
 		m_registry.destroy(entity);
 	}
@@ -425,6 +433,18 @@ namespace Madam
 
 	template<>
 	void MADAM_API Scene::OnComponentAdded<CPointLight>(Entity entity, CPointLight& component)
+	{
+
+	}
+
+	template<>
+	void MADAM_API Scene::OnComponentAdded<CDirectionalLight>(Entity entity, CDirectionalLight& component)
+	{
+
+	}
+
+	template<>
+	void MADAM_API Scene::OnComponentAdded<CSpotLight>(Entity entity, CSpotLight& component)
 	{
 
 	}

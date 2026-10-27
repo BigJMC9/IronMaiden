@@ -43,7 +43,7 @@ namespace Madam::UI {
 	
 	struct PipelineInfo {
 		Ref<Pipeline> pipeline;
-		VkPipelineLayout layout;
+		VkPipelineLayout layout = VK_NULL_HANDLE;
 	};
 
 	struct IconInfo
@@ -87,6 +87,7 @@ namespace Madam::UI {
 		void Project();
 		void Console();
 		void RenderingSettings();
+		void LightingWindow();
 		void DebugWindow();
 
 		static void DrawViewport(const ImDrawList* parentList, const ImDrawCmd* pcmd);
@@ -95,13 +96,15 @@ namespace Madam::UI {
 
 		enum WindowStates {
 			RENDER_SETTINGS_WINDOW = BIT(0),
-			DEBUG_INFO_WINDOW = BIT(1)
+			DEBUG_INFO_WINDOW = BIT(1),
+			LIGHTING_WINDOW = BIT(2)
 		};
 
 		int windowStates = 0;
 		void DrawVec3(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
 		void DrawViewportOverlays();
 		void DrawViewportGizmoButtons();
+		void DrawPerformanceOverlay(ImVec2 topLeft, ImVec2 size, const char* title);
 		void DrawEntityNode(Entity entity);
 		void DrawEntityComponents(Entity entity);
 		void DrawAssetInfo(Ref<Asset>& asset);
@@ -124,11 +127,27 @@ namespace Madam::UI {
 
 		std::filesystem::path curDir = ASSET_DIR;
 		std::filesystem::path sceneDir = "";
+		std::filesystem::path browserDirectory;
+		std::filesystem::file_time_type browserDirectoryStamp{};
+		std::vector<std::filesystem::directory_entry> browserFolders;
+		std::vector<std::filesystem::directory_entry> browserFiles;
+		struct BrowserTile
+		{
+			std::string buttonId;
+			std::string label;
+			float labelOffset = 0.0f;
+		};
+		std::vector<BrowserTile> browserFolderTiles;
+		std::vector<BrowserTile> browserFileTiles;
+		std::vector<UUID> browserHandles;
+		std::vector<AssetType> browserTypes;
 
 		Ref<Asset> selectedAsset = nullptr;
 		bool isSRGB = false;
 
 		bool isMovingViewportCamera = false;
+		bool showViewportStats = true;
+		bool showGameStats = true;
 
 		Ref<Entity> selectedEntity = nullptr;
 		Ref<Entity> pendingEntityDeletion;

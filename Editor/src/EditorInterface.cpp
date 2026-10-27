@@ -11,7 +11,6 @@ namespace Madam {
 		glm::vec2 mouseDelta{ 0.0f };
 		glm::vec2 mouseScroll{ 0.0f };
 		glm::vec2 lastMousePos{ 0.0f };
-		glm::vec2 smoothedMouseDelta{ 0.0f };
 		glm::vec3 velocity{ 0.0f };
 		bool hasLastMousePos = false;
 
@@ -27,21 +26,18 @@ namespace Madam {
 		void Update() {
 			if (!GetComponent<CCamera>().cameraHandle->IsMain()) return;
 			GLFWwindow* window = Application::Get().GetWindow().getGLFWwindow();
-			const float dt = glm::clamp(Application::Get().GetTime().GetDeltaTime(), 0.0f, 0.05f);
+			const float dt = glm::clamp(Application::Get().GetTime().GetDeltaTime(), 0.0f, 0.1f);
 			const bool captured = glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
 			const bool looking = captured && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
 			const bool panning = captured && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
-			const float blend = 1.0f - std::exp(-18.0f * dt);
 			const glm::vec2 inputDelta = mouseDelta;
 			mouseDelta = { 0.0f, 0.0f };
-			smoothedMouseDelta = glm::mix(smoothedMouseDelta,
-				(looking || panning) ? inputDelta : glm::vec2(0.0f), blend);
 
 			auto& transform = GetComponent<CTransform>();
 			if (looking) {
-				const glm::quat yaw = glm::angleAxis(smoothedMouseDelta.x * mouseSensitivity, glm::vec3(0, -1, 0));
+				const glm::quat yaw = glm::angleAxis(inputDelta.x * mouseSensitivity, glm::vec3(0, -1, 0));
 				const glm::quat yawed = glm::normalize(yaw * transform.rotation);
-				const glm::quat pitch = glm::angleAxis(smoothedMouseDelta.y * mouseSensitivity, glm::vec3(1, 0, 0));
+				const glm::quat pitch = glm::angleAxis(inputDelta.y * mouseSensitivity, glm::vec3(1, 0, 0));
 				const glm::quat candidate = glm::normalize(yawed * pitch);
 				const float pitchAngle = std::asin(glm::clamp((candidate * glm::vec3(0, 0, 1)).y, -1.0f, 1.0f));
 				transform.rotation = std::abs(pitchAngle) < glm::radians(89.0f) ? candidate : yawed;
@@ -51,7 +47,7 @@ namespace Madam {
 			const glm::vec3 right = transform.rotation * glm::vec3(1, 0, 0);
 			const glm::vec3 up = transform.rotation * glm::vec3(0, -1, 0);
 			if (panning)
-				transform.translation += (right * smoothedMouseDelta.x - up * smoothedMouseDelta.y) * panSensitivity;
+				transform.translation += (right * inputDelta.x - up * inputDelta.y) * panSensitivity;
 
 			glm::vec3 direction(0.0f);
 			if (looking) {
@@ -68,7 +64,8 @@ namespace Madam {
 			mouseScroll = { 0.0f, 0.0f };
 			const glm::vec3 desiredVelocity = glm::length(direction) > 0.0f
 				? glm::normalize(direction) * moveSpeed : glm::vec3(0.0f);
-			velocity = glm::mix(velocity, desiredVelocity, 1.0f - std::exp(-12.0f * dt));
+			velocity = looking ? glm::mix(velocity, desiredVelocity, 1.0f - std::exp(-28.0f * dt))
+				: glm::vec3(0.0f);
 			transform.translation += velocity * dt;
 		}
 		void LateUpdate() {}

@@ -28,10 +28,7 @@ namespace Madam
 			}
 		}
 		if (runtimeMaterial->shaderFragmentPath != shaderPath || bindingsChanged)
-		{
-			runtimeMaterial->descriptor_set = VK_NULL_HANDLE;
-			runtimeMaterial->cachedTextureBindings.clear();
-		}
+			++runtimeMaterial->descriptorLayoutVersion;
 		runtimeMaterial->shaderFragmentPath = shaderPath;
 		runtimeMaterial->expectedTextureCount = definition.textures.size();
 		runtimeMaterial->textureBindings.clear();

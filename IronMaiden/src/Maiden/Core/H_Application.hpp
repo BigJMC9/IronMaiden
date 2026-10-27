@@ -33,6 +33,25 @@ namespace Madam
 		std::filesystem::path projectsDirectory = "Projects";
 	};
 
+	struct PerformanceStats
+	{
+		float frameMs = 0.0f;
+		float fps = 0.0f;
+		float updateCpuMs = 0.0f;
+		float surfaceCpuMs = 0.0f;
+		float uiCpuMs = 0.0f;
+		float sceneCpuMs = 0.0f;
+		float bakeCpuMs = 0.0f;
+		float shadowCpuMs = 0.0f;
+		float viewportCpuMs = 0.0f;
+		float gameCpuMs = 0.0f;
+		uint32_t meshCount = 0;
+		uint32_t lightCount = 0;
+		uint32_t shadowDrawCalls = 0;
+		bool shadowRendered = false;
+		bool shadowCached = false;
+	};
+
 	// With madam api macro, the compiler will throw a warning, may need change in future, look at microsoft C4251 warn page for more details
 	class MADAM_API Application
 	{
@@ -66,6 +85,7 @@ namespace Madam
 		Scene& GetScene() { return m_sceneManager.GetActiveScene(); }
 		Ref<Scene> GetSceneRef() { return m_sceneManager.GetActiveSceneRef(); }
 		const Time& GetTime() const { return time; }
+		const PerformanceStats& GetPerformanceStats() const { return performanceStats; }
 		DescriptorPool& GetMaterialDescriptorPool() { return *materialPool; }
 		ApplicationInfo GetConfig()
 		{
@@ -142,10 +162,7 @@ namespace Madam
 			}
 		}
 
-		void SwitchScenes(Ref<Scene> scene)
-		{
-			m_sceneManager.SwitchScene(scene);
-		}
+		void SwitchScenes(Ref<Scene> scene);
 
 		IrmResult LoadScene(std::filesystem::path file_path);
 		IrmResult SaveScene(std::filesystem::path file_path);
@@ -196,6 +213,7 @@ namespace Madam
 		Rendering::Renderer renderer = Rendering::Renderer{ window, device };
 		Rendering::RenderStack render_stack = Rendering::RenderStack{ device, renderer };
 		Time time = Time{};
+		PerformanceStats performanceStats{};
 		EventSystem eventSystem = EventSystem{};
 
 		//Move this somewhere

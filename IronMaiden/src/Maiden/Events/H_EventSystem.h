@@ -89,15 +89,16 @@ namespace Madam::Events {
 
 		template<class T, class EventType>
 		void RemoveListener(T* instance, void (T::* function)(EventType*)) {
-			ListenerHandlers* listeners = _listeners[typeid(EventType)];
-			for (ListenerHandler* listener : *listeners) {
-				MemberListenerHandler<T, EventType>* memberListener = static_cast<MemberListenerHandler<T, EventType>*>(listener);
-				if (memberListener != nullptr) {
-					if (memberListener->_instance == instance && memberListener->_function == function) {
-						listeners->erase(std::remove(listeners->begin(), listeners->end(), listener), listeners->end());
-						delete listener;
-						break;
-					}
+			const auto found = _listeners.find(typeid(EventType));
+			if (found == _listeners.end() || !found->second) return;
+			auto& listeners = *found->second;
+			for (auto it = listeners.begin(); it != listeners.end(); ++it) {
+				auto* memberListener = dynamic_cast<MemberListenerHandler<T, EventType>*>(*it);
+				if (memberListener && memberListener->_instance == instance &&
+					memberListener->_function == function) {
+					delete *it;
+					listeners.erase(it);
+					break;
 				}
 			}
 		}

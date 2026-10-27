@@ -23,6 +23,17 @@ static bool Check(bool condition, const char* message)
 	return condition;
 }
 
+struct NativeScriptProbe : ScriptableEntity
+{
+	static inline int destroyed = 0;
+	void Create() {}
+	void Start() {}
+	void Update() {}
+	void LateUpdate() {}
+	void Render() {}
+	void Destroy() { ++destroyed; }
+};
+
 int main()
 {
 	const auto temporary = std::filesystem::temp_directory_path();
@@ -57,6 +68,63 @@ int main()
 		<< "layout(location=0) out vec4 outColor;\nvoid main() { outColor = texture(albedoMap, vec2(0.5)); }\n";
 	std::filesystem::current_path(testRoot);
 	Logger::Init();
+	{
+		NativeScriptProbe::destroyed = 0;
+		auto scene = CreateRef<Scene>();
+		auto entity = scene->CreateEntity("Unload probe");
+		entity.AddComponent<CNativeScript>().Bind<NativeScriptProbe>();
+		scene->Update();
+	}
+	if (!Check(NativeScriptProbe::destroyed == 1,
+		"Unloading a scene did not destroy its native script")) return 1;
+	{
+		auto scene = CreateRef<Scene>();
+		auto entity = scene->CreateEntity("Delete probe");
+		entity.AddComponent<CNativeScript>().Bind<NativeScriptProbe>();
+		scene->Update();
+		scene->DestroyEntity(entity);
+	}
+	if (!Check(NativeScriptProbe::destroyed == 2,
+		"Deleting an entity did not destroy its native script exactly once")) return 1;
+	{
+		auto scene = CreateRef<Scene>();
+		auto entity = scene->CreateEntity("Component probe");
+		entity.AddComponent<CNativeScript>().Bind<NativeScriptProbe>();
+		scene->Update();
+		entity.RemoveComponent<CNativeScript>();
+	}
+	if (!Check(NativeScriptProbe::destroyed == 3,
+		"Removing a native script component did not destroy its instance")) return 1;
+	{
+		auto scene = CreateRef<Scene>();
+		auto sun = scene->CreateEntity("Sun");
+		sun.AddComponent<CDirectionalLight>().intensity = 2.5f;
+		auto spot = scene->CreateEntity("Spot");
+		spot.AddComponent<CSpotLight>().outerAngle = 35.0f;
+		auto point = scene->CreateEntity("Point");
+		point.AddComponent<CPointLight>().range = 24.0f;
+		auto& lighting = scene->GetLightingSettings();
+		lighting.shadowMode = ShadowMode::Baked;
+		lighting.shadowCaster = sun.GetComponent<CUniqueIdentifier>().uuid;
+		lighting.shadowDistance = 80.0f;
+		lighting.bakeFile = "Library/Lighting/test.shadowbin";
+		Rendering::RenderScene renderScene;
+		scene->BuildRenderScene(renderScene);
+		if (!Check(renderScene.directionalLightEntities.size() == 1 &&
+			renderScene.spotLightEntities.size() == 1 &&
+			renderScene.pointLightEntities.size() == 1,
+			"Scene render data omitted a light type")) return 1;
+		auto copy = scene->Copy();
+		const auto& copiedLighting = copy->GetLightingSettings();
+		if (!Check(copiedLighting.shadowMode == ShadowMode::Baked &&
+			copiedLighting.shadowCaster == lighting.shadowCaster &&
+			copiedLighting.shadowDistance == 80.0f &&
+			copiedLighting.bakeFile == lighting.bakeFile &&
+			copy->GetEntity(sun.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CDirectionalLight>().intensity == 2.5f &&
+			copy->GetEntity(spot.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CSpotLight>().outerAngle == 35.0f &&
+			copy->GetEntity(point.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CPointLight>().range == 24.0f,
+			"Scene copy lost lighting settings or components")) return 1;
+	}
 	{
 		auto scene = CreateRef<Scene>();
 		auto editorCamera = scene->GetMainCameraEntity();
@@ -169,6 +237,12 @@ int main()
 		if (!Check(shader.IsValid() && shader.textures.size() == 2 &&
 			shader.textures[0].name == "albedoMap" && shader.textures[1].binding == 5,
 			"Custom shader bindings were not discovered")) return 1;
+		std::ofstream(testRoot / "resources" / "shaders" / "Custom.frag", std::ios::app)
+			<< "layout(set=1, binding=6) uniform sampler2D extraMap;\n";
+		const auto updatedShader = assets.GetShaderDefinition(Madam::UUID("editor://shaders/Custom.frag"));
+		if (!Check(updatedShader.IsValid() && updatedShader.textures.size() == 3 &&
+			updatedShader.textures[2].name == "extraMap",
+			"Cached shader inputs were not refreshed after a source edit")) return 1;
 		auto createdShader = assets.CreateShader(customProject / "Assets" / "New Shader.frag");
 		if (!Check(createdShader && std::filesystem::is_regular_file(customProject / "Assets" / "New Shader.vert"),
 			"Shader asset and vertex stage were not created")) return 1;

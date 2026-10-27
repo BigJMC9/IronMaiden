@@ -9,12 +9,14 @@
 #include "../Asset/H_AssetSystem.h"
 #include "../Asset/H_MaterialAsset.h"
 #include "../Rendering/H_Mesh.h"
+#include "../Rendering/Vulkan/H_VulkanTexture.h"
 #include "../Platform/Platforms.hpp"
 
 #define INCLUDE_GLM_UTILS
 #include "../Utils/H_Logger_Utils.h"
 
 #include <cwchar>
+#include <cstdio>
 #include <cstring>
 #include <cmath>
 #include <algorithm>
@@ -259,11 +261,15 @@ namespace Madam::UI {
 		pendingEntityDeletion = CreateRef<Entity>(Entity());
 	}
 
-	//Fix please, descriptorsets and image are not be deallocated
 	GUI::~GUI() {
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
+		viewportPipelineInfo.pipeline.reset();
+		if (viewportPipelineInfo.layout != VK_NULL_HANDLE)
+			vkDestroyPipelineLayout(Rendering::Renderer::GetDevice().device(), viewportPipelineInfo.layout, nullptr);
+		if (viewportSampler != VK_NULL_HANDLE)
+			vkDestroySampler(Rendering::Renderer::GetDevice().device(), viewportSampler, nullptr);
 		guiPool = nullptr;
 	}
 
@@ -290,7 +296,8 @@ namespace Madam::UI {
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+		// Keep drag previews on the editor's main swapchain for consistent frame pacing.
+		io.ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
 		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 
@@ -545,6 +552,7 @@ namespace Madam::UI {
 		{
 			DebugWindow();
 		}
+		if (windowStates & LIGHTING_WINDOW) LightingWindow();
 		Viewport();
 		Game();
 		Hierarchy();
@@ -570,6 +578,7 @@ namespace Madam::UI {
 						else {
 							selectedAsset.reset();
 							curDir = ASSET_DIR;
+							browserDirectory.clear();
 							sceneDir.clear();
 							Application::Get().SwitchScenes(CreateRef<Scene>());
 							Application::Get().SaveSession();
@@ -583,9 +592,9 @@ namespace Madam::UI {
 				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("New Scene")) {
-					//Move this behaviour somewhere else (probably scene class)
-					Scene newScene{};
-					Entity camera = newScene.CreateEntity();
+					sceneDir.clear();
+					auto newScene = CreateRef<Scene>();
+					Entity camera = newScene->CreateEntity();
 					camera.GetComponent<CMetadata>().name = "Editor Camera";
 					camera.GetComponent<CMetadata>().is_hidden_entity = true;
 					camera.GetComponent<CTransform>().translation.z = -2.5f;
@@ -596,7 +605,7 @@ namespace Madam::UI {
 					camera.GetComponent<CCamera>().editorOnly = true;
 					camera.GetComponent<CCamera>().cameraHandle->SetViewDirection(glm::vec3(0.f, 2.0f, 0.f), glm::vec3(0.f, 0.f, 0.f));
 					camera.GetComponent<CCamera>().cameraHandle->SetMain();
-					Application::Get().SwitchScenes(CreateRef<Scene>(std::move(newScene)));
+					Application::Get().SwitchScenes(std::move(newScene));
 				}
 				if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {
 					if (OpenFileDialog(sceneDir, L"scene", L"scene")) {
@@ -651,6 +660,7 @@ namespace Madam::UI {
 			}
 			if (ImGui::BeginMenu("Settings"))
 			{
+				if (ImGui::MenuItem("Lighting")) windowStates |= LIGHTING_WINDOW;
 				if (ImGui::MenuItem("Render Settings")) 
 				{
 					windowStates |= RENDER_SETTINGS_WINDOW;
@@ -659,6 +669,11 @@ namespace Madam::UI {
 				{
 					windowStates |= DEBUG_INFO_WINDOW;
 				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("View")) {
+				ImGui::MenuItem("Viewport Stats", nullptr, &showViewportStats);
+				ImGui::MenuItem("Game Stats", nullptr, &showGameStats);
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
@@ -713,14 +728,24 @@ namespace Madam::UI {
 	void GUI::Viewport() {
 		bool imageHovered = false;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		if (ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse)) {
+		const bool visible = ImGui::Begin("Viewport", nullptr,
+			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+		if (visible) {
 
 			const ImVec2 displaySize = ImGui::GetContentRegionAvail();
+			auto& renderer = Rendering::Renderer::Get();
+			renderer.SetOffscreenExtent(0,
+				static_cast<uint32_t>(std::ceil(std::max(1.0f, displaySize.x))),
+				static_cast<uint32_t>(std::ceil(std::max(1.0f, displaySize.y))));
+			const auto renderSize = renderer.GetOffscreenExtent(0);
+			const auto fullSize = renderer.GetSwapChainExtent();
+			const ImVec2 uv1(static_cast<float>(renderSize.width) / fullSize.width,
+				static_cast<float>(renderSize.height) / fullSize.height);
 
 			ImVec2 uv0 = ImVec2(0, 0);
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 			drawList->AddCallback(viewportCallback, &viewportPipelineInfo);
-			ImGui::Image(viewportSet, displaySize, uv0, ImVec2(1,1), ImVec4(1, 1, 1, 1));
+			ImGui::Image(viewportSet, displaySize, uv0, uv1, ImVec4(1, 1, 1, 1));
 			viewportImageTopLeft = ImGui::GetItemRectMin();
 			viewportImageSize = displaySize;
 			imageHovered = ImGui::IsItemHovered();
@@ -730,19 +755,38 @@ namespace Madam::UI {
 			{
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PROJECT_ITEM"))
 				{
-					const wchar_t* wPath = (const wchar_t*)payload->Data;
-					std::string path = ConvertWideToUtf8(wPath);
-
-					MADAM_CORE_INFO("Opening scene: " + path);
-					if (Application::Get().LoadScene(path) != VK_SUCCESS)
+					const std::filesystem::path path(static_cast<const wchar_t*>(payload->Data));
+					auto& assets = Project::Get().getAssetManager();
+					const auto metadata = assets.GetMetadata(path);
+					if (metadata.assetType == AssetType::SCENE)
 					{
-						MADAM_ERROR("Unable to Load Scene");
+						if (Application::Get().LoadScene(path) == IRM_SUCCESS)
+							sceneDir = path;
+						else
+							MADAM_ERROR("Unable to load scene: " + path.u8string());
+					}
+					else if (metadata.assetType == AssetType::MATERIAL)
+					{
+						if (selectedEntity && selectedEntity->HasComponent<CMeshRenderer>())
+						{
+							auto material = std::dynamic_pointer_cast<MaterialAsset>(assets.GetAsset(metadata.uuid));
+							if (material)
+							{
+								auto& renderer = selectedEntity->GetComponent<CMeshRenderer>();
+								renderer.materialAsset = metadata.uuid;
+								renderer.material = material->GetRuntimeMaterial(assets);
+							}
+							else MADAM_ERROR("Unable to load material: " + path.u8string());
+						}
+						else MADAM_INFO("Select a mesh entity to apply the material.");
 					}
 				}
 				ImGui::EndDragDropTarget();
 			}
 
 			DrawViewportOverlays();
+			if (showViewportStats)
+				DrawPerformanceOverlay(viewportImageTopLeft, viewportImageSize, "Viewport");
 
 			//imGuizmo
 			DrawViewportGizmoButtons();
@@ -801,10 +845,12 @@ namespace Madam::UI {
 			if (Input::Get().IsMouseButtonPress(MouseCode::RIGHTMOUSEBUTTON) ||
 				Input::Get().IsMouseButtonPress(MouseCode::MIDDLEMOUSEBUTTON))
 			{
-				Application::Get().GetWindow().SetCursorState(CursorState::DISABLED);
-				if (glfwRawMouseMotionSupported())
-					glfwSetInputMode(Application::Get().GetWindow().getGLFWwindow(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-				isMovingViewportCamera = true;
+				if (!isMovingViewportCamera) {
+					Application::Get().GetWindow().SetCursorState(CursorState::DISABLED);
+					if (glfwRawMouseMotionSupported())
+						glfwSetInputMode(Application::Get().GetWindow().getGLFWwindow(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+					isMovingViewportCamera = true;
+				}
 			}
 			else
 			{
@@ -825,6 +871,7 @@ namespace Madam::UI {
 			Application::Get().GetWindow().SetCursorState(CursorState::NORMAL);
 			Application::Get().GetWindow().SetCursorIcon(CursorType::ARROW);
 		}
+		if (!visible) Rendering::Renderer::Get().SetOffscreenExtent(0, 1, 1);
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}
@@ -833,17 +880,29 @@ namespace Madam::UI {
 	{
 		if (dockspaceId) ImGui::SetNextWindowDockID(dockspaceId, ImGuiCond_FirstUseEver);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		if (ImGui::Begin("Game", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+		const bool visible = ImGui::Begin("Game", nullptr,
+			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+		if (visible)
 		{
 			const ImVec2 imageSize = ImGui::GetContentRegionAvail();
 			if (imageSize.x > 1.0f && imageSize.y > 1.0f)
 			{
+				const ImVec2 imageTopLeft = ImGui::GetCursorScreenPos();
 				if (Application::Get().GetScene().GetGameCameraEntity())
 				{
-					ImGui::Image(gameSet, imageSize);
+					auto& renderer = Rendering::Renderer::Get();
+					renderer.SetOffscreenExtent(2,
+						static_cast<uint32_t>(std::ceil(imageSize.x)),
+						static_cast<uint32_t>(std::ceil(imageSize.y)));
+					const auto renderSize = renderer.GetOffscreenExtent(2);
+					const auto fullSize = renderer.GetSwapChainExtent();
+					ImGui::Image(gameSet, imageSize, ImVec2(0, 0),
+						ImVec2(static_cast<float>(renderSize.width) / fullSize.width,
+							static_cast<float>(renderSize.height) / fullSize.height));
 				}
 				else
 				{
+					Rendering::Renderer::Get().SetOffscreenExtent(2, 1, 1);
 					const ImVec2 topLeft = ImGui::GetCursorScreenPos();
 					ImGui::InvisibleButton("##NoGameCamera", imageSize);
 					ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -860,8 +919,12 @@ namespace Madam::UI {
 					drawList->AddText(ImVec2(centerX - helpSize.x * 0.5f, centerY + 5.0f),
 						IM_COL32(128, 143, 160, 255), help);
 				}
+				if (showGameStats)
+					DrawPerformanceOverlay(imageTopLeft, imageSize, "Game");
 			}
+			else Rendering::Renderer::Get().SetOffscreenExtent(2, 1, 1);
 		}
+		else Rendering::Renderer::Get().SetOffscreenExtent(2, 1, 1);
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}
@@ -946,6 +1009,16 @@ namespace Madam::UI {
 					auto entity = Application::Get().GetScene().CreateEntity("Point Light");
 					entity.AddComponent<CPointLight>();
 				}
+				if (ImGui::MenuItem("Directional Light")) {
+					auto entity = Application::Get().GetScene().CreateEntity("Directional Light");
+					entity.AddComponent<CDirectionalLight>();
+					entity.GetComponent<CTransform>().rotation = glm::angleAxis(
+						glm::radians(-50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				}
+				if (ImGui::MenuItem("Spot Light")) {
+					auto entity = Application::Get().GetScene().CreateEntity("Spot Light");
+					entity.AddComponent<CSpotLight>();
+				}
 				ImGui::EndMenu();
 			}
 			ImGui::EndPopup();
@@ -967,6 +1040,8 @@ namespace Madam::UI {
 					const bool hasCamera = selectedEntity->HasComponent<CCamera>();
 					const bool hasMeshRenderer = selectedEntity->HasComponent<CMeshRenderer>();
 					const bool hasPointLight = selectedEntity->HasComponent<CPointLight>();
+					const bool hasDirectionalLight = selectedEntity->HasComponent<CDirectionalLight>();
+					const bool hasSpotLight = selectedEntity->HasComponent<CSpotLight>();
 					const bool hasMaterial = selectedEntity->HasComponent<CMaterial>();
 					const bool hasCSharpScript = selectedEntity->HasComponent<CCSharpScript>();
 
@@ -980,6 +1055,14 @@ namespace Madam::UI {
 					}
 					if (ImGui::MenuItem("Point Light", nullptr, false, !hasPointLight)) {
 						selectedEntity->AddComponent<CPointLight>();
+						ImGui::CloseCurrentPopup();
+					}
+					if (ImGui::MenuItem("Directional Light", nullptr, false, !hasDirectionalLight)) {
+						selectedEntity->AddComponent<CDirectionalLight>();
+						ImGui::CloseCurrentPopup();
+					}
+					if (ImGui::MenuItem("Spot Light", nullptr, false, !hasSpotLight)) {
+						selectedEntity->AddComponent<CSpotLight>();
 						ImGui::CloseCurrentPopup();
 					}
 					if (ImGui::MenuItem("Material", nullptr, false, !hasMaterial)) {
@@ -1014,6 +1097,8 @@ namespace Madam::UI {
 
 	void GUI::Project() 
 	{
+		static bool prefetchedCurrentDrag = false;
+		if (!ImGui::IsDragDropActive()) prefetchedCurrentDrag = false;
 		std::filesystem::path projectDir = Project::Get().getProjectDirectory();
 		std::filesystem::path activeDir = projectDir / curDir;
 		std::filesystem::path relativeActiveDir = curDir;
@@ -1064,15 +1149,58 @@ namespace Madam::UI {
 			ImGui::PopStyleColor();
 			ImGui::PopStyleColor();
 			ImGui::PopStyleColor();
-			std::vector<std::filesystem::directory_entry> folders;
-			std::vector<std::filesystem::directory_entry> files;
-			for (const auto& entry : std::filesystem::directory_iterator(activeDir))
-			{
-				if (entry.is_directory()) folders.push_back(entry);
-				else if (entry.is_regular_file()) files.push_back(entry);
-			}
-
 			const float tileSize = 84.0f;
+			std::error_code directoryError;
+			const auto directoryStamp = std::filesystem::last_write_time(activeDir, directoryError);
+			if (activeDir != browserDirectory || directoryError || directoryStamp != browserDirectoryStamp)
+			{
+				browserDirectory = activeDir;
+				browserDirectoryStamp = directoryStamp;
+				browserFolders.clear();
+				browserFiles.clear();
+				browserFolderTiles.clear();
+				browserFileTiles.clear();
+				browserHandles.clear();
+				browserTypes.clear();
+				auto& assets = Project::Get().getAssetManager();
+				std::filesystem::directory_iterator entry(activeDir, directoryError), end;
+				for (; entry != end && !directoryError; entry.increment(directoryError))
+				{
+					if (entry->is_directory(directoryError)) browserFolders.push_back(*entry);
+					else if (!directoryError && entry->is_regular_file(directoryError)) browserFiles.push_back(*entry);
+				}
+				const auto makeTile = [&](const std::filesystem::directory_entry& item, bool file)
+				{
+					BrowserTile tile;
+					tile.buttonId = std::string(file ? "FileButton##" : "FolderButton##") + item.path().string();
+					const std::string name = file ? item.path().stem().string() : item.path().filename().string();
+					tile.label = TruncateTextToFit(name, tileSize);
+					tile.labelOffset = std::max(0.0f,
+						(tileSize - ImGui::CalcTextSize(tile.label.c_str()).x) * 0.5f);
+					return tile;
+				};
+				for (const auto& folder : browserFolders)
+					browserFolderTiles.push_back(makeTile(folder, false));
+				for (const auto& file : browserFiles)
+				{
+					browserFileTiles.push_back(makeTile(file, true));
+					const auto relativePath = relativeActiveDir / file.path().filename();
+					const AssetMetadata* metadata = &assets.GetMetadata(relativePath);
+					std::string extension = relativePath.extension().string();
+					std::transform(extension.begin(), extension.end(), extension.begin(),
+						[](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (!metadata->IsValid() && assetExtensionMap.find(extension) != assetExtensionMap.end())
+					{
+						assets.AppendMetaData(relativePath);
+						metadata = &assets.GetMetadata(relativePath);
+					}
+					browserHandles.push_back(metadata->IsValid() ? metadata->uuid : UUID(""));
+					browserTypes.push_back(metadata->IsValid() && !metadata->isMissing
+						? metadata->assetType : AssetType::NONE);
+				}
+			}
+			auto& folders = browserFolders;
+			auto& files = browserFiles;
 			const float gap = 12.0f;
 			const float availableWidth = ImGui::GetContentRegionAvail().x;
 			const float contentStartX = ImGui::GetCursorPosX();
@@ -1092,13 +1220,14 @@ namespace Madam::UI {
 				++tileIndex;
 			};
 
-			for (const auto& entry : folders)
+			for (size_t i = 0; i < folders.size(); ++i)
 			{
+				const auto& entry = folders[i];
+				const auto& tile = browserFolderTiles[i];
 					placeTile();
 					ImGui::BeginGroup();
 
-					std::string buttonID = "FolderButton##" + entry.path().string();
-					if (ImGui::ImageButton(buttonID.c_str(), icons["Folder.png"].descriptorSet, thumbnailSize))
+				if (ImGui::ImageButton(tile.buttonId.c_str(), icons["Folder.png"].descriptorSet, thumbnailSize))
 					{
 						curDir /= std::filesystem::u8path(entry.path().filename().string());
 						MADAM_CORE_INFO("Folder selected");
@@ -1107,18 +1236,8 @@ namespace Madam::UI {
 					{
 						hoveredItemPath = entry.path();
 					}
-					std::string text = entry.path().filename().string();
-					std::string truncatedText = TruncateTextToFit(text, tileSize);
-					ImVec2 textSize = ImGui::CalcTextSize(truncatedText.c_str());
-					float textXOffset = (tileSize - textSize.x) / 2;
-
-					if (textXOffset < 0)
-					{
-						textXOffset = 0;
-					}
-
-					ImGui::SetCursorPosX(ImGui::GetCursorPos().x + textXOffset);
-					ImGui::TextWrapped(truncatedText.c_str());
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + tile.labelOffset);
+				ImGui::TextUnformatted(tile.label.c_str());
 					ImGui::EndGroup();
 					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped))
 						hoveredItemPath = entry.path();
@@ -1142,75 +1261,79 @@ namespace Madam::UI {
 
 			for (size_t i = 0; i < files.size(); i++)
 			{
-				const AssetMetadata* metadata = &Project::Get().getAssetManager().GetMetadata(files[i].path());
-
-				if (!metadata->IsValid())
-				{
-					Project::Get().getAssetManager().AppendMetaData(files[i].path());
-					metadata = &Project::Get().getAssetManager().GetMetadata(files[i].path());
-				}
+				const auto& tile = browserFileTiles[i];
+				auto& assets = Project::Get().getAssetManager();
+				const UUID handle = browserHandles[i];
 				placeTile();
 				ImGui::BeginGroup();
-				std::string buttonID = "FileButton##" + files[i].path().string();
-				const AssetType type = metadata->IsValid()
-					? Project::Get().getAssetManager().GetAssetType(metadata->uuid) : AssetType::NONE;
+				const AssetType type = browserTypes[i];
 				if (type == AssetType::TEXTURE)
 				{
-					IconInfo& icon = loadedIconTextures[metadata->uuid];
+					IconInfo& icon = loadedIconTextures[handle];
 					if (!icon.texture)
 					{
-						icon.texture = std::dynamic_pointer_cast<Texture>(Project::Get().getAssetManager().GetAsset(metadata->uuid));
+						icon.texture = std::dynamic_pointer_cast<Texture>(assets.GetAsset(handle));
 						if (icon.texture)
 							icon.descriptorSet = ImGui_ImplVulkan_AddTexture(std::static_pointer_cast<VulkanTexture>(icon.texture)->GetSampler(), std::static_pointer_cast<VulkanTexture>(icon.texture)->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 					}
-					if (ImGui::ImageButton(buttonID.c_str(), icon.descriptorSet ? icon.descriptorSet : icons["File.png"].descriptorSet, thumbnailSize))
-						selectedAsset = Project::Get().getAssetManager().GetAsset(metadata->uuid);
+					if (ImGui::ImageButton(tile.buttonId.c_str(), icon.descriptorSet ? icon.descriptorSet : icons["File.png"].descriptorSet, thumbnailSize))
+						selectedAsset = assets.GetAsset(handle);
 				}
 				else if (type == AssetType::SCENE)
 				{
-				if (ImGui::ImageButton(buttonID.c_str(), icons["Scene.png"].descriptorSet, thumbnailSize))
-						selectedAsset = Project::Get().getAssetManager().GetAsset(metadata->uuid);
+					if (ImGui::ImageButton(tile.buttonId.c_str(), icons["Scene.png"].descriptorSet, thumbnailSize))
+						selectedAsset = assets.GetAsset(handle);
 				}
 				else if (type == AssetType::MATERIAL)
 				{
-					DrawMaterialThumbnail(metadata->uuid, buttonID.c_str(), ImVec2(tileSize, tileSize));
+					DrawMaterialThumbnail(handle, tile.buttonId.c_str(), ImVec2(tileSize, tileSize));
 					if (ImGui::IsItemClicked())
-						selectedAsset = Project::Get().getAssetManager().GetAsset(metadata->uuid);
+						selectedAsset = assets.GetAsset(handle);
 				}
 				else if (type == AssetType::SCRIPT || type == AssetType::SHADER)
 				{
 					const char* icon = type == AssetType::SCRIPT ? "Script.png" : "Shader.png";
-					if (ImGui::ImageButton(buttonID.c_str(), icons[icon].descriptorSet, thumbnailSize))
-						selectedAsset = Project::Get().getAssetManager().GetAsset(metadata->uuid);
+					if (ImGui::ImageButton(tile.buttonId.c_str(), icons[icon].descriptorSet, thumbnailSize))
+						selectedAsset = assets.GetAsset(handle);
 				}
 				else
 				{
-				if (ImGui::ImageButton(buttonID.c_str(), icons["File.png"].descriptorSet, thumbnailSize))
+					if (ImGui::ImageButton(tile.buttonId.c_str(), icons["File.png"].descriptorSet, thumbnailSize))
 					{
-						selectedAsset = metadata->IsValid() ? Project::Get().getAssetManager().GetAsset(metadata->uuid) : nullptr;
+						selectedAsset = handle != null ? assets.GetAsset(handle) : nullptr;
 					}
 				}
 				if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped))
 					hoveredItemPath = files[i].path();
 
-					std::string text = files[i].path().stem().string();
-					std::string truncatedText = TruncateTextToFit(text, tileSize);
-					ImVec2 textSize = ImGui::CalcTextSize(truncatedText.c_str());
-					float textXOffset = (tileSize - textSize.x) / 2;
-
-					ImGui::SetCursorPosX(ImGui::GetCursorPos().x + textXOffset);
-					ImGui::TextWrapped(truncatedText.c_str());
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + tile.labelOffset);
+					ImGui::TextUnformatted(tile.label.c_str());
 					ImGui::EndGroup();
 					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped))
 						hoveredItemPath = files[i].path();
 
 					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
 					{
+						if (type == AssetType::MATERIAL && !prefetchedCurrentDrag)
+						{
+							if (auto material = std::dynamic_pointer_cast<MaterialAsset>(assets.GetAsset(handle)))
+							{
+								const auto definition = assets.GetShaderDefinition(material->shader);
+								for (const auto& input : definition.textures)
+								{
+									const auto selected = material->textures.find(input.name);
+									if (selected != material->textures.end() &&
+										!assets.IsAssetLoaded(selected->second) &&
+										assets.GetAssetType(selected->second) == AssetType::TEXTURE)
+										VulkanTexture::Prefetch(assets.ResolveAssetPath(selected->second));
+								}
+							}
+							prefetchedCurrentDrag = true;
+						}
 						const wchar_t* itempath = files[i].path().c_str();
 						ImGui::SetDragDropPayload("PROJECT_ITEM", itempath, (std::wcslen(itempath) + 1) * sizeof(wchar_t));
 						ImGui::EndDragDropSource();
 					}
-
 			}
 
 			if (ImGui::BeginPopupContextWindow(0, 1))
@@ -1396,22 +1519,172 @@ namespace Madam::UI {
 				ImGuiWindowFlags_HorizontalScrollbar))
 			{
 				const bool wasAtBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f;
-				for (const auto& message : Logger::GetConsoleMessages())
+				struct ConsoleLine
 				{
-					if (!filter.PassFilter(message.text.c_str())) continue;
-					if (message.level >= spdlog::level::err)
-						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.40f, 0.40f, 1.0f));
-					else if (message.level == spdlog::level::warn)
-						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.76f, 0.35f, 1.0f));
-					ImGui::TextUnformatted(message.text.c_str());
-					if (message.level >= spdlog::level::err || message.level == spdlog::level::warn)
-						ImGui::PopStyleColor();
+					const char* begin;
+					const char* end;
+					spdlog::level::level_enum level;
+				};
+				static std::vector<ConsoleMessage> messages;
+				static std::vector<ConsoleLine> lines;
+				static std::uint64_t displayedRevision = UINT64_MAX;
+				static std::string displayedFilter;
+				const auto revision = Logger::GetConsoleRevision();
+				const std::string currentFilter(filter.InputBuf);
+				if (displayedRevision != revision || displayedFilter != currentFilter)
+				{
+					if (displayedRevision != revision) messages = Logger::GetConsoleMessages();
+					lines.clear();
+					lines.reserve(messages.size());
+					for (const auto& message : messages)
+					{
+						if (!filter.PassFilter(message.text.c_str())) continue;
+						const char* lineStart = message.text.data();
+						const char* messageEnd = lineStart + message.text.size();
+						for (const char* cursor = lineStart; cursor <= messageEnd; ++cursor)
+						{
+							if (cursor != messageEnd && *cursor != '\n') continue;
+							const char* lineEnd = cursor;
+							if (lineEnd > lineStart && lineEnd[-1] == '\r') --lineEnd;
+							lines.push_back({ lineStart, lineEnd, message.level });
+							lineStart = cursor + 1;
+						}
+					}
+					displayedRevision = revision;
+					displayedFilter = currentFilter;
 				}
+				ImGuiListClipper clipper;
+				clipper.Begin(static_cast<int>(lines.size()), ImGui::GetTextLineHeightWithSpacing());
+				while (clipper.Step())
+					for (int index = clipper.DisplayStart; index < clipper.DisplayEnd; ++index)
+					{
+						const auto& line = lines[index];
+						if (line.level >= spdlog::level::err)
+							ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.40f, 0.40f, 1.0f));
+						else if (line.level == spdlog::level::warn)
+							ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.76f, 0.35f, 1.0f));
+						ImGui::TextUnformatted(line.begin, line.end);
+						if (line.level >= spdlog::level::err || line.level == spdlog::level::warn)
+							ImGui::PopStyleColor();
+					}
 				if (autoScroll && wasAtBottom) ImGui::SetScrollHereY(1.0f);
 			}
 			ImGui::EndChild();
 		}
 		ImGui::End();
+	}
+
+	void GUI::LightingWindow() {
+		bool open = true;
+		if (ImGui::Begin("Lighting", &open)) {
+			Scene& scene = Application::Get().GetScene();
+			auto& settings = scene.GetLightingSettings();
+			ImGui::TextUnformatted("Environment");
+			ImGui::Separator();
+			ImGui::ColorEdit3("Ambient Color", glm::value_ptr(settings.ambientColor));
+			ImGui::DragFloat("Ambient Intensity", &settings.ambientIntensity, 0.005f, 0.0f, 10.0f);
+
+			ImGui::Spacing();
+			ImGui::TextUnformatted("Shadows");
+			ImGui::Separator();
+			const char* modes[] = { "Disabled", "Real time", "Baked" };
+			int mode = static_cast<int>(settings.shadowMode);
+			if (ImGui::Combo("Mode", &mode, modes, IM_ARRAYSIZE(modes)))
+				settings.shadowMode = static_cast<ShadowMode>(mode);
+
+			std::string casterName = "Automatic";
+			if (settings.shadowCaster != null) {
+				Entity caster = scene.GetEntity(settings.shadowCaster);
+				casterName = caster ? caster.GetComponent<CMetadata>().name : "Missing light";
+			}
+			if (ImGui::BeginCombo("Shadow Caster", casterName.c_str())) {
+				if (ImGui::Selectable("Automatic", settings.shadowCaster == null))
+					settings.shadowCaster = UUID("");
+				auto drawCaster = [&](entt::entity handle, const char* type) {
+					Entity entity(handle, &scene);
+					const auto uuid = entity.GetComponent<CUniqueIdentifier>().uuid;
+					const std::string label = entity.GetComponent<CMetadata>().name + " (" + type + ")";
+					ImGui::PushID(static_cast<int>(handle));
+					if (ImGui::Selectable(label.c_str(), settings.shadowCaster == uuid))
+						settings.shadowCaster = uuid;
+					ImGui::PopID();
+				};
+				for (auto entity : scene.GetAllEntitiesWith<CDirectionalLight>())
+					drawCaster(entity, "Directional");
+				for (auto entity : scene.GetAllEntitiesWith<CSpotLight>())
+					drawCaster(entity, "Spot");
+				ImGui::EndCombo();
+			}
+			ImGui::DragFloat("Shadow Distance", &settings.shadowDistance, 0.5f, 5.0f, 500.0f);
+			ImGui::DragFloat("Shadow Bias", &settings.shadowBias, 0.0001f, 0.00001f, 0.05f, "%.5f");
+			ImGui::TextDisabled("Shadow map: 2048 x 2048. Directional and spot lights can cast shadows.");
+			ImGui::TextDisabled("One light casts shadows at a time; all enabled lights illuminate the scene.");
+			if (settings.shadowMode == ShadowMode::Baked) {
+				const bool canBake = !sceneDir.empty() && sceneDir.extension() == ".scene";
+				ImGui::BeginDisabled(!canBake);
+				if (ImGui::Button("Bake Shadows")) {
+					const std::string scenePath = std::filesystem::absolute(sceneDir).u8string();
+					uint64_t hash = 14695981039346656037ull;
+					for (unsigned char character : scenePath) {
+						hash ^= character;
+						hash *= 1099511628211ull;
+					}
+					const auto name = sceneDir.stem().u8string() + "-" + std::to_string(hash) + ".shadowbin";
+					settings.bakeFile = std::filesystem::path("Library") / "Lighting" /
+						std::filesystem::u8path(name);
+					if (Application::Get().SaveScene(sceneDir) == IRM_SUCCESS) {
+						settings.bakeRequested = true;
+						settings.bakeStatus = "Queued shadow bake";
+					}
+					else settings.bakeStatus = "Save the scene before baking shadows";
+				}
+				ImGui::EndDisabled();
+				if (!canBake) ImGui::TextDisabled("Save the scene before baking shadows.");
+				if (!settings.bakeStatus.empty()) ImGui::TextWrapped("%s", settings.bakeStatus.c_str());
+			}
+
+			ImGui::Spacing();
+			ImGui::TextUnformatted("Lights in Scene");
+			ImGui::Separator();
+			if (ImGui::Button("Add Light")) ImGui::OpenPopup("Add Lighting Light");
+			if (ImGui::BeginPopup("Add Lighting Light")) {
+				if (ImGui::MenuItem("Directional Light")) {
+					auto entity = scene.CreateEntity("Directional Light");
+					entity.AddComponent<CDirectionalLight>();
+					entity.GetComponent<CTransform>().rotation = glm::angleAxis(
+						glm::radians(-50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+					selectedEntity = CreateRef<Entity>(entity);
+				}
+				if (ImGui::MenuItem("Spot Light")) {
+					auto entity = scene.CreateEntity("Spot Light");
+					entity.AddComponent<CSpotLight>();
+					selectedEntity = CreateRef<Entity>(entity);
+				}
+				if (ImGui::MenuItem("Point Light")) {
+					auto entity = scene.CreateEntity("Point Light");
+					entity.AddComponent<CPointLight>();
+					selectedEntity = CreateRef<Entity>(entity);
+				}
+				ImGui::EndPopup();
+			}
+			auto drawLight = [&](entt::entity handle, const char* type, bool enabled) {
+				Entity entity(handle, &scene);
+				const std::string label = entity.GetComponent<CMetadata>().name + "  -  " + type +
+					(enabled ? "" : " (Disabled)");
+				ImGui::PushID(static_cast<int>(handle));
+				if (ImGui::Selectable(label.c_str(), selectedEntity && *selectedEntity == entity))
+					selectedEntity = CreateRef<Entity>(entity);
+				ImGui::PopID();
+			};
+			for (auto entity : scene.GetAllEntitiesWith<CDirectionalLight>())
+				drawLight(entity, "Directional", scene.GetRegistry().get<CDirectionalLight>(entity).enabled);
+			for (auto entity : scene.GetAllEntitiesWith<CSpotLight>())
+				drawLight(entity, "Spot", scene.GetRegistry().get<CSpotLight>(entity).enabled);
+			for (auto entity : scene.GetAllEntitiesWith<CPointLight>())
+				drawLight(entity, "Point", scene.GetRegistry().get<CPointLight>(entity).enabled);
+		}
+		ImGui::End();
+		if (!open) windowStates &= ~LIGHTING_WINDOW;
 	}
 
 	void GUI::RenderingSettings() {
@@ -1625,6 +1898,18 @@ namespace Madam::UI {
 					auto childEntity = Application::Get().GetScene().CreateEntity("Point Light");
 					childEntity.AddComponent<CPointLight>();
 					Application::Get().GetScene().AddEntityRelationship(entity, childEntity);
+				}
+				if (ImGui::MenuItem("Directional Light")) {
+					auto child = Application::Get().GetScene().CreateEntity("Directional Light");
+					child.AddComponent<CDirectionalLight>();
+					child.GetComponent<CTransform>().rotation = glm::angleAxis(
+						glm::radians(-50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+					Application::Get().GetScene().AddEntityRelationship(entity, child);
+				}
+				if (ImGui::MenuItem("Spot Light")) {
+					auto child = Application::Get().GetScene().CreateEntity("Spot Light");
+					child.AddComponent<CSpotLight>();
+					Application::Get().GetScene().AddEntityRelationship(entity, child);
 				}
 				ImGui::EndMenu();
 			}
@@ -1881,9 +2166,11 @@ namespace Madam::UI {
 			}
 
 			if (open) {
+				ImGui::Checkbox("Enabled##Point", &pointLight.enabled);
 				ImGui::ColorEdit3("Color", glm::value_ptr(pointLight.color));
 				ImGui::DragFloat("Intensity", &pointLight.intensity, 0.1f, 0.0f, 100.0f);
 				ImGui::DragFloat("Radius", &pointLight.radius, 0.1f, 0.0f, 100.0f);
+				ImGui::DragFloat("Range##Point", &pointLight.range, 0.1f, 0.1f, 1000.0f);
 
 				ImGui::TreePop();
 			}
@@ -1891,6 +2178,52 @@ namespace Madam::UI {
 			if (removeComponent) {
 				entity.RemoveComponent<CPointLight>();
 			}
+		}
+
+		if (entity.HasComponent<CDirectionalLight>()) {
+			auto& light = entity.GetComponent<CDirectionalLight>();
+			const bool open = ImGui::TreeNodeEx((void*)typeid(CDirectionalLight).hash_code(),
+				headerFlags, "Directional Light");
+			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
+			if (ImGui::Button("...##DirectionalLight")) ImGui::OpenPopup("DirectionalLightSettings");
+			bool remove = false;
+			if (ImGui::BeginPopup("DirectionalLightSettings")) {
+				remove = ImGui::MenuItem("Remove Component");
+				ImGui::EndPopup();
+			}
+			if (open) {
+				ImGui::Checkbox("Enabled##Directional", &light.enabled);
+				ImGui::ColorEdit3("Color##Directional", glm::value_ptr(light.color));
+				ImGui::DragFloat("Intensity##Directional", &light.intensity, 0.05f, 0.0f, 100.0f);
+				ImGui::TextDisabled("Rotate the entity to aim the light.");
+				ImGui::TreePop();
+			}
+			if (remove) entity.RemoveComponent<CDirectionalLight>();
+		}
+
+		if (entity.HasComponent<CSpotLight>()) {
+			auto& light = entity.GetComponent<CSpotLight>();
+			const bool open = ImGui::TreeNodeEx((void*)typeid(CSpotLight).hash_code(),
+				headerFlags, "Spot Light");
+			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
+			if (ImGui::Button("...##SpotLight")) ImGui::OpenPopup("SpotLightSettings");
+			bool remove = false;
+			if (ImGui::BeginPopup("SpotLightSettings")) {
+				remove = ImGui::MenuItem("Remove Component");
+				ImGui::EndPopup();
+			}
+			if (open) {
+				ImGui::Checkbox("Enabled##Spot", &light.enabled);
+				ImGui::ColorEdit3("Color##Spot", glm::value_ptr(light.color));
+				ImGui::DragFloat("Intensity##Spot", &light.intensity, 0.05f, 0.0f, 100.0f);
+				ImGui::DragFloat("Range##Spot", &light.range, 0.1f, 0.2f, 1000.0f);
+				ImGui::SliderFloat("Inner Angle##Spot", &light.innerAngle, 0.0f, 84.0f);
+				ImGui::SliderFloat("Outer Angle##Spot", &light.outerAngle, 1.0f, 85.0f);
+				light.innerAngle = std::min(light.innerAngle, light.outerAngle - 0.1f);
+				ImGui::TextDisabled("Rotate the entity to aim the cone.");
+				ImGui::TreePop();
+			}
+			if (remove) entity.RemoveComponent<CSpotLight>();
 		}
 
 		if (entity.HasComponent<CMaterial>()) {
@@ -2024,9 +2357,22 @@ namespace Madam::UI {
 	{
 		auto& manager = Project::Get().getAssetManager();
 		ImGui::PushID(label);
-		const auto path = current == null ? std::filesystem::path{} : manager.ResolveAssetPath(current);
-		const std::string name = current == null ? "None" :
-			(path.empty() ? "Missing" : path.filename().string());
+		std::string name = "None";
+		if (current != null)
+		{
+			const auto& metadata = manager.GetMetadata(current);
+			if (metadata.IsValid()) name = metadata.filepath.filename().string();
+			else
+			{
+				const std::string handle = static_cast<std::string>(current);
+				if (handle.rfind("editor://", 0) == 0)
+				{
+					const auto slash = handle.find_last_of("/\\");
+					name = handle.substr(slash == std::string::npos ? 0 : slash + 1);
+				}
+				else name = "Missing";
+			}
+		}
 		ImGui::TextUnformatted(label);
 		ImGui::SameLine(145.0f);
 		if (ImGui::Button(name.c_str(), ImVec2(190.0f, 0.0f)))
@@ -2191,7 +2537,21 @@ namespace Madam::UI {
 				Application::Get().ReloadShaders();
 				changed = true;
 			});
-			const auto definition = manager.GetShaderDefinition(material->shader);
+			static std::filesystem::path inspectedProject;
+			static UUID inspectedShader("");
+			static ShaderDefinition inspectedDefinition;
+			static auto nextDefinitionCheck = std::chrono::steady_clock::time_point{};
+			const auto now = std::chrono::steady_clock::now();
+			const auto& projectPath = Project::Get().getProjectDirectory();
+			if (inspectedProject != projectPath || inspectedShader != material->shader ||
+				now >= nextDefinitionCheck)
+			{
+				inspectedDefinition = manager.GetShaderDefinition(material->shader);
+				inspectedProject = projectPath;
+				inspectedShader = material->shader;
+				nextDefinitionCheck = now + std::chrono::milliseconds(500);
+			}
+			const auto& definition = inspectedDefinition;
 			if (!definition.IsValid())
 				ImGui::TextWrapped("%s", definition.error.c_str());
 			else
@@ -2307,6 +2667,46 @@ namespace Madam::UI {
 		ImGui::PopID();
 	}
 
+	void GUI::DrawPerformanceOverlay(ImVec2 topLeft, ImVec2 size, const char* title)
+	{
+		constexpr float width = 304.0f;
+		constexpr float height = 123.0f;
+		if (size.x < width + 24.0f || size.y < height + 24.0f) return;
+		const auto& stats = Application::Get().GetPerformanceStats();
+		const ImVec2 cardMin(topLeft.x + size.x - width - 12.0f, topLeft.y + 12.0f);
+		const ImVec2 cardMax(cardMin.x + width, cardMin.y + height);
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		drawList->AddRectFilled(cardMin, cardMax, IM_COL32(16, 25, 37, 220), 6.0f);
+		drawList->AddRect(cardMin, cardMax, IM_COL32(75, 105, 126, 190), 6.0f);
+
+		char line[160];
+		float y = cardMin.y + 8.0f;
+		const float x = cardMin.x + 11.0f;
+		std::snprintf(line, sizeof(line), "%s   %.0f FPS   %.1f ms/frame",
+			title, stats.fps, stats.frameMs);
+		drawList->AddText(ImVec2(x, y), IM_COL32(137, 216, 235, 255), line);
+		y += 20.0f;
+		std::snprintf(line, sizeof(line), "CPU update total %.1f ms", stats.updateCpuMs);
+		drawList->AddText(ImVec2(x, y), IM_COL32(225, 232, 240, 255), line);
+		y += 18.0f;
+		std::snprintf(line, sizeof(line), "Surface %.1f UI %.1f Scene %.1f Bake %.1f",
+			stats.surfaceCpuMs, stats.uiCpuMs, stats.sceneCpuMs, stats.bakeCpuMs);
+		drawList->AddText(ImVec2(x, y), IM_COL32(225, 232, 240, 255), line);
+		y += 18.0f;
+		std::snprintf(line, sizeof(line), "CPU record  View %.1f  Game %.1f ms",
+			stats.viewportCpuMs, stats.gameCpuMs);
+		drawList->AddText(ImVec2(x, y), IM_COL32(225, 232, 240, 255), line);
+		y += 18.0f;
+		const char* shadowState = stats.shadowRendered ? "updated" :
+			(stats.shadowCached ? "cached" : "off");
+		std::snprintf(line, sizeof(line), "Shadow %s  %.2f ms CPU  %u draws",
+			shadowState, stats.shadowCpuMs, stats.shadowDrawCalls);
+		drawList->AddText(ImVec2(x, y), IM_COL32(225, 232, 240, 255), line);
+		y += 18.0f;
+		std::snprintf(line, sizeof(line), "Meshes %u   Lights %u", stats.meshCount, stats.lightCount);
+		drawList->AddText(ImVec2(x, y), IM_COL32(160, 176, 191, 255), line);
+	}
+
 	void GUI::DrawViewportOverlays()
 	{
 		const ImVec2 restore = ImGui::GetCursorScreenPos();
@@ -2379,6 +2779,12 @@ namespace Madam::UI {
 	}
 
 	void GUI::CreateViewportPipeline() {
+		viewportPipelineInfo.pipeline.reset();
+		if (viewportPipelineInfo.layout != VK_NULL_HANDLE)
+		{
+			vkDestroyPipelineLayout(Rendering::Renderer::GetDevice().device(), viewportPipelineInfo.layout, nullptr);
+			viewportPipelineInfo.layout = VK_NULL_HANDLE;
+		}
 		PipelineConfigInfo configInfo{};
 		configInfo.renderPass = Rendering::Renderer::Get().GetSwapChainRenderPass();
 		std::vector< VkVertexInputBindingDescription> bindingDescriptions;

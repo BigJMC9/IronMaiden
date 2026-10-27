@@ -11,6 +11,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 #include <filesystem>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -71,6 +72,7 @@ namespace Madam
 	public:
 		static void Init();
 		static std::vector<ConsoleMessage> GetConsoleMessages();
+		static std::uint64_t GetConsoleRevision();
 		static void ClearConsoleMessages();
 
 		inline static Ref<spdlog::logger>& GetCoreLogger() { return s_CoreLogger; }

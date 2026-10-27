@@ -15,6 +15,20 @@
 
 namespace Madam
 {
+	enum class ShadowMode : int { Disabled = 0, Realtime = 1, Baked = 2 };
+
+	struct LightingSettings
+	{
+		glm::vec3 ambientColor{ 1.0f };
+		float ambientIntensity = 0.02f;
+		ShadowMode shadowMode = ShadowMode::Realtime;
+		UUID shadowCaster = UUID("");
+		float shadowDistance = 60.0f;
+		float shadowBias = 0.002f;
+		std::filesystem::path bakeFile;
+		bool bakeRequested = false;
+		std::string bakeStatus;
+	};
 
 	class Entity;
 	struct UUID;
@@ -51,6 +65,8 @@ namespace Madam
 		AssetType GetAssetType() const override { return GetStaticType(); }
 
 		entt::registry& GetRegistry() { return m_registry; }
+		LightingSettings& GetLightingSettings() { return lighting; }
+		const LightingSettings& GetLightingSettings() const { return lighting; }
 
 		void BuildRenderScene(Rendering::RenderScene& out);
 
@@ -78,7 +94,7 @@ namespace Madam
 			return m_registry.view<Components...>(std::forward<Args>(args)...);
 		}
 
-		Scene(Scene&& other) noexcept : m_registry(std::move(other.m_registry))
+		Scene(Scene&& other) noexcept : m_registry(std::move(other.m_registry)), lighting(std::move(other.lighting))
 		{
 			RepopulateEntityMap();
 		}
@@ -88,6 +104,7 @@ namespace Madam
 			if (this != &other)
 			{
 				m_registry = std::move(other.m_registry);
+				lighting = std::move(other.lighting);
 				RepopulateEntityMap();
 			}
 			return *this;
@@ -103,6 +120,7 @@ namespace Madam
 		void RepopulateEntityMap();
 
 		entt::registry m_registry;
+		LightingSettings lighting;
 		std::unordered_map<UUID, entt::entity> m_entity_map;
 
 		friend class Entity;

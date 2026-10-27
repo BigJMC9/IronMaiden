@@ -1,0 +1,92 @@
+Version: 0.12.3.95
+Scene: temp
+Lighting:
+  AmbientColor: [1, 1, 1]
+  AmbientIntensity: 0.0199999996
+  ShadowMode: 2
+  ShadowCaster: ""
+  ShadowDistance: 60
+  ShadowBias: 0.00209999993
+  BakeFile: Library/Lighting/2026Scene-11637479922382304115.shadowbin
+Entities:
+  - Entity: 83e40e739dd42604-f59204b01307ebba
+    Transform:
+      Translation: [0, -0.41125378, -3.00248575]
+      Rotation: [-0.149312422, 0, 0, 0.988790035]
+      Scale: [0.999999344, 1.00000036, 1.00000036]
+    Metadata:
+      Name: Spot Light
+    Relationship:
+      Parent: ""
+      Children:
+        []
+    SpotLight:
+      Color: [1, 1, 1]
+      Intensity: 1
+      Range: 15
+      InnerAngle: 20
+      OuterAngle: 30
+      Enabled: true
+  - Entity: d39f1054337d25f4-678b6d1e0ae43cde
+    Transform:
+      Translation: [0, -2.6420126, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    Metadata:
+      Name: Cube
+    Relationship:
+      Parent: ""
+      Children:
+        []
+    MeshRenderer:
+      Material: false
+      IsPrimative: true
+      StaticMesh: Cube
+  - Entity: 75bbb9885c864289-3dcfa065730d3adf
+    Transform:
+      Translation: [-0.425159097, -6.32995367, -2.82562232]
+      Rotation: [-0.287096173, 0, 0, 0.957901776]
+      Scale: [1.00000024, 1, 1]
+    Metadata:
+      Name: Directional Light
+    Relationship:
+      Parent: ""
+      Children:
+        []
+    DirectionalLight:
+      Color: [1, 1, 1]
+      Intensity: 1
+      Enabled: true
+  - Entity: 528ac6a536b51653-4ee0aa17977d6214
+    Transform:
+      Translation: [0, 0.0146744251, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [4.38479948, 4.38479948, 4.38479948]
+    Metadata:
+      Name: Quad
+    Relationship:
+      Parent: ""
+      Children:
+        []
+    MeshRenderer:
+      Material: false
+      MaterialAsset: c849b3c8a962460b-73e2411e4b9228aa
+      IsPrimative: true
+      StaticMesh: Quad
+  - Entity: 39e77df5d2003d6b-3bea17fbf9b28acc
+    Transform:
+      Translation: [7.0674448, -5.20271492, 0.837383807]
+      Rotation: [0.147000104, 0.773760557, 0.194542438, -0.584669948]
+      Scale: [1, 1, 1]
+    Metadata:
+      Name: Editor Camera
+    Relationship:
+      Parent: ""
+      Children:
+        []
+    Camera:
+      Perspective: {Fov: 0.87266463, Aspect: 1.81646168, Near: 0.100000001, Far: 1000}
+      ViewPosition: [7.06744432, -5.20271444, 0.837383628]
+      ViewDirection: [0, 0, 0]
+      Main: true
+      EditorOnly: true

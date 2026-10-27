@@ -51,10 +51,11 @@ void main() {
 	fragColor = color;
 	fragUv = uv;
 
-	vec3 T, B;
-	T = normalize(vec3(push.modelMatrix * vec4(cross(normal, vec3(0.0, 0.0, 1.0)), 0.0)));
-	B = normalize(vec3(push.modelMatrix * vec4(cross(fragNormalWorld, T), 0.0)));
-	fragTangent = T;
-	fragBiTangent = B;
+	vec3 referenceAxis = abs(normal.z) > 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(0.0, 0.0, 1.0);
+	vec3 localTangent = normalize(cross(referenceAxis, normal));
+	vec3 worldTangent = normalize(mat3(push.modelMatrix) * localTangent);
+	worldTangent = normalize(worldTangent - fragNormalWorld * dot(worldTangent, fragNormalWorld));
+	fragTangent = worldTangent;
+	fragBiTangent = normalize(cross(fragNormalWorld, worldTangent));
 	//fragTangent = tangent;
 }

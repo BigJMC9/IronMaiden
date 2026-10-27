@@ -201,13 +201,14 @@ namespace Madam {
 
 		void Renderer::BeginRenderPass(VkCommandBuffer commandBuffer, int renderIndex) 
 		{
+			const VkExtent2D targetExtent = GetOffscreenExtent(renderIndex);
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			renderPassInfo.renderPass = renderPasses[0];
 			renderPassInfo.framebuffer = frames[currentFrameIndex].images[renderIndex].frameBuffer;
 
 			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
+			renderPassInfo.renderArea.extent = targetExtent;
 			
 			std::array<VkClearValue, 2> clearValues{};
 			clearValues[0].color = renderIndex == 2
@@ -221,8 +222,8 @@ namespace Madam {
 			VkViewport viewport{};
 			viewport.x = 0.0f;
 			viewport.y = 0.0f;
-			viewport.width = static_cast<float>(swapChain->getSwapChainExtent().width);
-			viewport.height = static_cast<float>(swapChain->getSwapChainExtent().height);
+			viewport.width = static_cast<float>(targetExtent.width);
+			viewport.height = static_cast<float>(targetExtent.height);
 			if (hasSwapChainRecreated)
 			{
 				MADAM_CORE_INFO("Viewport Width: {0}, Height: {1}", viewport.width, viewport.height);
@@ -230,8 +231,7 @@ namespace Madam {
 			}
 			viewport.minDepth = 0.0f;
 			viewport.maxDepth = 1.0f;
-			VkExtent2D extent = { viewportWidth, viewportHeight };
-			VkRect2D scissor{ {0, 0}, swapChain->getSwapChainExtent()};
+			VkRect2D scissor{ {0, 0}, targetExtent };
 			vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 

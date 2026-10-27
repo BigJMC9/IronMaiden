@@ -517,6 +517,29 @@ namespace Madam {
 			out << YAML::Key << "Color" << YAML::Value << pointLight.color;
 			out << YAML::Key << "Intensity" << YAML::Value << pointLight.intensity;
 			out << YAML::Key << "Radius" << YAML::Value << pointLight.radius;
+			out << YAML::Key << "Range" << YAML::Value << pointLight.range;
+			out << YAML::Key << "Enabled" << YAML::Value << pointLight.enabled;
+			out << YAML::EndMap;
+		}
+
+		if (entity.HasComponent<CDirectionalLight>()) {
+			const auto& light = entity.GetComponent<CDirectionalLight>();
+			out << YAML::Key << "DirectionalLight" << YAML::Value << YAML::BeginMap;
+			out << YAML::Key << "Color" << YAML::Value << light.color;
+			out << YAML::Key << "Intensity" << YAML::Value << light.intensity;
+			out << YAML::Key << "Enabled" << YAML::Value << light.enabled;
+			out << YAML::EndMap;
+		}
+
+		if (entity.HasComponent<CSpotLight>()) {
+			const auto& light = entity.GetComponent<CSpotLight>();
+			out << YAML::Key << "SpotLight" << YAML::Value << YAML::BeginMap;
+			out << YAML::Key << "Color" << YAML::Value << light.color;
+			out << YAML::Key << "Intensity" << YAML::Value << light.intensity;
+			out << YAML::Key << "Range" << YAML::Value << light.range;
+			out << YAML::Key << "InnerAngle" << YAML::Value << light.innerAngle;
+			out << YAML::Key << "OuterAngle" << YAML::Value << light.outerAngle;
+			out << YAML::Key << "Enabled" << YAML::Value << light.enabled;
 			out << YAML::EndMap;
 		}
 
@@ -548,6 +571,16 @@ namespace Madam {
 		out << YAML::BeginMap;
 		out << YAML::Key << "Version" << YAML::Value << Application::Get().GetConfig().version;
 		out << YAML::Key << "Scene" << YAML::Value << fileName.string();
+		const auto& lighting = scene->GetLightingSettings();
+		out << YAML::Key << "Lighting" << YAML::Value << YAML::BeginMap;
+		out << YAML::Key << "AmbientColor" << YAML::Value << lighting.ambientColor;
+		out << YAML::Key << "AmbientIntensity" << YAML::Value << lighting.ambientIntensity;
+		out << YAML::Key << "ShadowMode" << YAML::Value << static_cast<int>(lighting.shadowMode);
+		out << YAML::Key << "ShadowCaster" << YAML::Value << (std::string)lighting.shadowCaster;
+		out << YAML::Key << "ShadowDistance" << YAML::Value << lighting.shadowDistance;
+		out << YAML::Key << "ShadowBias" << YAML::Value << lighting.shadowBias;
+		out << YAML::Key << "BakeFile" << YAML::Value << lighting.bakeFile.generic_u8string();
+		out << YAML::EndMap;
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		entt::registry& reg = scene->GetRegistry();
 		reg.view<entt::entity>().each([&](auto entityID) {
@@ -607,6 +640,18 @@ namespace Madam {
 		}
 
 		Scene& targetScene = *scene;
+		if (const auto lightingNode = parentNode["Lighting"]) {
+			auto& lighting = targetScene.GetLightingSettings();
+			if (lightingNode["AmbientColor"])
+				lighting.ambientColor = lightingNode["AmbientColor"].as<glm::vec3>();
+			lighting.ambientIntensity = lightingNode["AmbientIntensity"].as<float>(lighting.ambientIntensity);
+			const int shadowMode = lightingNode["ShadowMode"].as<int>(static_cast<int>(lighting.shadowMode));
+			lighting.shadowMode = static_cast<ShadowMode>(std::clamp(shadowMode, 0, 2));
+			lighting.shadowCaster = UUID(lightingNode["ShadowCaster"].as<std::string>(""));
+			lighting.shadowDistance = lightingNode["ShadowDistance"].as<float>(lighting.shadowDistance);
+			lighting.shadowBias = lightingNode["ShadowBias"].as<float>(lighting.shadowBias);
+			lighting.bakeFile = std::filesystem::u8path(lightingNode["BakeFile"].as<std::string>(""));
+		}
 		std::string version = GetNodeValue<std::string>(parentNode, "Version").has_value() ? GetNodeValue<std::string>(parentNode, "Version").value() : "";
 		if (version == null) {
 			MADAM_ERROR("Failed to load scene: Unable to read version of the scene file");
@@ -699,6 +744,23 @@ namespace Madam {
 						pointLight.color = pointLightNode["Color"].as<glm::vec3>();
 						pointLight.intensity = pointLightNode["Intensity"].as<float>();
 						pointLight.radius = pointLightNode["Radius"].as<float>();
+						pointLight.range = pointLightNode["Range"].as<float>(pointLight.range);
+						pointLight.enabled = pointLightNode["Enabled"].as<bool>(pointLight.enabled);
+					}
+					if (const auto directionalNode = entity["DirectionalLight"]) {
+						auto& light = deserializedEntity.AddComponent<CDirectionalLight>();
+						light.color = directionalNode["Color"].as<glm::vec3>(light.color);
+						light.intensity = directionalNode["Intensity"].as<float>(light.intensity);
+						light.enabled = directionalNode["Enabled"].as<bool>(light.enabled);
+					}
+					if (const auto spotNode = entity["SpotLight"]) {
+						auto& light = deserializedEntity.AddComponent<CSpotLight>();
+						light.color = spotNode["Color"].as<glm::vec3>(light.color);
+						light.intensity = spotNode["Intensity"].as<float>(light.intensity);
+						light.range = spotNode["Range"].as<float>(light.range);
+						light.innerAngle = spotNode["InnerAngle"].as<float>(light.innerAngle);
+						light.outerAngle = spotNode["OuterAngle"].as<float>(light.outerAngle);
+						light.enabled = spotNode["Enabled"].as<bool>(light.enabled);
 					}
 
 					auto meshRendererNode = entity["MeshRenderer"];

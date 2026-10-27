@@ -6,6 +6,7 @@
 #include <spdlog/sinks/hourly_file_sink.h>
 #include <spdlog/sinks/base_sink.h>
 #include <chrono>
+#include <atomic>
 #include <deque>
 #include <iomanip>
 #include <mutex>
@@ -21,11 +22,13 @@ namespace Madam {
 			std::lock_guard<std::mutex> lock(messagesMutex);
 			return { messages.begin(), messages.end() };
 		}
+		std::uint64_t GetRevision() const { return revision.load(std::memory_order_relaxed); }
 
 		void Clear()
 		{
 			std::lock_guard<std::mutex> lock(messagesMutex);
 			messages.clear();
+			revision.fetch_add(1, std::memory_order_relaxed);
 		}
 
 	protected:
@@ -39,6 +42,7 @@ namespace Madam {
 			std::lock_guard<std::mutex> lock(messagesMutex);
 			if (messages.size() == 1000) messages.pop_front();
 			messages.push_back({ std::move(text), message.level });
+			revision.fetch_add(1, std::memory_order_relaxed);
 		}
 
 		void flush_() override {}
@@ -46,6 +50,7 @@ namespace Madam {
 	private:
 		std::mutex messagesMutex;
 		std::deque<ConsoleMessage> messages;
+		std::atomic<std::uint64_t> revision{ 0 };
 	};
 
 	Ref<spdlog::logger> Logger::s_CoreLogger;
@@ -79,6 +84,11 @@ namespace Madam {
 	std::vector<ConsoleMessage> Logger::GetConsoleMessages()
 	{
 		return s_ConsoleSink ? s_ConsoleSink->GetMessages() : std::vector<ConsoleMessage>{};
+	}
+
+	std::uint64_t Logger::GetConsoleRevision()
+	{
+		return s_ConsoleSink ? s_ConsoleSink->GetRevision() : 0;
 	}
 
 	void Logger::ClearConsoleMessages()

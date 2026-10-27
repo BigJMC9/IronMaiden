@@ -42,6 +42,8 @@ namespace Madam
 		//void GenerateMips();
 
 		virtual void Load(Device& device) override;
+		// Decode on a worker while an asset is being dragged. GPU upload stays on the render thread.
+		static void Prefetch(const std::filesystem::path& path);
 
 		static VkSamplerAddressMode GetVkSamplerWrap(Rendering::TextureWrap wrap)
 		{

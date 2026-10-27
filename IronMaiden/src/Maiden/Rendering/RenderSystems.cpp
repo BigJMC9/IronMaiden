@@ -37,13 +37,22 @@ namespace Madam {
 		*/
 
 		RenderLayer::RenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
-			: device{ device }, name{ std::move(_name) } {
+			: RenderLayer(device, renderPass, globalSetLayout, std::move(_name), true) {}
 
-			createPipelineLayout(globalSetLayout);
-			createPipeline(renderPass);
+		RenderLayer::RenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout,
+			std::string _name, bool initializeBasePipeline)
+			: device{ device }, name{ std::move(_name) } {
+			if (initializeBasePipeline)
+			{
+				createPipelineLayout(globalSetLayout);
+				createPipeline(renderPass);
+			}
 		}
 
 		RenderLayer::~RenderLayer() {
+			oldPipeline.reset();
+			if (oldPipelineLayout != VK_NULL_HANDLE)
+				vkDestroyPipelineLayout(device.device(), oldPipelineLayout, nullptr);
 			vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
 			pipelineLayout = VK_NULL_HANDLE;
 		}
@@ -170,7 +179,7 @@ namespace Madam {
 		*/
 
 		CustomLayer::CustomLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
-			: RenderLayer(device, renderPass, globalSetLayout, _name) {
+			: RenderLayer(device, renderPass, globalSetLayout, _name, false) {
 			createPipelineLayout(globalSetLayout);
 			createPipeline(renderPass);
 		}
@@ -284,7 +293,7 @@ namespace Madam {
 		*/
 
 		GridRenderLayer::GridRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
-			: RenderLayer(device, renderPass, globalSetLayout, _name) {
+			: RenderLayer(device, renderPass, globalSetLayout, _name, false) {
 			createPipelineLayout(globalSetLayout);
 			createPipeline(renderPass);
 		}
@@ -377,7 +386,7 @@ namespace Madam {
 		*/
 
 		SkyboxRenderLayer::SkyboxRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
-			: RenderLayer(device, renderPass, globalSetLayout, _name) {
+			: RenderLayer(device, renderPass, globalSetLayout, _name, false) {
 			TextureData textureData;
 			noiseTexture = Texture::Create(textureData, std::filesystem::u8path("resources\\textures\\skybox.png"));
 			createPipelineLayout(globalSetLayout);
@@ -484,7 +493,7 @@ namespace Madam {
 		*/
 
 		TextureRenderLayer::TextureRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
-			: RenderLayer(device, renderPass, globalSetLayout, _name) {
+			: RenderLayer(device, renderPass, globalSetLayout, _name, false) {
 			createPipelineLayout(globalSetLayout);
 			createPipeline(renderPass);
 		}
@@ -687,7 +696,10 @@ namespace Madam {
 				Pipeline* selectedPipeline = pipeline.get();
 				VkPipelineLayout selectedLayout = pipelineLayout;
 				DescriptorSetLayout* selectedDescriptorLayout = renderSystemLayout.get();
-				if (!material->shaderFragmentPath.empty())
+			static const std::string standardShaderPath =
+				std::filesystem::absolute("resources/shaders/texture_shader.frag").lexically_normal().string();
+			if (!material->shaderFragmentPath.empty() &&
+				material->shaderFragmentPath != standardShaderPath)
 				{
 					auto custom = GetShaderPipeline(material->shaderFragmentPath);
 					if (!custom)
@@ -705,26 +717,32 @@ namespace Madam {
 					selectedLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
 				if (!bindings.empty())
 				{
-					const bool texturesChanged = material->cachedTextureBindings != bindings;
-					if (material->descriptor_set == VK_NULL_HANDLE || texturesChanged)
+				if (material->descriptorFrames.size() < SwapChain::MAX_FRAMES_IN_FLIGHT)
+					material->descriptorFrames.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+				auto& descriptor = material->descriptorFrames[frameInfo.frameIndex];
+				const bool layoutChanged = descriptor.layoutVersion != material->descriptorLayoutVersion;
+				if (descriptor.set == VK_NULL_HANDLE || layoutChanged || descriptor.textures != bindings)
 					{
 						DescriptorWriter writer(*selectedDescriptorLayout, Application::Get().GetMaterialDescriptorPool());
 						for (const auto& [binding, texture] : bindings)
 							writer.WriteImage(binding, static_cast<VkDescriptorImageInfo*>(texture->GetDescriptorInfo()));
-						if (material->descriptor_set == VK_NULL_HANDLE)
+					if (descriptor.set == VK_NULL_HANDLE || layoutChanged)
 						{
-							if (!writer.Build(material->descriptor_set))
+						VkDescriptorSet newSet = VK_NULL_HANDLE;
+						if (!writer.Build(newSet))
 							{
 								MADAM_CORE_ERROR("Failed to allocate material descriptor set");
 								continue;
 							}
+						descriptor.set = newSet;
 						}
 						else
-							writer.Overwrite(material->descriptor_set);
-						material->cachedTextureBindings = bindings;
+						writer.Overwrite(descriptor.set);
+					descriptor.layoutVersion = material->descriptorLayoutVersion;
+					descriptor.textures = bindings;
 					}
 					vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-						selectedLayout, 1, 1, &material->descriptor_set, 0, nullptr);
+					selectedLayout, 1, 1, &descriptor.set, 0, nullptr);
 				}
 
 				DefaultPushConstantData push{};
@@ -753,7 +771,7 @@ namespace Madam {
 		*/
 
 		PointLightRenderLayer::PointLightRenderLayer(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, std::string _name)
-			: RenderLayer(device, renderPass, globalSetLayout, _name) {
+			: RenderLayer(device, renderPass, globalSetLayout, _name, false) {
 			// Ensure to initialize device in the member initialization list
 			createPipelineLayout(globalSetLayout);
 			createPipeline(renderPass);
@@ -844,6 +862,7 @@ namespace Madam {
 			//This could absolutely be speed up if put on another thread and done before the rendering call
 			for (entt::entity entity : frameInfo.renderScene.pointLightEntities) {
 				auto& pointLight = entities.get<CPointLight>(entity);
+				if (!pointLight.enabled) continue;
 
 				UUID uuid = entities.get<CUniqueIdentifier>(entity).uuid;
 				glm::mat4 worldTransform = frameInfo.scene->GetWorldTransform(uuid);

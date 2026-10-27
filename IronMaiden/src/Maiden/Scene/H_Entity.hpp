@@ -49,6 +49,8 @@ namespace Madam {
 		template<typename T>
 		void RemoveComponent() {
 			MADAM_CORE_ASSERT(HasComponent<T>(), "GameObject does not have that component!");
+			if constexpr (std::is_same_v<T, CNativeScript>)
+				GetComponent<CNativeScript>().DestroyInstance();
 			//assert(HasComponent<T>(), "GameObject does not have that component!");
 			//scene->OnComponentRemoved<T>(*this, component);
 			scene->m_registry.remove<T>(entityHandle);

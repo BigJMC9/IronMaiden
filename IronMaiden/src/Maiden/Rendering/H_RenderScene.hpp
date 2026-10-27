@@ -11,12 +11,16 @@ namespace Madam::Rendering
 		entt::registry* registry = nullptr;
 		std::vector<entt::entity> meshEntities;
 		std::vector<entt::entity> pointLightEntities;
+		std::vector<entt::entity> directionalLightEntities;
+		std::vector<entt::entity> spotLightEntities;
 
 		void Clear()
 		{
 			registry = nullptr;
 			meshEntities.clear();
 			pointLightEntities.clear();
+			directionalLightEntities.clear();
+			spotLightEntities.clear();
 		}
 	};
 }

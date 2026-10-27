@@ -4,6 +4,7 @@ if not defined VK_SDK_PATH exit /b 1
 cd /d "%VK_SDK_PATH%\Bin" || exit /b 1
 glslc.exe "%current_dir%\resources\shaders\simple_shader.vert" -o "%current_dir%\resources\shaders\simple_shader.vert.spv"
 glslc.exe "%current_dir%\resources\shaders\simple_shader.frag" -o "%current_dir%\resources\shaders\simple_shader.frag.spv"
+glslc.exe "%current_dir%\resources\shaders\shadow_map.vert" -o "%current_dir%\resources\shaders\shadow_map.vert.spv"
 glslc.exe "%current_dir%\resources\shaders\point_light.vert" -o "%current_dir%\resources\shaders\point_light.vert.spv"
 glslc.exe "%current_dir%\resources\shaders\point_light.frag" -o "%current_dir%\resources\shaders\point_light.frag.spv"
 glslc.exe "%current_dir%\resources\shaders\texture_shader.vert" -o "%current_dir%\resources\shaders\texture_shader.vert.spv"

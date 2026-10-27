@@ -50,6 +50,21 @@ namespace Madam {
 			{
 				return swapChain->extentAspectRatio();
 			}
+			VkExtent2D GetSwapChainExtent() const { return swapChain->getSwapChainExtent(); }
+			void SetOffscreenExtent(int renderIndex, uint32_t width, uint32_t height)
+			{
+				if (renderIndex == 0) { viewportWidth = width; viewportHeight = height; }
+				else if (renderIndex == 2) { gameWidth = width; gameHeight = height; }
+			}
+			VkExtent2D GetOffscreenExtent(int renderIndex) const
+			{
+				const auto full = GetSwapChainExtent();
+				if (renderIndex != 0 && renderIndex != 2) return full;
+				const uint32_t width = renderIndex == 0 ? viewportWidth : gameWidth;
+				const uint32_t height = renderIndex == 0 ? viewportHeight : gameHeight;
+				return { std::max(1u, std::min(width, full.width)),
+					std::max(1u, std::min(height, full.height)) };
+			}
 			bool IsFrameInProgress() const 
 			{ 
 				return isFrameStarted; 
@@ -175,6 +190,7 @@ namespace Madam {
 			//std::vector<ImageView> imageViews;
 
 			uint32_t viewportWidth = 800, viewportHeight = 450;
+			uint32_t gameWidth = 800, gameHeight = 450;
 		};
 	}
 }

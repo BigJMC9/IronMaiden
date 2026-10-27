@@ -28,6 +28,7 @@ namespace Madam
 
 		AssetType GetAssetType(UUID uuid);
 		Ref<Asset> GetAsset(UUID uuid);
+		bool IsAssetLoaded(UUID uuid) const { return loadedAssets.find(uuid) != loadedAssets.end(); }
 		Ref<MaterialAsset> CreateMaterial(const std::filesystem::path& path);
 		Ref<SourceAsset> CreateShader(const std::filesystem::path& fragmentPath);
 		Ref<SourceAsset> CreateCSharpScript(const std::filesystem::path& path);
@@ -56,6 +57,7 @@ namespace Madam
 	private:
 		void LoadRegistry();
 		void SetMetaData(const std::filesystem::path& path);
+		void RebuildPathIndex();
 		std::filesystem::path NormalizeAssetPath(const std::filesystem::path& path, bool recoverLegacy = false) const;
 
 		AssetMetadata& GetInternalMetadata(UUID uuid);
@@ -63,7 +65,19 @@ namespace Madam
 		std::filesystem::path projectPath;
 		std::filesystem::path registryPath;
 		AssetRegistry m_registry;
+		std::unordered_map<std::filesystem::path, UUID> pathIndex;
 		std::unordered_map<UUID, Ref<Asset>> loadedAssets;
+		struct CachedShaderDefinition
+		{
+			std::filesystem::path source;
+			std::filesystem::path vertex;
+			std::filesystem::file_time_type sourceTime{};
+			std::filesystem::file_time_type vertexTime{};
+			uintmax_t sourceSize = 0;
+			uintmax_t vertexSize = 0;
+			ShaderDefinition definition;
+		};
+		mutable std::unordered_map<UUID, CachedShaderDefinition> shaderDefinitions;
 		bool registryWritable = true;
 	};
 }
