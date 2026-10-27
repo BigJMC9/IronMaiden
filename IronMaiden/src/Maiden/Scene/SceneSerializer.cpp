@@ -262,6 +262,36 @@ namespace YAML {
 }
 
 namespace Madam {
+	static void WriteShadowSettings(YAML::Emitter& out, const LightShadowSettings& settings)
+	{
+		out << YAML::Key << "ShadowMode" << YAML::Value << static_cast<int>(settings.mode);
+		out << YAML::Key << "ShadowResolution" << YAML::Value << settings.resolution;
+		out << YAML::Key << "ShadowBias" << YAML::Value << settings.bias;
+		out << YAML::Key << "ShadowAdvancedBias" << YAML::Value << settings.advancedBias;
+		out << YAML::Key << "ShadowDepthBias" << YAML::Value << settings.depthBias;
+		out << YAML::Key << "ShadowSlopeBias" << YAML::Value << settings.slopeBias;
+		out << YAML::Key << "ShadowNormalBias" << YAML::Value << settings.normalBias;
+		out << YAML::Key << "ShadowFiltering" << YAML::Value << static_cast<int>(settings.filtering);
+		out << YAML::Key << "ShadowPriority" << YAML::Value << static_cast<int>(settings.priority);
+		out << YAML::Key << "LightMobility" << YAML::Value << static_cast<int>(settings.mobility);
+		out << YAML::Key << "CacheRuntimeShadows" << YAML::Value << settings.cacheRuntimeShadows;
+	}
+
+	static void ReadShadowSettings(const YAML::Node& node, LightShadowSettings& settings,
+		LightShadowMode legacyMode = LightShadowMode::Realtime, float legacyBias = 0.002f)
+	{
+		settings.mode = static_cast<LightShadowMode>(std::clamp(node["ShadowMode"].as<int>(static_cast<int>(legacyMode)), 0, 2));
+		settings.resolution = std::clamp(node["ShadowResolution"].as<uint32_t>(2048), 256u, 4096u);
+		settings.bias = std::clamp(node["ShadowBias"].as<float>(legacyBias), 0.00001f, 0.05f);
+		settings.advancedBias = node["ShadowAdvancedBias"].as<bool>(false);
+		settings.depthBias = std::clamp(node["ShadowDepthBias"].as<float>(settings.bias), 0.00001f, 0.05f);
+		settings.slopeBias = std::clamp(node["ShadowSlopeBias"].as<float>(1.75f), 0.0f, 10.0f);
+		settings.normalBias = std::clamp(node["ShadowNormalBias"].as<float>(0.0f), 0.0f, 0.05f);
+		settings.filtering = static_cast<ShadowFiltering>(std::clamp(node["ShadowFiltering"].as<int>(1), 0, 3));
+		settings.priority = static_cast<ShadowPriority>(std::clamp(node["ShadowPriority"].as<int>(0), 0, 4));
+		settings.mobility = static_cast<LightMobility>(std::clamp(node["LightMobility"].as<int>(2), 0, 2));
+		settings.cacheRuntimeShadows = node["CacheRuntimeShadows"].as<bool>(true);
+	}
 
 	static YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec2& v)
 	{
@@ -488,6 +518,11 @@ namespace Madam {
 			out << YAML::Key << "Material" << YAML::Value << entity.HasComponent<CMaterial>();
 			if (meshRenderer.materialAsset != null)
 				out << YAML::Key << "MaterialAsset" << YAML::Value << (std::string)meshRenderer.materialAsset;
+			out << YAML::Key << "Mobility" << YAML::Value << static_cast<int>(meshRenderer.mobility);
+			out << YAML::Key << "CastShadows" << YAML::Value << meshRenderer.castShadows;
+			out << YAML::Key << "CastRealtimeShadows" << YAML::Value << meshRenderer.castRealtimeShadows;
+			out << YAML::Key << "ReceiveRealtimeShadows" << YAML::Value << meshRenderer.receiveRealtimeShadows;
+			out << YAML::Key << "ContributeToBakedLighting" << YAML::Value << meshRenderer.contributeToBakedLighting;
 			out << YAML::Key << "IsPrimative" << YAML::Value << meshRenderer.GetMesh()->IsPrimative();
 			if (!meshRenderer.GetMesh()->IsPrimative())
 			{
@@ -519,6 +554,7 @@ namespace Madam {
 			out << YAML::Key << "Radius" << YAML::Value << pointLight.radius;
 			out << YAML::Key << "Range" << YAML::Value << pointLight.range;
 			out << YAML::Key << "Enabled" << YAML::Value << pointLight.enabled;
+			WriteShadowSettings(out, pointLight.shadows);
 			out << YAML::EndMap;
 		}
 
@@ -528,6 +564,7 @@ namespace Madam {
 			out << YAML::Key << "Color" << YAML::Value << light.color;
 			out << YAML::Key << "Intensity" << YAML::Value << light.intensity;
 			out << YAML::Key << "Enabled" << YAML::Value << light.enabled;
+			WriteShadowSettings(out, light.shadows);
 			out << YAML::EndMap;
 		}
 
@@ -540,6 +577,7 @@ namespace Madam {
 			out << YAML::Key << "InnerAngle" << YAML::Value << light.innerAngle;
 			out << YAML::Key << "OuterAngle" << YAML::Value << light.outerAngle;
 			out << YAML::Key << "Enabled" << YAML::Value << light.enabled;
+			WriteShadowSettings(out, light.shadows);
 			out << YAML::EndMap;
 		}
 
@@ -746,12 +784,17 @@ namespace Madam {
 						pointLight.radius = pointLightNode["Radius"].as<float>();
 						pointLight.range = pointLightNode["Range"].as<float>(pointLight.range);
 						pointLight.enabled = pointLightNode["Enabled"].as<bool>(pointLight.enabled);
+						ReadShadowSettings(pointLightNode, pointLight.shadows);
 					}
 					if (const auto directionalNode = entity["DirectionalLight"]) {
 						auto& light = deserializedEntity.AddComponent<CDirectionalLight>();
 						light.color = directionalNode["Color"].as<glm::vec3>(light.color);
 						light.intensity = directionalNode["Intensity"].as<float>(light.intensity);
 						light.enabled = directionalNode["Enabled"].as<bool>(light.enabled);
+						ReadShadowSettings(directionalNode, light.shadows,
+							targetScene.GetLightingSettings().shadowMode == ShadowMode::Baked
+							? LightShadowMode::Baked : LightShadowMode::Realtime,
+							targetScene.GetLightingSettings().shadowBias);
 					}
 					if (const auto spotNode = entity["SpotLight"]) {
 						auto& light = deserializedEntity.AddComponent<CSpotLight>();
@@ -761,12 +804,21 @@ namespace Madam {
 						light.innerAngle = spotNode["InnerAngle"].as<float>(light.innerAngle);
 						light.outerAngle = spotNode["OuterAngle"].as<float>(light.outerAngle);
 						light.enabled = spotNode["Enabled"].as<bool>(light.enabled);
+						ReadShadowSettings(spotNode, light.shadows,
+							targetScene.GetLightingSettings().shadowMode == ShadowMode::Baked
+							? LightShadowMode::Baked : LightShadowMode::Realtime,
+							targetScene.GetLightingSettings().shadowBias);
 					}
 
 					auto meshRendererNode = entity["MeshRenderer"];
 					if (meshRendererNode) {
 						bool hasLegacyMaterial = meshRendererNode["Material"].as<bool>(false);
 						CMeshRenderer& meshRenderer = deserializedEntity.AddComponent<CMeshRenderer>();
+						meshRenderer.mobility = static_cast<CMeshRenderer::Mobility>(std::clamp(meshRendererNode["Mobility"].as<int>(0), 0, 1));
+						meshRenderer.castShadows = meshRendererNode["CastShadows"].as<bool>(true);
+						meshRenderer.castRealtimeShadows = meshRendererNode["CastRealtimeShadows"].as<bool>(true);
+						meshRenderer.receiveRealtimeShadows = meshRendererNode["ReceiveRealtimeShadows"].as<bool>(true);
+						meshRenderer.contributeToBakedLighting = meshRendererNode["ContributeToBakedLighting"].as<bool>(true);
 						bool isPrimative = meshRendererNode["IsPrimative"].as<bool>();
 						if (!isPrimative)
 						{

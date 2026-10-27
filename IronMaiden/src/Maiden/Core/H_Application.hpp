@@ -48,6 +48,8 @@ namespace Madam
 		uint32_t meshCount = 0;
 		uint32_t lightCount = 0;
 		uint32_t shadowDrawCalls = 0;
+		uint32_t shadowTiles = 0;
+		uint32_t shadowDroppedLights = 0;
 		bool shadowRendered = false;
 		bool shadowCached = false;
 	};

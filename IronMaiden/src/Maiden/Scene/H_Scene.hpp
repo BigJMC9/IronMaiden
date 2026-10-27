@@ -69,6 +69,7 @@ namespace Madam
 		const LightingSettings& GetLightingSettings() const { return lighting; }
 
 		void BuildRenderScene(Rendering::RenderScene& out);
+		void PrepareStaticRenderResources();
 
 		glm::mat4 Scene::GetWorldTransform(UUID entity_uuid);
 		glm::mat4 GetWorldTransform(Entity entity);

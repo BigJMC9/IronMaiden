@@ -98,11 +98,31 @@ int main()
 	{
 		auto scene = CreateRef<Scene>();
 		auto sun = scene->CreateEntity("Sun");
-		sun.AddComponent<CDirectionalLight>().intensity = 2.5f;
+		auto& sunLight = sun.AddComponent<CDirectionalLight>();
+		sunLight.intensity = 2.5f;
+		sunLight.shadows.mode = LightShadowMode::Mixed;
+		sunLight.shadows.resolution = 1024;
+		sunLight.shadows.bias = 0.003f;
+		sunLight.shadows.filtering = ShadowFiltering::PCF5x5;
+		sunLight.shadows.priority = ShadowPriority::Critical;
+		sunLight.shadows.mobility = LightMobility::Stationary;
 		auto spot = scene->CreateEntity("Spot");
-		spot.AddComponent<CSpotLight>().outerAngle = 35.0f;
+		auto& spotLight = spot.AddComponent<CSpotLight>();
+		spotLight.outerAngle = 35.0f;
+		spotLight.shadows.mode = LightShadowMode::Baked;
+		spotLight.shadows.advancedBias = true;
+		spotLight.shadows.depthBias = 0.004f;
+		spotLight.shadows.slopeBias = 2.5f;
+		spotLight.shadows.normalBias = 0.001f;
+		spotLight.shadows.filtering = ShadowFiltering::PCSS;
 		auto point = scene->CreateEntity("Point");
 		point.AddComponent<CPointLight>().range = 24.0f;
+		auto staticObject = scene->CreateEntity("Static object");
+		auto& renderer = staticObject.AddComponent<CMeshRenderer>();
+		renderer.mobility = CMeshRenderer::Mobility::Static;
+		renderer.receiveRealtimeShadows = false;
+		renderer.castRealtimeShadows = false;
+		renderer.contributeToBakedLighting = true;
 		auto& lighting = scene->GetLightingSettings();
 		lighting.shadowMode = ShadowMode::Baked;
 		lighting.shadowCaster = sun.GetComponent<CUniqueIdentifier>().uuid;
@@ -121,7 +141,22 @@ int main()
 			copiedLighting.shadowDistance == 80.0f &&
 			copiedLighting.bakeFile == lighting.bakeFile &&
 			copy->GetEntity(sun.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CDirectionalLight>().intensity == 2.5f &&
+			copy->GetEntity(sun.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CDirectionalLight>().shadows.mode == LightShadowMode::Mixed &&
+			copy->GetEntity(sun.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CDirectionalLight>().shadows.resolution == 1024 &&
+			copy->GetEntity(sun.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CDirectionalLight>().shadows.bias == 0.003f &&
+			copy->GetEntity(sun.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CDirectionalLight>().shadows.filtering == ShadowFiltering::PCF5x5 &&
+			copy->GetEntity(sun.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CDirectionalLight>().shadows.priority == ShadowPriority::Critical &&
+			copy->GetEntity(sun.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CDirectionalLight>().shadows.mobility == LightMobility::Stationary &&
 			copy->GetEntity(spot.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CSpotLight>().outerAngle == 35.0f &&
+			copy->GetEntity(spot.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CSpotLight>().shadows.mode == LightShadowMode::Baked &&
+			copy->GetEntity(spot.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CSpotLight>().shadows.advancedBias &&
+			copy->GetEntity(spot.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CSpotLight>().shadows.depthBias == 0.004f &&
+			copy->GetEntity(spot.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CSpotLight>().shadows.slopeBias == 2.5f &&
+			copy->GetEntity(spot.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CSpotLight>().shadows.normalBias == 0.001f &&
+			copy->GetEntity(spot.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CSpotLight>().shadows.filtering == ShadowFiltering::PCSS &&
+			copy->GetEntity(staticObject.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CMeshRenderer>().mobility == CMeshRenderer::Mobility::Static &&
+			!copy->GetEntity(staticObject.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CMeshRenderer>().receiveRealtimeShadows &&
+			!copy->GetEntity(staticObject.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CMeshRenderer>().castRealtimeShadows &&
 			copy->GetEntity(point.GetComponent<CUniqueIdentifier>().uuid).GetComponent<CPointLight>().range == 24.0f,
 			"Scene copy lost lighting settings or components")) return 1;
 	}

@@ -180,11 +180,17 @@ namespace Madam
 
 	struct CMeshRenderer
 	{
+		enum class Mobility : int { Static = 0, Dynamic = 1 };
 
 		CMeshRenderer() = default;
 
 		Ref<StaticMesh> mesh = nullptr;
 		UUID materialAsset = UUID("");
+		Mobility mobility = Mobility::Static;
+		bool castShadows = true;
+		bool castRealtimeShadows = true;
+		bool receiveRealtimeShadows = true;
+		bool contributeToBakedLighting = true;
 
 		// Update so no dangling pointer
 		Ref<CMaterial> material = nullptr; 
@@ -200,6 +206,25 @@ namespace Madam
 		}
 	};
 
+	enum class LightShadowMode : int { Realtime = 0, Baked = 1, Mixed = 2 };
+	enum class LightMobility : int { Static = 0, Stationary = 1, Movable = 2 };
+	enum class ShadowPriority : int { Automatic = 0, Low = 1, Normal = 2, High = 3, Critical = 4 };
+	enum class ShadowFiltering : int { Hard = 0, PCF3x3 = 1, PCF5x5 = 2, PCSS = 3 };
+	struct LightShadowSettings
+	{
+		LightShadowMode mode = LightShadowMode::Realtime;
+		uint32_t resolution = 2048;
+		float bias = 0.002f;
+		bool advancedBias = false;
+		float depthBias = 0.002f;
+		float slopeBias = 1.75f;
+		float normalBias = 0.0f;
+		ShadowFiltering filtering = ShadowFiltering::PCF3x3;
+		ShadowPriority priority = ShadowPriority::Automatic;
+		LightMobility mobility = LightMobility::Movable;
+		bool cacheRuntimeShadows = true;
+	};
+
 	struct CPointLight
 	{
 		glm::vec3 color{ 1.0f, 1.0f, 1.0f };
@@ -207,6 +232,7 @@ namespace Madam
 		float intensity = 1.0f;
 		float range = 10.0f;
 		bool enabled = true;
+		LightShadowSettings shadows{};
 
 		CPointLight() = default;
 		CPointLight(const CPointLight&) = default;
@@ -217,6 +243,7 @@ namespace Madam
 		glm::vec3 color{ 1.0f };
 		float intensity = 1.0f;
 		bool enabled = true;
+		LightShadowSettings shadows{};
 	};
 
 	struct CSpotLight
@@ -227,6 +254,7 @@ namespace Madam
 		float innerAngle = 20.0f;
 		float outerAngle = 30.0f;
 		bool enabled = true;
+		LightShadowSettings shadows{};
 	};
 
 	struct CRelationship

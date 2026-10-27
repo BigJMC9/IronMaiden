@@ -140,6 +140,7 @@ namespace Madam {
 			editorScene = Application::Get().GetSceneRef();
 			editorCameraId = editorScene->GetEditorCameraEntity().GetComponent<CUniqueIdentifier>().uuid;
 			auto runtimeScene = editorScene->Copy();
+			runtimeScene->PrepareStaticRenderResources();
 			if (scriptEngine->Start(Project::Get().getProjectDirectory(), runtimeScene)) {
 				Application::Get().SwitchScenes(runtimeScene);
 				Application::Get().RuntimeStart();

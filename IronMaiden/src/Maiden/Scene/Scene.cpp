@@ -6,6 +6,9 @@
 #include "Components.hpp"
 #include "../Rendering/H_Renderer.hpp"
 #include "../Rendering/H_RenderScene.hpp"
+#include "../Asset/H_MaterialAsset.h"
+#include "../Asset/H_AssetSystem.h"
+#include "../Project/H_Project.h"
 
 namespace Madam
 {
@@ -95,6 +98,21 @@ namespace Madam
 		auto spotLightView = m_registry.view<CTransform, CSpotLight>();
 		for (auto entity : spotLightView)
 			out.spotLightEntities.push_back(entity);
+	}
+
+	void Scene::PrepareStaticRenderResources()
+	{
+		// Mesh constructors allocate device-local vertex/index memory. The runtime scene
+		// shares those handles; resolve static materials before scripts start as well.
+		for (auto entity : m_registry.view<CMeshRenderer>())
+		{
+			auto& renderer = m_registry.get<CMeshRenderer>(entity);
+			if (renderer.mobility != CMeshRenderer::Mobility::Static || !renderer.mesh ||
+				renderer.material || renderer.materialAsset == null || !Project::HasActive()) continue;
+			auto& assets = Project::Get().getAssetManager();
+			if (auto material = std::dynamic_pointer_cast<MaterialAsset>(assets.GetAsset(renderer.materialAsset)))
+				renderer.material = material->GetRuntimeMaterial(assets);
+		}
 	}
 
 	Entity Scene::CreateErrorEntity()

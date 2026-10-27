@@ -41,6 +41,17 @@ namespace Madam {
 
 	#define MAX_DIRECTIONAL_LIGHTS 2
 	#define MAX_SPOT_LIGHTS 8
+	#define MAX_SHADOW_RECORDS 112
+
+	struct ShadowRecordData
+	{
+		glm::mat4 viewProjection{ 1.0f };
+		glm::vec4 atlasRect{}; // normalized x, y, width, height
+		glm::vec4 biasFilter{}; // depth, slope, normal, filter radius
+		glm::vec4 options{}; // cascade far, light size, tile texel size, reserved
+		glm::ivec4 meta{}; // atlas (0 realtime, 1 baked), filtering, face/cascade, reserved
+	};
+	static_assert(sizeof(ShadowRecordData) == 128);
 
 	//When making changes to buffer object structures(struct below) always double check the alignment rules
 	/*
@@ -65,15 +76,17 @@ namespace Madam {
 		int lightPadding = 0;
 		DirectionalLightData directionalLights[MAX_DIRECTIONAL_LIGHTS]{};
 		SpotLightData spotLights[MAX_SPOT_LIGHTS]{};
-		glm::mat4 shadowViewProjection{ 1.0f };
-		glm::vec4 shadowParams{ 0.002f, 0.0f, 0.0f, 0.0f };
-		glm::ivec4 shadowInfo{ 0 }; // mode, type (1 directional, 2 spot), light index
+		glm::ivec4 shadowCounts{}; // x is the number of active records
+		ShadowRecordData shadows[MAX_SHADOW_RECORDS]{};
+		glm::ivec4 pointShadowIndices[MAX_LIGHTS]{};
+		glm::ivec4 directionalShadowIndices[MAX_DIRECTIONAL_LIGHTS]{};
+		glm::ivec4 spotShadowIndices[MAX_SPOT_LIGHTS]{};
 	};
 	static_assert(offsetof(GlobalUbo, directionalLights) == 544);
 	static_assert(offsetof(GlobalUbo, spotLights) == 608);
-	static_assert(offsetof(GlobalUbo, shadowViewProjection) == 1120);
-	static_assert(offsetof(GlobalUbo, shadowInfo) == 1200);
-	static_assert(sizeof(GlobalUbo) == 1216);
+	static_assert(offsetof(GlobalUbo, shadowCounts) == 1120);
+	static_assert(offsetof(GlobalUbo, shadows) == 1136);
+	static_assert(sizeof(GlobalUbo) == 15792);
 
 	struct FrameInfo {
 		int frameIndex;

@@ -160,6 +160,8 @@ namespace Madam {
 				push.modelMatrix = frameInfo.scene->GetWorldTransform(uuid);
 				//push.modelMatrix[3][1] = -push.modelMatrix[3][1];
 				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
+				push.normalMatrix[3][0] = meshRenderer.mobility == CMeshRenderer::Mobility::Static ? 1.0f : 0.0f;
+				push.normalMatrix[3][1] = meshRenderer.receiveRealtimeShadows ? 1.0f : 0.0f;
 
 				vkCmdPushConstants(
 					frameInfo.commandBuffer,
@@ -750,6 +752,8 @@ namespace Madam {
 				push.modelMatrix = frameInfo.scene->GetWorldTransform(uuid);
 				//push.modelMatrix[3][1] = -push.modelMatrix[3][1];
 				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
+				push.normalMatrix[3][0] = meshRenderer.mobility == CMeshRenderer::Mobility::Static ? 1.0f : 0.0f;
+				push.normalMatrix[3][1] = meshRenderer.receiveRealtimeShadows ? 1.0f : 0.0f;
 
 				vkCmdPushConstants(
 					frameInfo.commandBuffer,

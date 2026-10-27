@@ -32,7 +32,7 @@ namespace Madam
 		globalPool = DescriptorPool::Builder(device)
 			.setMaxSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT * 4)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT * 12)
 			.build();
 
 		const uint32_t maxMaterialSets = 2000;
@@ -152,6 +152,10 @@ namespace Madam
 			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 			.addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 			.build();
 
 		std::vector<VkDescriptorSet> globalDescriptorSets(Rendering::SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -162,10 +166,18 @@ namespace Madam
 			auto bufferInfo = uboBuffers[i]->DescriptorInfo();
 			auto realtimeShadowInfo = shadowSystem.RealtimeDescriptor(i);
 			auto bakedShadowInfo = shadowSystem.BakedDescriptor();
+			auto realtimeDepthInfo = shadowSystem.RealtimeDepthDescriptor(i);
+			auto bakedDepthInfo = shadowSystem.BakedDepthDescriptor();
+			auto directionalShadowInfo = shadowSystem.DirectionalDescriptor(i);
+			auto directionalDepthInfo = shadowSystem.DirectionalDepthDescriptor(i);
 			if (!DescriptorWriter(*globalSetLayout, *globalPool)
 				.WriteBuffer(0, &bufferInfo)
 				.WriteImage(1, &realtimeShadowInfo)
 				.WriteImage(2, &bakedShadowInfo)
+				.WriteImage(3, &realtimeDepthInfo)
+				.WriteImage(4, &bakedDepthInfo)
+				.WriteImage(5, &directionalShadowInfo)
+				.WriteImage(6, &directionalDepthInfo)
 				.Build(globalDescriptorSets[i]))
 				throw std::runtime_error("Could not allocate the viewport camera descriptor set");
 			auto gameBufferInfo = gameUboBuffers[i]->DescriptorInfo();
@@ -173,6 +185,10 @@ namespace Madam
 				.WriteBuffer(0, &gameBufferInfo)
 				.WriteImage(1, &realtimeShadowInfo)
 				.WriteImage(2, &bakedShadowInfo)
+				.WriteImage(3, &realtimeDepthInfo)
+				.WriteImage(4, &bakedDepthInfo)
+				.WriteImage(5, &directionalShadowInfo)
+				.WriteImage(6, &directionalDepthInfo)
 				.Build(gameGlobalDescriptorSets[i]))
 				throw std::runtime_error("Could not allocate the game camera descriptor set");
 		}
@@ -278,6 +294,8 @@ namespace Madam
 					static_cast<uint32_t>(frame_index), command_buffer);
 				performanceStats.shadowCpuMs = elapsedMs(shadowStart, std::chrono::steady_clock::now());
 				performanceStats.shadowDrawCalls = shadowResult.drawCalls;
+				performanceStats.shadowTiles = shadowResult.activeTiles;
+				performanceStats.shadowDroppedLights = shadowResult.droppedLights;
 				performanceStats.shadowRendered = shadowResult.rendered;
 				performanceStats.shadowCached = shadowResult.cached;
 				performanceStats.lightCount = frameInfo.ubo.numLights +

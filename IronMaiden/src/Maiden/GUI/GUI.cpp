@@ -164,6 +164,79 @@ struct ImGui_ImplVulkan_Data
 
 
 namespace Madam::UI {
+	static bool SegmentedChoice(const char* label, int& value, const char* const* choices, int count)
+	{
+		ImGui::PushID(label);
+		ImGui::TextUnformatted(label);
+		const float spacing = ImGui::GetStyle().ItemSpacing.x;
+		const float width = std::max(55.0f, (ImGui::GetContentRegionAvail().x - spacing * (count - 1)) / count);
+		bool changed = false;
+		for (int i = 0; i < count; ++i)
+		{
+			if (i) ImGui::SameLine(0.0f, spacing);
+			const bool active = value == i;
+			if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+			if (ImGui::Button(choices[i], ImVec2(width, 0.0f))) { value = i; changed = true; }
+			if (active) ImGui::PopStyleColor();
+		}
+		ImGui::PopID();
+		return changed;
+	}
+
+	static bool DrawLightShadowSettings(LightShadowSettings& settings, const char* id, bool spot = false)
+	{
+		ImGui::PushID(id);
+		const char* mobilities[] = { "Static", "Stationary", "Movable" };
+		int mobility = static_cast<int>(settings.mobility);
+		bool changed = SegmentedChoice("Light Mobility", mobility, mobilities, 3);
+		if (changed) settings.mobility = static_cast<LightMobility>(mobility);
+		const char* modes[] = { "Realtime", "Baked", "Mixed" };
+		int mode = static_cast<int>(settings.mode);
+		if (SegmentedChoice("Shadows", mode, modes, 3))
+		{
+			settings.mode = static_cast<LightShadowMode>(mode);
+			changed = true;
+		}
+		const char* resolutions[] = { "256", "512", "1024", "2048", "4096" };
+		int resolution = 3;
+		for (int i = 0; i < 5; ++i)
+			if (settings.resolution == (256u << i)) resolution = i;
+		if (ImGui::Combo("Shadow Resolution", &resolution, resolutions, 5))
+		{
+			settings.resolution = 256u << resolution;
+			changed = true;
+		}
+		const char* filters[] = { "Hard", "PCF 3x3", "PCF 5x5", "PCSS" };
+		int filter = static_cast<int>(settings.filtering);
+		if (ImGui::Combo("Shadow Filtering", &filter, filters, IM_ARRAYSIZE(filters)))
+		{
+			settings.filtering = static_cast<ShadowFiltering>(filter);
+			changed = true;
+		}
+		const char* priorities[] = { "Automatic", "Low", "Normal", "High", "Critical" };
+		int priority = static_cast<int>(settings.priority);
+		if (ImGui::Combo("Shadow Priority", &priority, priorities, IM_ARRAYSIZE(priorities)))
+		{
+			settings.priority = static_cast<ShadowPriority>(priority);
+			changed = true;
+		}
+		if (spot)
+		{
+			changed |= ImGui::Checkbox("Advanced Bias", &settings.advancedBias);
+			if (settings.advancedBias)
+			{
+				changed |= ImGui::DragFloat("Depth Bias", &settings.depthBias, 0.0001f, 0.00001f, 0.05f, "%.5f");
+				changed |= ImGui::DragFloat("Slope Bias", &settings.slopeBias, 0.05f, 0.0f, 10.0f, "%.2f");
+				changed |= ImGui::DragFloat("Normal Bias", &settings.normalBias, 0.0001f, 0.0f, 0.05f, "%.5f");
+			}
+			else changed |= ImGui::DragFloat("Shadow Bias", &settings.bias, 0.0001f, 0.00001f, 0.05f, "%.5f");
+		}
+		else changed |= ImGui::DragFloat("Shadow Bias", &settings.bias, 0.0001f, 0.00001f, 0.05f, "%.5f");
+		if (settings.mobility == LightMobility::Static)
+			changed |= ImGui::Checkbox("Cache Runtime Shadows", &settings.cacheRuntimeShadows);
+		ImGui::PopID();
+		return changed;
+	}
 
 	void GUI::DrawViewport(const ImDrawList* parentList, const ImDrawCmd* pcmd) {
 		
@@ -1587,17 +1660,15 @@ namespace Madam::UI {
 			ImGui::Spacing();
 			ImGui::TextUnformatted("Shadows");
 			ImGui::Separator();
-			const char* modes[] = { "Disabled", "Real time", "Baked" };
-			int mode = static_cast<int>(settings.shadowMode);
-			if (ImGui::Combo("Mode", &mode, modes, IM_ARRAYSIZE(modes)))
-				settings.shadowMode = static_cast<ShadowMode>(mode);
-
+			bool shadowsEnabled = settings.shadowMode != ShadowMode::Disabled;
+			if (ImGui::Checkbox("Enable Shadows", &shadowsEnabled))
+				settings.shadowMode = shadowsEnabled ? ShadowMode::Realtime : ShadowMode::Disabled;
 			std::string casterName = "Automatic";
 			if (settings.shadowCaster != null) {
 				Entity caster = scene.GetEntity(settings.shadowCaster);
 				casterName = caster ? caster.GetComponent<CMetadata>().name : "Missing light";
 			}
-			if (ImGui::BeginCombo("Shadow Caster", casterName.c_str())) {
+			if (ImGui::BeginCombo("Preferred Shadow Light", casterName.c_str())) {
 				if (ImGui::Selectable("Automatic", settings.shadowCaster == null))
 					settings.shadowCaster = UUID("");
 				auto drawCaster = [&](entt::entity handle, const char* type) {
@@ -1613,14 +1684,34 @@ namespace Madam::UI {
 					drawCaster(entity, "Directional");
 				for (auto entity : scene.GetAllEntitiesWith<CSpotLight>())
 					drawCaster(entity, "Spot");
+				for (auto entity : scene.GetAllEntitiesWith<CPointLight>())
+					drawCaster(entity, "Point");
 				ImGui::EndCombo();
 			}
 			ImGui::DragFloat("Shadow Distance", &settings.shadowDistance, 0.5f, 5.0f, 500.0f);
-			ImGui::DragFloat("Shadow Bias", &settings.shadowBias, 0.0001f, 0.00001f, 0.05f, "%.5f");
-			ImGui::TextDisabled("Shadow map: 2048 x 2048. Directional and spot lights can cast shadows.");
-			ImGui::TextDisabled("One light casts shadows at a time; all enabled lights illuminate the scene.");
-			if (settings.shadowMode == ShadowMode::Baked) {
-				const bool canBake = !sceneDir.empty() && sceneDir.extension() == ".scene";
+			ImGui::TextDisabled("Shadow atlases serve multiple lights. Priority decides when atlas space is full.");
+			{
+				bool hasBakedLight = false;
+				for (auto handle : scene.GetAllEntitiesWith<CDirectionalLight>())
+				{
+					const auto& light = scene.GetRegistry().get<CDirectionalLight>(handle);
+					hasBakedLight |= light.enabled && (light.shadows.mode != LightShadowMode::Realtime ||
+						light.shadows.mobility == LightMobility::Stationary);
+				}
+				for (auto handle : scene.GetAllEntitiesWith<CSpotLight>())
+				{
+					const auto& light = scene.GetRegistry().get<CSpotLight>(handle);
+					hasBakedLight |= light.enabled && (light.shadows.mode != LightShadowMode::Realtime ||
+						light.shadows.mobility == LightMobility::Stationary);
+				}
+				for (auto handle : scene.GetAllEntitiesWith<CPointLight>())
+				{
+					const auto& light = scene.GetRegistry().get<CPointLight>(handle);
+					hasBakedLight |= light.enabled && (light.shadows.mode != LightShadowMode::Realtime ||
+						light.shadows.mobility == LightMobility::Stationary);
+				}
+				const bool canBake = shadowsEnabled && hasBakedLight &&
+					!sceneDir.empty() && sceneDir.extension() == ".scene";
 				ImGui::BeginDisabled(!canBake);
 				if (ImGui::Button("Bake Shadows")) {
 					const std::string scenePath = std::filesystem::absolute(sceneDir).u8string();
@@ -1639,7 +1730,9 @@ namespace Madam::UI {
 					else settings.bakeStatus = "Save the scene before baking shadows";
 				}
 				ImGui::EndDisabled();
-				if (!canBake) ImGui::TextDisabled("Save the scene before baking shadows.");
+				if (!shadowsEnabled) ImGui::TextDisabled("Enable shadows before baking.");
+				else if (!hasBakedLight) ImGui::TextDisabled("Set a light to Baked, Mixed, or Stationary.");
+				else if (!canBake) ImGui::TextDisabled("Save the scene before baking shadows.");
 				if (!settings.bakeStatus.empty()) ImGui::TextWrapped("%s", settings.bakeStatus.c_str());
 			}
 
@@ -2106,6 +2199,16 @@ namespace Madam::UI {
 					auto asset = std::dynamic_pointer_cast<MaterialAsset>(Project::Get().getAssetManager().GetAsset(selected));
 					meshRenderer.material = asset ? asset->GetRuntimeMaterial(Project::Get().getAssetManager()) : nullptr;
 				});
+				const char* mobilityNames[] = { "Static", "Dynamic" };
+				int mobility = static_cast<int>(meshRenderer.mobility);
+				if (SegmentedChoice("Mobility", mobility, mobilityNames, 2))
+					meshRenderer.mobility = static_cast<CMeshRenderer::Mobility>(mobility);
+				ImGui::Checkbox("Cast Shadows", &meshRenderer.castShadows);
+				if (meshRenderer.mobility == CMeshRenderer::Mobility::Static)
+					ImGui::Checkbox("Cast Realtime Shadows", &meshRenderer.castRealtimeShadows);
+				ImGui::Checkbox("Receive Realtime Shadows", &meshRenderer.receiveRealtimeShadows);
+				if (meshRenderer.mobility == CMeshRenderer::Mobility::Static)
+					ImGui::Checkbox("Contribute to Baked Lighting", &meshRenderer.contributeToBakedLighting);
 				ImGui::TreePop();
 			}
 
@@ -2171,6 +2274,7 @@ namespace Madam::UI {
 				ImGui::DragFloat("Intensity", &pointLight.intensity, 0.1f, 0.0f, 100.0f);
 				ImGui::DragFloat("Radius", &pointLight.radius, 0.1f, 0.0f, 100.0f);
 				ImGui::DragFloat("Range##Point", &pointLight.range, 0.1f, 0.1f, 1000.0f);
+				DrawLightShadowSettings(pointLight.shadows, "Point");
 
 				ImGui::TreePop();
 			}
@@ -2195,6 +2299,7 @@ namespace Madam::UI {
 				ImGui::Checkbox("Enabled##Directional", &light.enabled);
 				ImGui::ColorEdit3("Color##Directional", glm::value_ptr(light.color));
 				ImGui::DragFloat("Intensity##Directional", &light.intensity, 0.05f, 0.0f, 100.0f);
+				DrawLightShadowSettings(light.shadows, "Directional");
 				ImGui::TextDisabled("Rotate the entity to aim the light.");
 				ImGui::TreePop();
 			}
@@ -2220,6 +2325,7 @@ namespace Madam::UI {
 				ImGui::SliderFloat("Inner Angle##Spot", &light.innerAngle, 0.0f, 84.0f);
 				ImGui::SliderFloat("Outer Angle##Spot", &light.outerAngle, 1.0f, 85.0f);
 				light.innerAngle = std::min(light.innerAngle, light.outerAngle - 0.1f);
+				DrawLightShadowSettings(light.shadows, "Spot", true);
 				ImGui::TextDisabled("Rotate the entity to aim the cone.");
 				ImGui::TreePop();
 			}
@@ -2670,7 +2776,7 @@ namespace Madam::UI {
 	void GUI::DrawPerformanceOverlay(ImVec2 topLeft, ImVec2 size, const char* title)
 	{
 		constexpr float width = 304.0f;
-		constexpr float height = 123.0f;
+		constexpr float height = 141.0f;
 		if (size.x < width + 24.0f || size.y < height + 24.0f) return;
 		const auto& stats = Application::Get().GetPerformanceStats();
 		const ImVec2 cardMin(topLeft.x + size.x - width - 12.0f, topLeft.y + 12.0f);
@@ -2704,6 +2810,10 @@ namespace Madam::UI {
 		drawList->AddText(ImVec2(x, y), IM_COL32(225, 232, 240, 255), line);
 		y += 18.0f;
 		std::snprintf(line, sizeof(line), "Meshes %u   Lights %u", stats.meshCount, stats.lightCount);
+		drawList->AddText(ImVec2(x, y), IM_COL32(160, 176, 191, 255), line);
+		y += 18.0f;
+		std::snprintf(line, sizeof(line), "Shadow tiles %u   skipped passes %u",
+			stats.shadowTiles, stats.shadowDroppedLights);
 		drawList->AddText(ImVec2(x, y), IM_COL32(160, 176, 191, 255), line);
 	}
 

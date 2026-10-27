@@ -1,19 +1,19 @@
-Version: 0.12.3.95
+Version: 0.12.4.95
 Scene: temp
 Lighting:
   AmbientColor: [1, 1, 1]
   AmbientIntensity: 0.0199999996
-  ShadowMode: 2
+  ShadowMode: 1
   ShadowCaster: ""
   ShadowDistance: 60
-  ShadowBias: 0.00209999993
-  BakeFile: Library/Lighting/2026Scene-11637479922382304115.shadowbin
+  ShadowBias: 0.00200000009
+  BakeFile: ""
 Entities:
-  - Entity: 83e40e739dd42604-f59204b01307ebba
+  - Entity: 3563fee7089c2832-5662803d0f241f50
     Transform:
-      Translation: [0, -0.41125378, -3.00248575]
-      Rotation: [-0.149312422, 0, 0, 0.988790035]
-      Scale: [0.999999344, 1.00000036, 1.00000036]
+      Translation: [-0.11715129, -1.35481918, -5.09636641]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
     Metadata:
       Name: Spot Light
     Relationship:
@@ -22,14 +22,17 @@ Entities:
         []
     SpotLight:
       Color: [1, 1, 1]
-      Intensity: 1
-      Range: 15
+      Intensity: 5
+      Range: 30
       InnerAngle: 20
-      OuterAngle: 30
+      OuterAngle: 35.8380013
       Enabled: true
-  - Entity: d39f1054337d25f4-678b6d1e0ae43cde
+      ShadowMode: 2
+      ShadowResolution: 2048
+      ShadowBias: 0.00200000009
+  - Entity: b5d466a0e5840bd2-7932498712f6d808
     Transform:
-      Translation: [0, -2.6420126, 0]
+      Translation: [0, -0.977148771, 0]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     Metadata:
@@ -40,28 +43,37 @@ Entities:
         []
     MeshRenderer:
       Material: false
+      Mobility: 1
+      CastShadows: true
+      ReceiveRealtimeShadows: true
+      ContributeToBakedLighting: true
       IsPrimative: true
       StaticMesh: Cube
-  - Entity: 75bbb9885c864289-3dcfa065730d3adf
+  - Entity: ade79a3209de8191-0205e6990f8f4f00
     Transform:
-      Translation: [-0.425159097, -6.32995367, -2.82562232]
-      Rotation: [-0.287096173, 0, 0, 0.957901776]
-      Scale: [1.00000024, 1, 1]
+      Translation: [0, -0.867222548, -2.65882564]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
     Metadata:
-      Name: Directional Light
+      Name: Point Light
     Relationship:
       Parent: ""
       Children:
         []
-    DirectionalLight:
+    PointLight:
       Color: [1, 1, 1]
       Intensity: 1
-      Enabled: true
-  - Entity: 528ac6a536b51653-4ee0aa17977d6214
+      Radius: 0.5
+      Range: 10
+      Enabled: false
+      ShadowMode: 0
+      ShadowResolution: 2048
+      ShadowBias: 0.00200000009
+  - Entity: 215a3d69a62a9d85-b3a5306a46c2b259
     Transform:
-      Translation: [0, 0.0146744251, 0]
+      Translation: [0, 0, 0]
       Rotation: [0, 0, 0, 1]
-      Scale: [4.38479948, 4.38479948, 4.38479948]
+      Scale: [3.05999994, 3.05999994, 3.05999994]
     Metadata:
       Name: Quad
     Relationship:
@@ -70,13 +82,16 @@ Entities:
         []
     MeshRenderer:
       Material: false
-      MaterialAsset: c849b3c8a962460b-73e2411e4b9228aa
+      Mobility: 0
+      CastShadows: true
+      ReceiveRealtimeShadows: true
+      ContributeToBakedLighting: true
       IsPrimative: true
       StaticMesh: Quad
-  - Entity: 39e77df5d2003d6b-3bea17fbf9b28acc
+  - Entity: c9168fab0b515131-df7d118585c79a1c
     Transform:
-      Translation: [7.0674448, -5.20271492, 0.837383807]
-      Rotation: [0.147000104, 0.773760557, 0.194542438, -0.584669948]
+      Translation: [2.98562932, -3.31168866, -0.952589273]
+      Rotation: [-0.162645891, -0.775765002, -0.222233459, 0.567756474]
       Scale: [1, 1, 1]
     Metadata:
       Name: Editor Camera
@@ -85,8 +100,8 @@ Entities:
       Children:
         []
     Camera:
-      Perspective: {Fov: 0.87266463, Aspect: 1.81646168, Near: 0.100000001, Far: 1000}
-      ViewPosition: [7.06744432, -5.20271444, 0.837383628]
+      Perspective: {Fov: 0.87266463, Aspect: 1.8176471, Near: 0.100000001, Far: 1000}
+      ViewPosition: [2.98562956, -3.3116889, -0.952589631]
       ViewDirection: [0, 0, 0]
       Main: true
       EditorOnly: true
