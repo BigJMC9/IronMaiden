@@ -426,7 +426,7 @@ namespace Madam::UI {
 		{
 			TextureData textureData;
 			textureData.format = Rendering::Image::Format::RGBA;
-			textureData.samplerWrap = Rendering::TextureWrap::Clamp;
+			textureData.samplerWrap = Rendering::TextureWrap::Stretch;
 			
 			IconInfo iconInfo;
 			iconInfo.texture = Texture::Create(textureData, iconFilepaths[i]);
@@ -472,19 +472,33 @@ namespace Madam::UI {
 	}
 
 	void GUI::OnResizeEvent(WindowResizeEvent* e) {
-		for (auto set : viewportSets) ImGui_ImplVulkan_RemoveTexture(set);
-		for (auto set : gameSets) ImGui_ImplVulkan_RemoveTexture(set);
+		// The renderer has already waited for the GPU to become idle
+		// and recreated the offscreen images before this event.
+
+		// Release descriptors referencing the previous images.
+		for (VkDescriptorSet set : viewportSets)
+		{
+			if (set != VK_NULL_HANDLE)
+				ImGui_ImplVulkan_RemoveTexture(set);
+		}
+
+		for (VkDescriptorSet set : gameSets)
+		{
+			if (set != VK_NULL_HANDLE)
+				ImGui_ImplVulkan_RemoveTexture(set);
+		}
+
 		viewportSets.clear();
 		gameSets.clear();
-		ImGui_ImplGlfw_Shutdown();
-		ImGui_ImplVulkan_Shutdown();
-		initInfo = Rendering::Renderer::Get().GetImGuiInitInfo();
-		init_info->DescriptorPool = guiPool.get()->descriptor_pool;
-		init_info->MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-		init_info->RenderPass = Rendering::Renderer::Get().GetSwapChainRenderPass();
-		ImGui_ImplGlfw_InitForVulkan(Application::Get().GetWindow().getGLFWwindow(), true);
-		ImGui_ImplVulkan_Init(init_info);
+
+		viewportSet = VK_NULL_HANDLE;
+		gameSet = VK_NULL_HANDLE;
+
+		// Create descriptors for the new offscreen image views.
 		RefreshRenderTargetDescriptors();
+
+		// Recreate our custom viewport pipeline against the
+		// current swapchain render pass.
 		CreateViewportPipeline();
 	}
 
