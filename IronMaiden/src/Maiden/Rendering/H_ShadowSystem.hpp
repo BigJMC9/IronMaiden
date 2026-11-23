@@ -83,7 +83,7 @@ namespace Madam::Rendering
 		struct BakeHeader
 		{
 			char magic[8] = { 'I', 'M', 'S', 'H', 'A', 'D', 'O', 'W' };
-			uint32_t version = 4;
+			uint32_t version = 5;
 			uint32_t atlasSize = AtlasSize;
 			uint32_t recordCount = 0;
 		};
@@ -91,6 +91,7 @@ namespace Madam::Rendering
 		{
 			char key[96]{};
 			Tile tile{};
+			uint64_t signature = 0;
 			glm::mat4 matrix{ 1.0f };
 		};
 

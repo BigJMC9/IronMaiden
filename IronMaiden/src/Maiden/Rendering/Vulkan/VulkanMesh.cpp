@@ -9,6 +9,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 #include <ofbx.h>
+#include <algorithm>
+#include <cmath>
 
 namespace std {
 	template<>
@@ -122,6 +124,25 @@ namespace Madam
 
 		if (vertices.size() != 0 && indices.size() != 0)
 		{
+			m_shadowTerminatorAngle = 0.0f;
+			for (size_t face = 0; face + 2 < indices.size(); face += 3)
+			{
+				const Vertex& a = vertices[indices[face]];
+				const Vertex& b = vertices[indices[face + 1]];
+				const Vertex& c = vertices[indices[face + 2]];
+				glm::vec3 faceNormal = glm::cross(b.position - a.position, c.position - a.position);
+				const float faceLength = glm::length(faceNormal);
+				if (faceLength < 1e-8f) continue;
+				faceNormal /= faceLength;
+				for (const Vertex* vertex : { &a, &b, &c })
+				{
+					const float normalLength = glm::length(vertex->normal);
+					if (normalLength < 1e-8f) continue;
+					const float agreement = glm::clamp(std::abs(glm::dot(faceNormal,
+						vertex->normal / normalLength)), 0.0f, 1.0f);
+					m_shadowTerminatorAngle = std::max(m_shadowTerminatorAngle, std::acos(agreement));
+				}
+			}
 			CreateVertexBuffers(vertices);
 			CreateIndexBuffers(indices);
 		}

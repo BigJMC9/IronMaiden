@@ -162,6 +162,8 @@ namespace Madam {
 				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
 				push.normalMatrix[3][0] = meshRenderer.mobility == CMeshRenderer::Mobility::Static ? 1.0f : 0.0f;
 				push.normalMatrix[3][1] = meshRenderer.receiveRealtimeShadows ? 1.0f : 0.0f;
+				push.normalMatrix[3][2] = meshRenderer.GetMesh()->GetShadowTerminatorAngle();
+				push.normalMatrix[3][3] = meshRenderer.GetMesh()->GetPrimative() == MeshPrimatives::Sphere ? 2.0f : 0.0f;
 
 				vkCmdPushConstants(
 					frameInfo.commandBuffer,
@@ -754,6 +756,8 @@ namespace Madam {
 				push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
 				push.normalMatrix[3][0] = meshRenderer.mobility == CMeshRenderer::Mobility::Static ? 1.0f : 0.0f;
 				push.normalMatrix[3][1] = meshRenderer.receiveRealtimeShadows ? 1.0f : 0.0f;
+				push.normalMatrix[3][2] = meshRenderer.GetMesh()->GetShadowTerminatorAngle();
+				push.normalMatrix[3][3] = meshRenderer.GetMesh()->GetPrimative() == MeshPrimatives::Sphere ? 2.0f : 0.0f;
 
 				vkCmdPushConstants(
 					frameInfo.commandBuffer,

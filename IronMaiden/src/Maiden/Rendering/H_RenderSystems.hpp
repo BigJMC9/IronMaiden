@@ -19,6 +19,7 @@ namespace Madam {
 
         struct DefaultPushConstantData {
             glm::mat4 modelMatrix{ 1.f };
+            // The unused fourth column carries static, receive-shadow, normal-spread and sphere flags.
             glm::mat4 normalMatrix{ 1.f };
         };
 

@@ -47,8 +47,8 @@ namespace Madam {
 	{
 		glm::mat4 viewProjection{ 1.0f };
 		glm::vec4 atlasRect{}; // normalized x, y, width, height
-		glm::vec4 biasFilter{}; // depth, slope, normal, filter radius
-		glm::vec4 options{}; // cascade far, light size, tile texel size, reserved
+		glm::vec4 biasFilter{}; // manual depth, slope, manual normal, world-space shadow texel scale
+		glm::vec4 options{}; // cascade far, light size, atlas texel size, signed adaptive depth bias
 		glm::ivec4 meta{}; // atlas (0 realtime, 1 baked), filtering, face/cascade, reserved
 	};
 	static_assert(sizeof(ShadowRecordData) == 128);

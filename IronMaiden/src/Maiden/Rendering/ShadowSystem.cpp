@@ -377,7 +377,7 @@ namespace Madam::Rendering
 		if (!file) return false;
 		BakeHeader header{};
 		file.read(reinterpret_cast<char*>(&header), sizeof(header));
-		if (!file || std::memcmp(header.magic, "IMSHADOW", 8) != 0 || header.version != 4 ||
+		if (!file || std::memcmp(header.magic, "IMSHADOW", 8) != 0 || header.version != 5 ||
 			header.atlasSize != AtlasSize || header.recordCount > MAX_SHADOW_RECORDS) return false;
 		std::vector<BakeRecord> records(header.recordCount);
 		file.read(reinterpret_cast<char*>(records.data()), records.size() * sizeof(BakeRecord));
@@ -411,7 +411,7 @@ namespace Madam::Rendering
 			if (record.tile.size < MinimumTile || record.tile.x + record.tile.size > AtlasSize ||
 				record.tile.y + record.tile.size > AtlasSize) return false;
 			const std::string key(record.key, std::find(record.key, record.key + sizeof(record.key), '\0'));
-			bakedAtlas.cached[key] = { record.tile, 0, record.matrix };
+			bakedAtlas.cached[key] = { record.tile, record.signature, record.matrix };
 		}
 		return true;
 	}
@@ -433,6 +433,7 @@ namespace Madam::Rendering
 				BakeRecord record{};
 				std::memcpy(record.key, key.data(), std::min(key.size(), sizeof(record.key) - 1));
 				record.tile = cached.tile;
+				record.signature = cached.signature;
 				record.matrix = cached.matrix;
 				file.write(reinterpret_cast<const char*>(&record), sizeof(record));
 			}
@@ -573,6 +574,9 @@ namespace Madam::Rendering
 		{
 			ShadowDraw draw;
 			uint32_t entityId = 0;
+			std::string uuid;
+			std::string meshSource;
+			MeshPrimatives primitive = MeshPrimatives::None;
 			bool isStatic = false;
 			bool castRealtime = false;
 			bool contributeBaked = false;
@@ -586,7 +590,9 @@ namespace Madam::Rendering
 			if (!renderer.mesh || !renderer.castShadows) continue;
 			const auto uuid = entities.get<CUniqueIdentifier>(entity).uuid;
 			meshes.push_back({ { renderer.mesh.get(), scene.GetWorldTransform(uuid) },
-				static_cast<uint32_t>(entity), renderer.mobility == CMeshRenderer::Mobility::Static,
+				static_cast<uint32_t>(entity), static_cast<std::string>(uuid),
+				renderer.mesh->GetFilepath().generic_u8string(), renderer.mesh->GetPrimative(),
+				renderer.mobility == CMeshRenderer::Mobility::Static,
 				renderer.castRealtimeShadows,
 				renderer.contributeToBakedLighting });
 		}
@@ -647,18 +653,41 @@ namespace Madam::Rendering
 		{
 			drawList.clear();
 			uint64_t signature = 14695981039346656037ull;
-			const auto sceneAddress = reinterpret_cast<uintptr_t>(&scene);
-			signature = HashBytes(signature, &sceneAddress, sizeof(sceneAddress));
+			if (!baked)
+			{
+				const auto sceneAddress = reinterpret_cast<uintptr_t>(&scene);
+				signature = HashBytes(signature, &sceneAddress, sizeof(sceneAddress));
+			}
 			signature = HashBytes(signature, candidate.uuid.data(), candidate.uuid.size());
+			std::vector<uint64_t> bakedMeshSignatures;
+			if (baked) bakedMeshSignatures.reserve(meshes.size());
 			for (const auto& mesh : meshes)
 			{
 				if (baked && (!mesh.isStatic || !mesh.contributeBaked)) continue;
 				if (!baked && mesh.isStatic && (!mesh.castRealtime || dynamicOnly)) continue;
 				drawList.push_back(mesh.draw);
-				const auto meshAddress = reinterpret_cast<uintptr_t>(mesh.draw.mesh);
-				signature = HashBytes(signature, &mesh.entityId, sizeof(mesh.entityId));
-				signature = HashBytes(signature, &meshAddress, sizeof(meshAddress));
-				signature = HashBytes(signature, glm::value_ptr(mesh.draw.model), sizeof(glm::mat4));
+				if (baked)
+				{
+					uint64_t meshSignature = 14695981039346656037ull;
+					meshSignature = HashBytes(meshSignature, mesh.uuid.data(), mesh.uuid.size());
+					meshSignature = HashBytes(meshSignature, mesh.meshSource.data(), mesh.meshSource.size());
+					meshSignature = HashBytes(meshSignature, &mesh.primitive, sizeof(mesh.primitive));
+					meshSignature = HashBytes(meshSignature, glm::value_ptr(mesh.draw.model), sizeof(glm::mat4));
+					bakedMeshSignatures.push_back(meshSignature);
+				}
+				else
+				{
+					const auto meshAddress = reinterpret_cast<uintptr_t>(mesh.draw.mesh);
+					signature = HashBytes(signature, &mesh.entityId, sizeof(mesh.entityId));
+					signature = HashBytes(signature, &meshAddress, sizeof(meshAddress));
+					signature = HashBytes(signature, glm::value_ptr(mesh.draw.model), sizeof(glm::mat4));
+				}
+			}
+			if (baked)
+			{
+				std::sort(bakedMeshSignatures.begin(), bakedMeshSignatures.end());
+				for (const auto meshSignature : bakedMeshSignatures)
+					signature = HashBytes(signature, &meshSignature, sizeof(meshSignature));
 			}
 			return signature;
 		};
@@ -709,6 +738,7 @@ namespace Madam::Rendering
 		};
 
 		bool bakedAny = false;
+		bool staleBaked = false;
 		bool waitedForBakedWrite = false;
 		for (const auto& candidate : candidates)
 		{
@@ -764,14 +794,16 @@ namespace Madam::Rendering
 					const auto key = candidate.uuid + ":" + std::to_string(face);
 					const auto found = atlas.cached.find(key);
 					const bool validTile = found != atlas.cached.end() && found->second.tile == tiles[face];
-					if (baked && !bakeNow && !runtimeStaticCache && !validTile)
+					auto drawSignature = HashBytes(signature, &face, sizeof(face));
+					drawSignature = HashBytes(drawSignature, &tiles[face], sizeof(Tile));
+					if (baked && !bakeNow && !runtimeStaticCache &&
+						(!validTile || found->second.signature != drawSignature))
 					{
-						lighting.bakeStatus = "Shadow atlas layout changed; bake again";
+						lighting.bakeStatus = "Baked shadows are stale; bake again";
+						staleBaked = true;
 						usable = false;
 						break;
 					}
-					auto drawSignature = HashBytes(signature, &face, sizeof(face));
-					drawSignature = HashBytes(drawSignature, &tiles[face], sizeof(Tile));
 					const bool mustRender = baked
 						? bakeNow || (runtimeStaticCache && (!validTile || found->second.signature != drawSignature))
 						: !validTile || found->second.signature != drawSignature ||
@@ -807,12 +839,18 @@ namespace Madam::Rendering
 					record.biasFilter = glm::vec4(candidate.settings.advancedBias
 						? candidate.settings.depthBias : candidate.settings.bias,
 						candidate.settings.advancedBias ? candidate.settings.slopeBias : 1.75f,
-						candidate.settings.advancedBias ? candidate.settings.normalBias : 0.0f, 1.0f);
+						candidate.settings.advancedBias ? candidate.settings.normalBias : 0.0f, 0.0f);
 					const float cascadeFar = candidate.type == 1 && !baked
 						? std::max(5.0f, lighting.shadowDistance) * (face == 0 ? 0.18f : face == 1 ? 0.45f : 1.0f)
 						: std::max(5.0f, lighting.shadowDistance);
+					const float adaptiveBias = candidate.type == 1
+						? -0.8f * cascadeFar / (2.0f * std::max(5.0f, lighting.shadowDistance) * tiles[face].size)
+						: 0.16f * std::tan(glm::radians(candidate.angle)) / tiles[face].size;
+					record.biasFilter.w = candidate.type == 1
+						? cascadeFar / tiles[face].size
+						: 2.0f * std::tan(glm::radians(candidate.angle)) / tiles[face].size;
 					record.options = glm::vec4(cascadeFar, candidate.radius > 0.0f ? candidate.radius : 1.5f,
-						1.0f / atlas.size, 0.0f);
+						1.0f / atlas.size, adaptiveBias);
 					record.meta = glm::ivec4(directionalRealtime ? 2 : kind,
 						static_cast<int>(candidate.settings.filtering),
 						static_cast<int>(face), static_cast<int>(candidate.settings.mobility));
@@ -820,6 +858,8 @@ namespace Madam::Rendering
 				result.activeTiles += count;
 			}
 		}
+		if (!staleBaked && lighting.bakeStatus == "Baked shadows are stale; bake again")
+			lighting.bakeStatus = "Shadow atlas bake ready";
 		if (bakeNow)
 		{
 			if (bakedAny)

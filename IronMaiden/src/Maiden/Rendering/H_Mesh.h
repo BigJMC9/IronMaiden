@@ -57,6 +57,7 @@ namespace Madam {
 		std::filesystem::path GetFilepath() const { return m_filepath; }
 		bool IsPrimative() const { return mesh_primative != MeshPrimatives::None; }
 		MeshPrimatives GetPrimative() const { return mesh_primative; }
+		float GetShadowTerminatorAngle() const { return m_shadowTerminatorAngle; }
 		std::string GetPrimativeAsString() const 
 		{
 			switch (mesh_primative)
@@ -88,5 +89,6 @@ namespace Madam {
 		MeshFlags mesh_flags;
 		std::filesystem::path m_filepath;
 		MeshPrimatives mesh_primative = MeshPrimatives::None;
+		float m_shadowTerminatorAngle = 0.0f;
 	};
 }
