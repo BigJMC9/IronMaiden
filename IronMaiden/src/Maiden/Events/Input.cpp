@@ -4,6 +4,12 @@
 #include "../Core/H_Application.hpp"
 
 namespace Madam {
+
+	Input& Input::Get()
+	{
+		static Input instance;
+		return instance;
+	}
 	
 	Input::Input()
 	{
@@ -33,11 +39,47 @@ namespace Madam {
 		return glfwGetMouseButton(Application::Get().GetWindow().getGLFWwindow(), static_cast<int32_t>(button)) == GLFW_RELEASE;
 	}
 
-	glm::vec2 Input::GetMousePosition()
+	glm::vec2 Input::GetMousePosition() const
 	{
 		double xpos, ypos;
 		glfwGetCursorPos(Application::Get().GetWindow().getGLFWwindow(), &xpos, &ypos);
 		return { (float)xpos, (float)ypos };
+	}
+
+	void Input::SetEditorViewportInput(bool focused, bool hovered, bool captured,
+		glm::vec2 topLeft, glm::vec2 size)
+	{
+		editorViewportFocused = focused;
+		editorViewportHovered = hovered;
+		editorViewportCaptured = captured;
+		editorViewportTopLeft = topLeft;
+		editorViewportSize = size;
+	}
+
+	bool Input::IsEditorViewportCameraActive() const
+	{
+		return editorViewportFocused && (editorViewportHovered || editorViewportCaptured);
+	}
+
+	bool Input::IsEditorViewportHovered() const
+	{
+		return editorViewportHovered;
+	}
+
+	bool Input::IsEditorViewportCaptured() const
+	{
+		return editorViewportCaptured;
+	}
+
+	bool Input::IsEditorViewportScrollTarget() const
+	{
+		if (!editorViewportFocused || editorViewportCaptured ||
+			editorViewportSize.x <= 0.0f || editorViewportSize.y <= 0.0f)
+			return false;
+		const glm::vec2 mouse = GetMousePosition();
+		return mouse.x >= editorViewportTopLeft.x && mouse.y >= editorViewportTopLeft.y &&
+			mouse.x < editorViewportTopLeft.x + editorViewportSize.x &&
+			mouse.y < editorViewportTopLeft.y + editorViewportSize.y;
 	}
 
 	void Input::CursorPositionCallback(GLFWwindow* window, double xpos, double ypos)

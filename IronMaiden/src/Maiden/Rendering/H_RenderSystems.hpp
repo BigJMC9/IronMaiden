@@ -171,6 +171,26 @@ namespace Madam {
             void createPipeline(VkRenderPass renderPass) override;
         };
 
+        struct SelectionOutlinePushConstants {
+            glm::mat4 model{ 1.f };
+            glm::vec4 settings{ 1.f }; // target width, height, thickness, opacity
+        };
+        static_assert(sizeof(SelectionOutlinePushConstants) == 80);
+
+        class MADAM_API SelectionOutlineRenderer {
+        public:
+            SelectionOutlineRenderer(Device& device, VkRenderPass renderPass,
+                VkDescriptorSetLayout globalSetLayout);
+            ~SelectionOutlineRenderer();
+            void render(FrameInfo& frameInfo, entt::entity selected);
+        private:
+            Device& device;
+            VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+            Scope<Pipeline> stencilMaskPipeline;
+            Scope<Pipeline> occludedPipeline;
+            Scope<Pipeline> visiblePipeline;
+        };
+
         class MADAM_API RenderStack {
 
         public:
@@ -182,6 +202,7 @@ namespace Madam {
 
             void initialize(Scope<DescriptorSetLayout>& globalSetLayout);
             void render(FrameInfo& frameInfo, bool includeEditorGrid = true);
+            void renderSelectionOutline(FrameInfo& frameInfo, entt::entity selected);
             bool switchRenderSystems(int first, int second);
             void reloadPipeline(int renderLayer, VkRenderPass renderPass, Scope<DescriptorSetLayout>& globalDescriptorSetLayout);
             const std::vector<Ref<RenderLayer>>& getRenderLayers() const {
@@ -194,6 +215,7 @@ namespace Madam {
             bool isRunning = false;
             Device& device;
             std::vector<Ref<RenderLayer>> renderSystems;
+            Scope<SelectionOutlineRenderer> selectionOutlineRenderer;
         };
     }
 }

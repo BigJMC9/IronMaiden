@@ -20,6 +20,7 @@
 #include <cstring>
 #include <cmath>
 #include <algorithm>
+#include <limits>
 #include <tuple>
 
 using namespace Madam::Platform;
@@ -798,12 +799,118 @@ namespace Madam::UI {
 		ImGui::End();
 	}
 
+	Entity GUI::DrawViewportEntityMarkers(ImVec2 mousePosition)
+	{
+		Scene& scene = Application::Get().GetScene();
+		const glm::mat4 viewProjection = Rendering::CameraHandle::GetMain().GetProjection() *
+			Rendering::CameraHandle::GetMain().GetView();
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		Entity hovered;
+		float nearestDepth = std::numeric_limits<float>::max();
+		for (auto handle : scene.GetAllEntitiesWith<CTransform, CMetadata, CUniqueIdentifier>())
+		{
+			Entity entity(handle, &scene);
+			const auto& metadata = entity.GetComponent<CMetadata>();
+			if (metadata.is_hidden_entity || metadata.is_error_entity ||
+				(entity.HasComponent<CMeshRenderer>() && entity.GetComponent<CMeshRenderer>().mesh))
+				continue;
+			const bool isLight = entity.HasComponent<CPointLight>() || entity.HasComponent<CDirectionalLight>() ||
+				entity.HasComponent<CSpotLight>();
+			const bool isCamera = entity.HasComponent<CCamera>();
+			const glm::vec3 position = glm::vec3(scene.GetWorldTransform(entity)[3]);
+			const glm::vec4 clip = viewProjection * glm::vec4(position, 1.0f);
+			if (clip.w <= 0.0f) continue;
+			const glm::vec3 ndc = glm::vec3(clip) / clip.w;
+			if (std::abs(ndc.x) > 1.0f || std::abs(ndc.y) > 1.0f || ndc.z < 0.0f || ndc.z > 1.0f)
+				continue;
+			const ImVec2 screen(viewportImageTopLeft.x + (ndc.x * 0.5f + 0.5f) * viewportImageSize.x,
+				viewportImageTopLeft.y + (ndc.y * 0.5f + 0.5f) * viewportImageSize.y);
+			const bool selected = selectedEntity && *selectedEntity == entity;
+			const ImU32 fill = isLight ? IM_COL32(247, 201, 95, 220) :
+				isCamera ? IM_COL32(100, 192, 225, 220) : IM_COL32(179, 194, 207, 210);
+			drawList->AddCircleFilled(screen, 6.0f, fill, 16);
+			drawList->AddCircle(screen, selected ? 9.0f : 7.0f,
+				selected ? IM_COL32(255, 255, 255, 255) : IM_COL32(19, 27, 38, 240), 16, 2.0f);
+			const float dx = mousePosition.x - screen.x;
+			const float dy = mousePosition.y - screen.y;
+			if (dx * dx + dy * dy <= 100.0f && ndc.z < nearestDepth)
+			{
+				hovered = entity;
+				nearestDepth = ndc.z;
+			}
+		}
+		return hovered;
+	}
+
+	Entity GUI::PickViewportEntity(ImVec2 mousePosition)
+	{
+		if (viewportImageSize.x <= 0.0f || viewportImageSize.y <= 0.0f) return Entity();
+		const float x = (mousePosition.x - viewportImageTopLeft.x) / viewportImageSize.x * 2.0f - 1.0f;
+		const float y = (mousePosition.y - viewportImageTopLeft.y) / viewportImageSize.y * 2.0f - 1.0f;
+		const auto& camera = Rendering::CameraHandle::GetMain();
+		const glm::mat4 inverseViewProjection = glm::inverse(camera.GetProjection() * camera.GetView());
+		glm::vec4 nearPoint = inverseViewProjection * glm::vec4(x, y, 0.0f, 1.0f);
+		glm::vec4 farPoint = inverseViewProjection * glm::vec4(x, y, 1.0f, 1.0f);
+		if (std::abs(nearPoint.w) < 1e-6f || std::abs(farPoint.w) < 1e-6f) return Entity();
+		nearPoint /= nearPoint.w;
+		farPoint /= farPoint.w;
+		const glm::vec3 origin = glm::vec3(nearPoint);
+		const glm::vec3 rayVector = glm::vec3(farPoint - nearPoint);
+		if (glm::dot(rayVector, rayVector) < 1e-12f) return Entity();
+		const glm::vec3 direction = glm::normalize(rayVector);
+
+		Scene& scene = Application::Get().GetScene();
+		Entity closest;
+		float nearestDistance = std::numeric_limits<float>::max();
+		for (auto handle : scene.GetAllEntitiesWith<CTransform, CMeshRenderer, CMetadata>())
+		{
+			Entity entity(handle, &scene);
+			if (entity.GetComponent<CMetadata>().is_hidden_entity) continue;
+			const auto& mesh = entity.GetComponent<CMeshRenderer>().mesh;
+			if (!mesh) continue;
+			const glm::mat4 world = scene.GetWorldTransform(entity);
+			const float determinant = glm::determinant(world);
+			if (!std::isfinite(determinant) || std::abs(determinant) < 1e-20f) continue;
+			const glm::mat4 inverseWorld = glm::inverse(world);
+			const glm::vec3 localOrigin = glm::vec3(inverseWorld * glm::vec4(origin, 1.0f));
+			const glm::vec3 localDirection = glm::vec3(inverseWorld * glm::vec4(direction, 0.0f));
+			if (mesh->IntersectRay(localOrigin, localDirection, nearestDistance))
+				closest = entity;
+		}
+
+		// Point lights draw a camera-facing disc rather than a mesh.
+		const glm::vec3 cameraForward = glm::normalize(glm::vec3(camera.GetInverseView()[2]));
+		for (auto handle : scene.GetAllEntitiesWith<CTransform, CPointLight, CMetadata>())
+		{
+			Entity entity(handle, &scene);
+			const auto& light = entity.GetComponent<CPointLight>();
+			if (!light.enabled || entity.GetComponent<CMetadata>().is_hidden_entity ||
+				(entity.HasComponent<CMeshRenderer>() && entity.GetComponent<CMeshRenderer>().mesh))
+				continue;
+			const glm::vec3 center = glm::vec3(scene.GetWorldTransform(entity)[3]);
+			const float denominator = glm::dot(direction, cameraForward);
+			if (std::abs(denominator) < 1e-6f) continue;
+			const float distance = glm::dot(center - origin, cameraForward) / denominator;
+			if (distance <= 0.0f || distance >= nearestDistance) continue;
+			const glm::vec3 offset = origin + direction * distance - center;
+			if (glm::dot(offset, offset) <= light.radius * light.radius)
+			{
+				nearestDistance = distance;
+				closest = entity;
+			}
+		}
+		return closest;
+	}
+
 	void GUI::Viewport() {
 		bool imageHovered = false;
+		bool viewportFocused = false;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		const bool visible = ImGui::Begin("Viewport", nullptr,
 			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 		if (visible) {
+			viewportFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
+				glfwGetWindowAttrib(Application::Get().GetWindow().getGLFWwindow(), GLFW_FOCUSED);
 
 			const ImVec2 displaySize = ImGui::GetContentRegionAvail();
 			auto& renderer = Rendering::Renderer::Get();
@@ -811,6 +918,14 @@ namespace Madam::UI {
 				static_cast<uint32_t>(std::ceil(std::max(1.0f, displaySize.x))),
 				static_cast<uint32_t>(std::ceil(std::max(1.0f, displaySize.y))));
 			const auto renderSize = renderer.GetOffscreenExtent(0);
+			auto& camera = Rendering::CameraHandle::GetMain();
+			auto& cameraData = camera.GetMutableCameraData();
+			const float aspect = static_cast<float>(renderSize.width) / renderSize.height;
+			if (cameraData.projectionType == Rendering::CameraData::ProjectionType::Perspective)
+				cameraData.perspective.aspect = aspect;
+			else if (cameraData.projectionType == Rendering::CameraData::ProjectionType::Orthographic)
+				cameraData.orthographic.aspect = aspect;
+			camera.SetProjection();
 			const auto fullSize = renderer.GetSwapChainExtent();
 			const ImVec2 uv1(static_cast<float>(renderSize.width) / fullSize.width,
 				static_cast<float>(renderSize.height) / fullSize.height);
@@ -856,13 +971,17 @@ namespace Madam::UI {
 				}
 				ImGui::EndDragDropTarget();
 			}
+			const Entity markerUnderMouse = DrawViewportEntityMarkers(ImGui::GetMousePos());
 
 			DrawViewportOverlays();
+			bool overlayHovered = ImGui::IsMouseHoveringRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 			if (showViewportStats)
 				DrawPerformanceOverlay(viewportImageTopLeft, viewportImageSize, "Viewport");
 
 			//imGuizmo
 			DrawViewportGizmoButtons();
+			overlayHovered |= ImGui::IsMouseHoveringRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+			ImGuizmo::Enable(viewportFocused);
 			if (selectedEntity) {
 				if (Rendering::CameraHandle::GetMain().GetCameraData().projectionType == Rendering::CameraData::ProjectionType::Orthographic) {
 					ImGuizmo::SetOrthographic(true);
@@ -912,38 +1031,36 @@ namespace Madam::UI {
 					selectedEntity->GetComponent<CTransform>().UpdateTransform(transform);
 				}
 			}
-		}
-		if (imageHovered || isMovingViewportCamera)
-		{
-			if (Input::Get().IsMouseButtonPress(MouseCode::RIGHTMOUSEBUTTON) ||
-				Input::Get().IsMouseButtonPress(MouseCode::MIDDLEMOUSEBUTTON))
+			const bool gizmoBusy = selectedEntity && (ImGuizmo::IsOver() || ImGuizmo::IsUsing());
+			if (imageHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !overlayHovered &&
+				!isMovingViewportCamera && !gizmoBusy)
 			{
-				if (!isMovingViewportCamera) {
-					Application::Get().GetWindow().SetCursorState(CursorState::DISABLED);
-					if (glfwRawMouseMotionSupported())
-						glfwSetInputMode(Application::Get().GetWindow().getGLFWwindow(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-					isMovingViewportCamera = true;
-				}
-			}
-			else
-			{
-				if (isMovingViewportCamera)
-				{
-					if (glfwRawMouseMotionSupported())
-						glfwSetInputMode(Application::Get().GetWindow().getGLFWwindow(), GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
-					isMovingViewportCamera = false;
-					Application::Get().GetWindow().SetCursorState(CursorState::NORMAL);
-					Application::Get().GetWindow().PopCursorPosition();
-				}
-				Application::Get().GetWindow().SetCursorState(CursorState::NORMAL);
-				Application::Get().GetWindow().SetCursorIcon(CursorType::CROSSHAIR);
+				const Entity picked = markerUnderMouse ? markerUnderMouse : PickViewportEntity(ImGui::GetMousePos());
+				selectedEntity = picked ? CreateRef<Entity>(picked) : nullptr;
 			}
 		}
-		else
+		const bool cameraButtonDown = Input::Get().IsMouseButtonPress(MouseCode::RIGHTMOUSEBUTTON) ||
+			Input::Get().IsMouseButtonPress(MouseCode::MIDDLEMOUSEBUTTON);
+		if (isMovingViewportCamera && (!cameraButtonDown || !viewportFocused))
 		{
+			if (glfwRawMouseMotionSupported())
+				glfwSetInputMode(Application::Get().GetWindow().getGLFWwindow(), GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+			isMovingViewportCamera = false;
 			Application::Get().GetWindow().SetCursorState(CursorState::NORMAL);
-			Application::Get().GetWindow().SetCursorIcon(CursorType::ARROW);
+			Application::Get().GetWindow().PopCursorPosition();
 		}
+		if (!isMovingViewportCamera && imageHovered && viewportFocused && cameraButtonDown)
+		{
+			Application::Get().GetWindow().SetCursorState(CursorState::DISABLED);
+			if (glfwRawMouseMotionSupported())
+				glfwSetInputMode(Application::Get().GetWindow().getGLFWwindow(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+			isMovingViewportCamera = true;
+		}
+		if (!isMovingViewportCamera)
+			Application::Get().GetWindow().SetCursorIcon(imageHovered ? CursorType::CROSSHAIR : CursorType::ARROW);
+		Input::Get().SetEditorViewportInput(viewportFocused, imageHovered, isMovingViewportCamera,
+			glm::vec2(viewportImageTopLeft.x, viewportImageTopLeft.y),
+			visible ? glm::vec2(viewportImageSize.x, viewportImageSize.y) : glm::vec2(0.0f));
 		if (!visible) Rendering::Renderer::Get().SetOffscreenExtent(0, 1, 1);
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -1046,7 +1163,8 @@ namespace Madam::UI {
 			ImGui::EndDragDropTarget();
 		}
 
-		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() &&
+			!ImGui::IsAnyItemHovered()) {
 			selectedEntity = nullptr;
 		}
 

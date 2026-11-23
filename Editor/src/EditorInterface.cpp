@@ -24,10 +24,17 @@ namespace Madam {
 		}
 		void Start() {}
 		void Update() {
-			if (!GetComponent<CCamera>().cameraHandle->IsMain()) return;
+			if (!GetComponent<CCamera>().cameraHandle->IsMain()) {
+				mouseDelta = { 0.0f, 0.0f };
+				mouseScroll = { 0.0f, 0.0f };
+				velocity = glm::vec3(0.0f);
+				return;
+			}
 			GLFWwindow* window = Application::Get().GetWindow().getGLFWwindow();
 			const float dt = glm::clamp(Application::Get().GetTime().GetDeltaTime(), 0.0f, 0.1f);
-			const bool captured = glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
+			const bool viewportActive = Input::Get().IsEditorViewportCameraActive();
+			const bool captured = viewportActive && Input::Get().IsEditorViewportCaptured() &&
+				glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
 			const bool looking = captured && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
 			const bool panning = captured && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
 			const glm::vec2 inputDelta = mouseDelta;
@@ -58,7 +65,7 @@ namespace Madam {
 				if (Input::Get().IsKeyPress(KeyCode::E)) direction += up;
 				if (Input::Get().IsKeyPress(KeyCode::Q)) direction -= up;
 				moveSpeed = glm::clamp(moveSpeed + mouseScroll.y, 0.25f, 50.0f);
-			} else if (!panning) {
+			} else if (!panning && viewportActive && Input::Get().IsEditorViewportHovered()) {
 				transform.translation += forward * mouseScroll.y * scrollSensitivity;
 			}
 			mouseScroll = { 0.0f, 0.0f };
@@ -73,7 +80,8 @@ namespace Madam {
 
 		void OnMouseMoveRawEvent(MouseMoveRawEvent* e) {
 			GLFWwindow* window = Application::Get().GetWindow().getGLFWwindow();
-			if (glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED ||
+			if (!Input::Get().IsEditorViewportCaptured() ||
+				glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED ||
 				(!Input::Get().IsMouseButtonPress(MouseCode::RIGHTMOUSEBUTTON) &&
 				 !Input::Get().IsMouseButtonPress(MouseCode::MIDDLEMOUSEBUTTON))) {
 				hasLastMousePos = false;
@@ -89,7 +97,8 @@ namespace Madam {
 			hasLastMousePos = true;
 		}
 		void OnMouseScrollEvent(MouseScrollEvent* e) {
-			mouseScroll += glm::vec2(static_cast<float>(e->x), static_cast<float>(e->y));
+			if (Input::Get().IsEditorViewportScrollTarget())
+				mouseScroll += glm::vec2(static_cast<float>(e->x), static_cast<float>(e->y));
 		}
 	};
 

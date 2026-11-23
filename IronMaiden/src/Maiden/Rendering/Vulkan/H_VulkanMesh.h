@@ -12,6 +12,8 @@ namespace Madam
 
 		virtual void Bind(void* command_buffer) override;
 		virtual void Draw(void* command_buffer) override;
+		bool IntersectRay(const glm::vec3& origin, const glm::vec3& direction,
+			float& nearestDistance) const override;
 
 		struct Vertex
 		{
@@ -51,5 +53,9 @@ namespace Madam
 		VkDescriptorSetAllocateInfo m_info{};
 
 		bool has_index_buffer = false;
+		std::vector<glm::vec3> m_pickPositions;
+		std::vector<uint32_t> m_pickIndices;
+		glm::vec3 m_pickBoundsMin{ 0.0f };
+		glm::vec3 m_pickBoundsMax{ 0.0f };
 	};
 }

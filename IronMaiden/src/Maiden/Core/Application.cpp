@@ -308,6 +308,8 @@ namespace Madam
 				const auto viewportStart = std::chrono::steady_clock::now();
 				renderer.BeginRenderPass(command_buffer, 0);
 				render_stack.render(frameInfo);
+				if (const auto& selected = p_gui->GetSelectedEntity())
+					render_stack.renderSelectionOutline(frameInfo, static_cast<entt::entity>(*selected));
 				renderer.EndRenderPass(command_buffer);
 				performanceStats.viewportCpuMs = elapsedMs(viewportStart, std::chrono::steady_clock::now());
 				renderer.PipelineBarrier(command_buffer, false, false, frame_index, 0);

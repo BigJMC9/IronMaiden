@@ -5,6 +5,7 @@
 #include "../Asset/H_ShaderDefinition.h"
 #include "../Asset/H_AssetSystem.h"
 #include "../Project/H_Project.h"
+#include <algorithm>
 
 //May need overhaul since a pipeline may need to be created for each shader
 //Each shader needs a pipeline. Shader variants can use the same pipeline but ubershader has to be used which can cause a performance hit to the GPU.
@@ -923,6 +924,161 @@ namespace Madam {
 		------------------Master Render System------------------
 		*/
 
+        // GPU-only editor selection outline. The three pipelines share one
+        // pipeline layout so they can reuse the camera UBO and push constants.
+        SelectionOutlineRenderer::SelectionOutlineRenderer(Device& device,
+            VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
+            : device{ device }
+        {
+            VkPushConstantRange pushRange{};
+            pushRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+            pushRange.offset = 0;
+            pushRange.size = sizeof(SelectionOutlinePushConstants);
+
+            VkPipelineLayoutCreateInfo layoutInfo{};
+            layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            layoutInfo.setLayoutCount = 1;
+            layoutInfo.pSetLayouts = &globalSetLayout;
+            layoutInfo.pushConstantRangeCount = 1;
+            layoutInfo.pPushConstantRanges = &pushRange;
+            if (vkCreatePipelineLayout(device.device(), &layoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+                throw std::runtime_error("Could not create selection outline pipeline layout");
+
+            try {
+                const auto vert = VulkanShaderCompiler::CompileStage(
+                    "resources\\shaders\\selection_outline.vert", VK_SHADER_STAGE_VERTEX_BIT);
+                const auto frag = VulkanShaderCompiler::CompileStage(
+                    "resources\\shaders\\selection_outline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+                if (vert.empty() || frag.empty())
+                    throw std::runtime_error("Could not compile selection outline GLSL shaders");
+
+                ShaderStageConfigInfo stages;
+                stages.vertexModule = ShaderModuleConfigInfo(vert);
+                stages.fragmentModule = ShaderModuleConfigInfo(frag);
+
+                VkStencilOpState markState{};
+                markState.failOp = VK_STENCIL_OP_KEEP;
+                markState.passOp = VK_STENCIL_OP_REPLACE;
+                markState.depthFailOp = VK_STENCIL_OP_REPLACE;
+                markState.compareOp = VK_COMPARE_OP_ALWAYS;
+                markState.compareMask = 0xff;
+                markState.writeMask = 0xff;
+                markState.reference = 1;
+
+                {
+                    PipelineConfigInfo config;
+                    Pipeline::setDescriptions(config);
+                    config.renderPass = renderPass;
+                    config.pipelineLayout = pipelineLayout;
+                    config.rasterizationInfo.cullMode = VK_CULL_MODE_NONE;
+                    config.colorBlendAttachment.colorWriteMask = 0;
+                    config.depthStencilInfo.depthTestEnable = VK_FALSE;
+                    config.depthStencilInfo.depthWriteEnable = VK_FALSE;
+                    config.depthStencilInfo.stencilTestEnable = VK_TRUE;
+                    config.depthStencilInfo.front = markState;
+                    config.depthStencilInfo.back = markState;
+                    stencilMaskPipeline = CreateScope<Pipeline>(device, config, stages);
+                }
+
+                VkStencilOpState outlineState{};
+                outlineState.failOp = VK_STENCIL_OP_KEEP;
+                outlineState.passOp = VK_STENCIL_OP_KEEP;
+                outlineState.depthFailOp = VK_STENCIL_OP_KEEP;
+                outlineState.compareOp = VK_COMPARE_OP_NOT_EQUAL;
+                outlineState.compareMask = 0xff;
+                outlineState.writeMask = 0;
+                outlineState.reference = 1;
+
+                const auto createHullPipeline = [&](VkCompareOp depthCompare) {
+                    PipelineConfigInfo config;
+                    Pipeline::setDescriptions(config);
+                    config.renderPass = renderPass;
+                    config.pipelineLayout = pipelineLayout;
+                    // Match the normal scene's winding. The stencil mask
+                    // removes interior pixels, so inverted-hull culling is
+                    // unnecessary (and would hide one-sided meshes).
+                    config.rasterizationInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+                    config.depthStencilInfo.depthTestEnable = VK_TRUE;
+                    config.depthStencilInfo.depthWriteEnable = VK_FALSE;
+                    config.depthStencilInfo.depthCompareOp = depthCompare;
+                    config.depthStencilInfo.stencilTestEnable = VK_TRUE;
+                    config.depthStencilInfo.front = outlineState;
+                    config.depthStencilInfo.back = outlineState;
+                    config.enableAlphaBlending();
+                    // Keep the viewport image opaque for the ImGui compositor.
+                    config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+                    config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                    return CreateScope<Pipeline>(device, config, stages);
+                };
+
+                occludedPipeline = createHullPipeline(VK_COMPARE_OP_GREATER);
+                visiblePipeline = createHullPipeline(VK_COMPARE_OP_LESS_OR_EQUAL);
+            }
+            catch (...) {
+                stencilMaskPipeline.reset();
+                occludedPipeline.reset();
+                visiblePipeline.reset();
+                vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+                pipelineLayout = VK_NULL_HANDLE;
+                throw;
+            }
+        }
+
+        SelectionOutlineRenderer::~SelectionOutlineRenderer() {
+            stencilMaskPipeline.reset();
+            occludedPipeline.reset();
+            visiblePipeline.reset();
+            if (pipelineLayout != VK_NULL_HANDLE)
+                vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+        }
+
+        void SelectionOutlineRenderer::render(FrameInfo& frameInfo, entt::entity selected) {
+            if (!frameInfo.renderScene.registry)
+                return;
+
+            entt::registry& registry = *frameInfo.renderScene.registry;
+            if (!registry.valid(selected) ||
+                !registry.any_of<CMeshRenderer>(selected) ||
+                !registry.any_of<CUniqueIdentifier>(selected))
+                return;
+
+            // Match the scene's actual render list (excludes hidden entities).
+            if (std::find(frameInfo.renderScene.meshEntities.begin(),
+                frameInfo.renderScene.meshEntities.end(), selected) ==
+                frameInfo.renderScene.meshEntities.end())
+                return;
+
+            auto mesh = registry.get<CMeshRenderer>(selected).GetMesh();
+            if (!mesh)
+                return;
+
+            SelectionOutlinePushConstants push{};
+            const UUID uuid = registry.get<CUniqueIdentifier>(selected).uuid;
+            push.model = frameInfo.scene->GetWorldTransform(uuid);
+            const VkExtent2D extent = Renderer::Get().GetOffscreenExtent(0);
+
+            const auto draw = [&](Pipeline& pipeline, float width, float opacity) {
+                push.settings = glm::vec4(static_cast<float>(extent.width),
+                    static_cast<float>(extent.height), width, opacity);
+                pipeline.bind(frameInfo.commandBuffer);
+                vkCmdBindDescriptorSets(frameInfo.commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
+                    &frameInfo.globalDescriptorSet, 0, nullptr);
+                vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
+                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                    0, sizeof(push), &push);
+                mesh->Bind(frameInfo.commandBuffer);
+                mesh->Draw(frameInfo.commandBuffer);
+            };
+
+            // First exclude the entire selected object's unexpanded silhouette,
+            // even where another mesh is in front of it.
+            draw(*stencilMaskPipeline, 0.0f, 0.0f);
+            // Then colour the expanded outside pixels according to scene depth.
+            draw(*occludedPipeline, 2.3f, 0.23f);
+            draw(*visiblePipeline, 2.3f, 0.98f);
+        }
+
 		RenderStack::~RenderStack() { 
 			//renderSystems.clear(); 
 			if (isRunning) {
@@ -936,6 +1092,7 @@ namespace Madam {
 		}
 
 		void RenderStack::deinit() {
+			selectionOutlineRenderer.reset();
 			renderSystems.clear();
 			isRunning = false;
 		}
@@ -990,6 +1147,8 @@ namespace Madam {
 						"Point Light Render System"
 					));
 				MADAM_CORE_INFO("Point Light Render Layer Complete");
+				selectionOutlineRenderer = CreateScope<SelectionOutlineRenderer>(
+					device, renderer.GetMainRenderPass(), globalSetLayout->getDescriptorSetLayout());
 			}
 			catch (const std::exception& e) {
 				MADAM_CORE_ERROR("Error: {0}", e.what());
@@ -1003,6 +1162,10 @@ namespace Madam {
 				system->updatePipelineState();
 				system->render(frameInfo);
 			}
+		}
+
+		void RenderStack::renderSelectionOutline(FrameInfo& frameInfo, entt::entity selected) {
+			if (selectionOutlineRenderer) selectionOutlineRenderer->render(frameInfo, selected);
 		}
 
 		bool RenderStack::switchRenderSystems(int first, int second) {

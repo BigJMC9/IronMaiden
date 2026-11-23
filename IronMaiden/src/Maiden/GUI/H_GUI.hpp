@@ -75,6 +75,9 @@ namespace Madam::UI {
 
 		void EditorUI();
 
+		// Used by the renderer after the editor UI has updated selection.
+		const Ref<Entity>& GetSelectedEntity() const { return selectedEntity; }
+
 		//MenuBars
 		void MenuBar();
 
@@ -104,6 +107,8 @@ namespace Madam::UI {
 		void DrawVec3(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
 		void DrawViewportOverlays();
 		void DrawViewportGizmoButtons();
+		Entity DrawViewportEntityMarkers(ImVec2 mousePosition);
+		Entity PickViewportEntity(ImVec2 mousePosition);
 		void DrawPerformanceOverlay(ImVec2 topLeft, ImVec2 size, const char* title);
 		void DrawEntityNode(Entity entity);
 		void DrawEntityComponents(Entity entity);

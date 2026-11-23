@@ -96,20 +96,28 @@ namespace Madam {
         bool IsKeyHeld(KeyCode key);
         bool IsMouseButtonPress(MouseCode button);
         bool IsMouseButtonRelease(MouseCode button);
-        glm::vec2 GetMousePosition();
+        glm::vec2 GetMousePosition() const;
+
+        void SetEditorViewportInput(bool focused, bool hovered, bool captured, glm::vec2 topLeft, glm::vec2 size);
+        bool IsEditorViewportCameraActive() const;
+        bool IsEditorViewportHovered() const;
+        bool IsEditorViewportCaptured() const;
+        bool IsEditorViewportScrollTarget() const;
         
         Input(const Input&) = delete;
         Input& operator=(const Input&) = delete;
 
-        static Input& Get() {
-			static Input instance;
-			return instance;
-		}
+        static Input& Get();
 
     private:
         float mouseThreshold = 0.1f;
         float frameTime = 0.0f;
         glm::vec2 mousePosition {0.0f, 0.0f};
+        bool editorViewportFocused = false;
+        bool editorViewportHovered = false;
+        bool editorViewportCaptured = false;
+        glm::vec2 editorViewportTopLeft{ 0.0f };
+        glm::vec2 editorViewportSize{ 0.0f };
         static void CursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
         static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
         static void KeyStateChangeCallback(GLFWwindow* window, int key, int scancode, int action, int mods);

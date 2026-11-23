@@ -53,6 +53,9 @@ namespace Madam {
 
 		virtual void Bind(void* commandBuffer) = 0;
 		virtual void Draw(void* commandBuffer) = 0;
+		// Ray and mesh coordinates are local. The direction is left unnormalized so
+		// the returned parameter also measures distance along the caller's world ray.
+		virtual bool IntersectRay(const glm::vec3& origin, const glm::vec3& direction, float& nearestDistance) const = 0;
 
 		std::filesystem::path GetFilepath() const { return m_filepath; }
 		bool IsPrimative() const { return mesh_primative != MeshPrimatives::None; }

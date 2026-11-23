@@ -380,6 +380,7 @@ Editor/Internal/shaders/temp/
 VersionControl.py
 IronMaiden/OnBuild.bat
 prebuild.bld
+non-public/**
 
 #UnIgnore
 !vendors/*

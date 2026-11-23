@@ -124,6 +124,17 @@ namespace Madam
 
 		if (vertices.size() != 0 && indices.size() != 0)
 		{
+			m_pickPositions.clear();
+			m_pickPositions.reserve(vertices.size());
+			m_pickBoundsMin = vertices.front().position;
+			m_pickBoundsMax = vertices.front().position;
+			for (const auto& vertex : vertices)
+			{
+				m_pickPositions.push_back(vertex.position);
+				m_pickBoundsMin = glm::min(m_pickBoundsMin, vertex.position);
+				m_pickBoundsMax = glm::max(m_pickBoundsMax, vertex.position);
+			}
+			m_pickIndices = indices;
 			m_shadowTerminatorAngle = 0.0f;
 			for (size_t face = 0; face + 2 < indices.size(); face += 3)
 			{
@@ -148,6 +159,59 @@ namespace Madam
 		}
 
 		is_loaded = true;
+	}
+
+	bool VulkanStaticMesh::IntersectRay(const glm::vec3& origin, const glm::vec3& direction,
+		float& nearestDistance) const
+	{
+		if (m_pickIndices.empty() || nearestDistance <= 0.0f) return false;
+
+		// Reject most objects using their local-space bounds before visiting triangles.
+		float nearDistance = 0.0f;
+		float farDistance = nearestDistance;
+		for (int axis = 0; axis < 3; ++axis)
+		{
+			if (std::abs(direction[axis]) < 1e-12f)
+			{
+				if (origin[axis] < m_pickBoundsMin[axis] || origin[axis] > m_pickBoundsMax[axis])
+					return false;
+				continue;
+			}
+			float first = (m_pickBoundsMin[axis] - origin[axis]) / direction[axis];
+			float last = (m_pickBoundsMax[axis] - origin[axis]) / direction[axis];
+			if (first > last) std::swap(first, last);
+			nearDistance = std::max(nearDistance, first);
+			farDistance = std::min(farDistance, last);
+			if (nearDistance > farDistance) return false;
+		}
+
+		bool hit = false;
+		for (size_t i = 0; i + 2 < m_pickIndices.size(); i += 3)
+		{
+			const glm::vec3& a = m_pickPositions[m_pickIndices[i]];
+			const glm::vec3& b = m_pickPositions[m_pickIndices[i + 1]];
+			const glm::vec3& c = m_pickPositions[m_pickIndices[i + 2]];
+			const glm::vec3 edge1 = b - a;
+			const glm::vec3 edge2 = c - a;
+			const glm::vec3 perpendicular = glm::cross(direction, edge2);
+			const float determinant = glm::dot(edge1, perpendicular);
+			const float tolerance = 1e-7f * glm::length(edge1) * glm::length(edge2) * glm::length(direction);
+			if (std::abs(determinant) <= tolerance) continue;
+			const float inverseDeterminant = 1.0f / determinant;
+			const glm::vec3 fromA = origin - a;
+			const float u = glm::dot(fromA, perpendicular) * inverseDeterminant;
+			if (u < 0.0f || u > 1.0f) continue;
+			const glm::vec3 perpendicular2 = glm::cross(fromA, edge1);
+			const float v = glm::dot(direction, perpendicular2) * inverseDeterminant;
+			if (v < 0.0f || u + v > 1.0f) continue;
+			const float distance = glm::dot(edge2, perpendicular2) * inverseDeterminant;
+			if (distance > 1e-5f && distance < nearestDistance)
+			{
+				nearestDistance = distance;
+				hit = true;
+			}
+		}
+		return hit;
 	}
 
 	void VulkanStaticMesh::LoadFBX()
